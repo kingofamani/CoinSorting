@@ -131,7 +131,7 @@ void loop() {
   if (TEST_MODE) {
     static unsigned long lastPrint = 0;
     if (millis() - lastPrint > 200) {
-      lastPrint = millis();m
+      lastPrint = millis();
       for (int i = 0; i < 4; i++) {
         Serial.print(digitalRead(SENSOR_PIN[i]));
         Serial.print(i < 3 ? "  " : "\n");
