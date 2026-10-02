@@ -1,0 +1,712 @@
+{
+ "beam_margin": {
+  "item": "光束 U 離覆蓋區左界（貼 #7 的硬幣右緣 115.876）",
+  "value": "U118.475，+2.6，扣光窗半寬 0.5 後 +2.1",
+  "need": "扣光窗後 ≥1.0",
+  "ok": true,
+  "note": ""
+ },
+ "beam_margin_roll": {
+  "item": "硬幣繞軌道方向任意翻轉時（U 寬 ≥18.79）光束仍在硬幣內",
+  "value": "右緣 ≤117.08，光束重疊 1.39",
+  "need": ">0",
+  "ok": true,
+  "note": ""
+ },
+ "beam_V": {
+  "item": "光束 V 與 W' 段",
+  "value": "V74.0，W'19.3→29.3（後臂內面在 #37 內面後 0.3）",
+  "need": "後臂不得凸出 #37 內面",
+  "ok": true,
+  "note": ""
+ },
+ "beam": {
+  "U": 118.475,
+  "V": 74.0,
+  "W": [
+   19.3,
+   29.3
+  ]
+ },
+ "s5": {
+  "up": {
+   "sweep_bounds": [
+    115.114,
+    52.496,
+    141.955,
+    78.254
+   ],
+   "Wmax": 10.0,
+   "gap_W": 2.3,
+   "overlap_area": 0.0
+  },
+  "down": {
+   "sweep_bounds": [
+    126.954,
+    52.496,
+    150.844,
+    82.564
+   ],
+   "Wmax": 10.0,
+   "gap_W": 2.3,
+   "overlap_area": 0.0
+  },
+  "center": {
+   "sweep_bounds": [
+    121.034,
+    52.496,
+    144.924,
+    80.409
+   ],
+   "Wmax": 10.0,
+   "gap_W": 2.3,
+   "overlap_area": 0.0
+  }
+ },
+ "s5_gap_up": {
+  "item": "S1 與 S5（翼 up）最終位置＋安裝掃掠的 W' 間隙",
+  "value": "2.3（(U,V) 重疊時 W' 不重疊；同 W' 段的 (U,V) 重疊面積 0.0）",
+  "need": "≥1.5 且同 W' 段重疊＝0",
+  "ok": true,
+  "note": ""
+ },
+ "s5_gap_down": {
+  "item": "S1 與 S5（翼 down）最終位置＋安裝掃掠的 W' 間隙",
+  "value": "2.3（(U,V) 重疊時 W' 不重疊；同 W' 段的 (U,V) 重疊面積 0.0）",
+  "need": "≥1.5 且同 W' 段重疊＝0",
+  "ok": true,
+  "note": ""
+ },
+ "s5_gap_center": {
+  "item": "S1 與 S5（翼 center）最終位置＋安裝掃掠的 W' 間隙",
+  "value": "2.3（(U,V) 重疊時 W' 不重疊；同 W' 段的 (U,V) 重疊面積 0.0）",
+  "need": "≥1.5 且同 W' 段重疊＝0",
+  "ok": true,
+  "note": ""
+ },
+ "beyond_direct": {
+  "item": "越過硬幣直落線 U114.104 的凸出（前臂＋導流帽）",
+  "value": "8.37 mm，體積 507.0 mm³",
+  "need": "只有前臂＋帽；其餘在死區",
+  "ok": true,
+  "note": ""
+ },
+ "tip_to_7": {
+  "item": "臂尖／帽左面到 #7（1|5 間隔條）",
+  "value": "13.4（<20：硬幣可能架在帽與 #7 之間 → 帽頂坡 62.7° 讓它滑進通道）",
+  "need": "記錄",
+  "ok": true,
+  "note": ""
+ },
+ "wall_to_open": {
+  "item": "牆滑道面到 1 元開口右緣",
+  "value": "6.229；PCB 元件面 110.475、本體頂 113.475（都 <114.104 → 死區）",
+  "need": "PCB、元件、本體都在死區",
+  "ok": true,
+  "note": ""
+ },
+ "faces": {
+  "導流帽頂坡": 62.7,
+  "前臂前面（W'=12.3 面，朝 #26）": 60.0,
+  "本體頂（槽底，兩臂之間，U≤113.475）": 30.0,
+  "PCB／元件上緣（V57.7，U≤112.475）": 30.0
+ },
+ "flip_first_S1": {
+  "item": "以唇為軸翻 0~180° 時第一次碰到 S1 的角度",
+  "value": "翻到 180° 都不碰",
+  "need": ">90°（翻過去以後才碰，不會撐住翻倒）",
+  "ok": true,
+  "note": ""
+ },
+ "flip": {
+  "124.1": [
+   null,
+   null,
+   112.0,
+   "PCB 零件區"
+  ],
+  "124.35": [
+   null,
+   null,
+   112.0,
+   "PCB 零件區"
+  ],
+  "124.6": [
+   null,
+   null,
+   112.0,
+   "PCB 零件區"
+  ]
+ },
+ "w13_single": {
+  "item": "#13R 單一外形",
+  "value": "Polygon，1 塊，面積 4059.4（原 #13 3025.4）",
+  "need": "1 塊",
+  "ok": true,
+  "note": ""
+ },
+ "w13_strip": {
+  "item": "槽前料條（連接上段與下段）",
+  "value": "W'0~11.8＝11.8 mm 寬、長 19.4",
+  "need": "≥8",
+  "ok": true,
+  "note": ""
+ },
+ "w13_upper": {
+  "item": "加高上段（V30~57.5）面積與固定",
+  "value": "848.0 mm²；前榫 F1 V(50.5, 56.0)、後榫 B1 V(36.0, 48.0)、前料條",
+  "need": "有前、後各 1 榫",
+  "ok": true,
+  "note": ""
+ },
+ "tabF1_hidden": {
+  "item": "前榫 F1 槽口上緣 V50.35 在該處軌道 V49.25 以下",
+  "value": "1.1",
+  "need": ">0（#26 槽被 #24 擋住，不在硬幣靠的面上）",
+  "ok": true,
+  "note": ""
+ },
+ "tabF2_hidden": {
+  "item": "前榫 F2 槽口上緣 V67.85 在該處軌道 V49.25 以下",
+  "value": "18.6",
+  "need": ">0（#26 槽被 #24 擋住，不在硬幣靠的面上）",
+  "ok": true,
+  "note": ""
+ },
+ "tab26_len": {
+  "item": "前榫長 vs #26 最薄 2.7",
+  "value": "2.6",
+  "need": "<2.7（榫尖不露出 #26 前面）",
+  "ok": true,
+  "note": ""
+ },
+ "corner_fix": {
+  "item": "修 37-cutout-corners 右側：#13R 與 #37 板厚區（V≤82.84）的重疊",
+  "value": "原 #13 1.19 mm² → #13R 0.0 mm²（後榫除外）",
+  "need": "0",
+  "ok": true,
+  "note": ""
+ },
+ "s26_F1": {
+  "item": "#26 槽 F1 U104.725~108.025 V50.35~56.15",
+  "value": "離外框 39.17、離 #26 既有孔 6.09、離 #24 孔／斜槽 1.03",
+  "need": "外框 ≥2、既有孔 ≥2.5、#24 孔 >0",
+  "ok": true,
+  "note": ""
+ },
+ "s26_F2": {
+  "item": "#26 槽 F2 U104.725~108.025 V67.85~74.65",
+  "value": "離外框 23.35、離 #26 既有孔 10.38、離 #24 孔／斜槽 0.04",
+  "need": "外框 ≥2、既有孔 ≥2.5、#24 孔 >0",
+  "ok": true,
+  "note": ""
+ },
+ "s26_C": {
+  "item": "#26 槽 C U101.725~105.025 V58.85~65.15",
+  "value": "離外框 32.85、離 #26 既有孔 12.64、離 #24 孔／斜槽 0.81",
+  "need": "外框 ≥2、既有孔 ≥2.5、#24 孔 >0",
+  "ok": true,
+  "note": ""
+ },
+ "s26_web": {
+  "item": "#26 新槽彼此之間的料",
+  "value": "2.7",
+  "need": "≥2.5",
+  "ok": true,
+  "note": ""
+ },
+ "w37_inside": {
+  "item": "#37 窗在 #37 內（不切斷外框）",
+  "value": "窗 bounds [101.575, 54.2, 122.875, 78.8]，面積 371.5 mm²",
+  "need": "窗 ⊂ #37 且最小料 ≥3",
+  "ok": true,
+  "note": ""
+ },
+ "w37_strip": {
+  "item": "窗到 #37 外框（含下方開口 V82 與 R2 圓角）最小料",
+  "value": "3.45",
+  "need": "≥3.0",
+  "ok": true,
+  "note": ""
+ },
+ "w37_holes": {
+  "item": "窗到 #37 既有孔",
+  "value": "16.28",
+  "need": "≥3",
+  "ok": true,
+  "note": ""
+ },
+ "s37_B1": {
+  "item": "#37 後榫槽 B1 U104.725~108.025 V35.85~48.15",
+  "value": "離窗 6.05、離外框 31.85",
+  "need": "≥3",
+  "ok": true,
+  "note": ""
+ },
+ "h37_0": {
+  "item": "#37 螺絲孔 1 中心 U96.575 V56.2 Ø3.4",
+  "value": "離窗 3.3、離外框 25.82",
+  "need": "≥2.5",
+  "ok": true,
+  "note": ""
+ },
+ "h37_1": {
+  "item": "#37 螺絲孔 2 中心 U96.575 V73.5 Ø3.4",
+  "value": "離窗 3.3、離外框 10.75",
+  "need": "≥2.5",
+  "ok": true,
+  "note": ""
+ },
+ "w37_gap": {
+  "item": "卡匣插好後窗在滑道側剩的縫（硬幣面）",
+  "value": "77.7 mm²，其中元件帶通道 34.6 mm²（U110.47~112.88×V57.3~78.1，在死區）；若實品元件帶無零件、改用 S1-K：剩 52.5 mm²（其餘縫寬 ≤0.4）",
+  "need": "帽通道必須由 S1-P 填住",
+  "ok": true,
+  "note": ""
+ },
+ "S1B": {
+  "item": "S1-B 座塊",
+  "value": "外框 22.7×19.0，Polygon；讓位孔四周最細料約 2.0；在牆槽內 V 向單邊 0.2、前端 0.5",
+  "need": "1 塊、最細料 ≥2",
+  "ok": true,
+  "note": ""
+ },
+ "S1B_inslot": {
+  "item": "S1-B 本體落在牆槽內",
+  "value": "True",
+  "need": "True",
+  "ok": true,
+  "note": ""
+ },
+ "S1C": {
+  "item": "S1-C 座板",
+  "value": "外框 37.0×24.0，比牆槽上下各多 3.0／1.6（壓在牆空腔側）",
+  "need": "上下都 ≥1.5",
+  "ok": true,
+  "note": ""
+ },
+ "S1F": {
+  "item": "S1-F 背蓋",
+  "value": "外框 35.3×27.3，Polygon；最細料約 3.3",
+  "need": "1 塊、最細料 ≥3",
+  "ok": true,
+  "note": ""
+ },
+ "cover_13": {
+  "item": "背蓋下緣 V78.0 到 #13R 在 #37 後方的櫃頂邊",
+  "value": "1.93（櫃頂邊 [(32.0, 81.67), (33.5, 80.8), (35.0, 79.93)]）",
+  "need": "≥1.0",
+  "ok": true,
+  "note": ""
+ },
+ "cover_B1": {
+  "item": "背蓋上緣到 B1 榫尾（榫可能凸出 #37 外面 0~0.3）",
+  "value": "2.55",
+  "need": "≥1.0（背蓋不壓榫尾）",
+  "ok": true,
+  "note": ""
+ },
+ "S1H": {
+  "item": "S1-H 導流帽（3 片）",
+  "value": "三角形 7.0×4.5，每片 15.8 mm²，疊 3 片＝U113.475~122.475",
+  "need": "片數 ≈ 槽深/3",
+  "ok": true,
+  "note": ""
+ },
+ "S1P": {
+  "item": "S1-P 帽通道填塊",
+  "value": "9.9×4.4；下緣 V70.4 到後臂頂 V70.8 留 0.4；右緣 U112.875 到元件頂 U112.475 留 0.4",
+  "need": "都 ≥0.3",
+  "ok": true,
+  "note": ""
+ },
+ "exit": {
+  "item": "模組在滑道內最低點到出口平面",
+  "value": "PCB 下緣 V77.7；出口平面在 W'29.0 處 V82.0 → 差 4.3",
+  "need": "≥2（出口平面以下無新增物，抽屜照常抽）",
+  "ok": true,
+  "note": ""
+ },
+ "to12": {
+  "item": "#12（櫃後板）到 PCB 後端／排針／背蓋",
+  "value": "3.21／9.87／2.91（#12 U105.0~239.0）",
+  "need": "≥1.5",
+  "ok": true,
+  "note": ""
+ },
+ "motor": {
+  "item": "TT 馬達盒右壁 U72.07 到 S1 最右物（S1-C 空腔側 U101.875；螺絲孔 U94.88）",
+  "value": "29.81／22.81",
+  "need": "≥10",
+  "ok": true,
+  "note": ""
+ },
+ "cavity": {
+  "item": "右側空腔剩餘寬（U72.07~S1-C）",
+  "value": "29.81（原 32.8）；空腔內新增：S1-C（W'0.6~29，V54.5~78.5）、2 顆 M3 螺帽（#37 內面）",
+  "need": "≥25（S5~S50 排線經空腔）",
+  "ok": true,
+  "note": ""
+ },
+ "cable": {
+  "item": "crosstrack 排線孔（U91.5~101.5、V103.5~108）到 S1-C",
+  "value": "25.0；線在空腔內往上到 #37 穿線孔：建議穿線孔放在 U78~88、V85~98（避開背蓋 U91.6~126.9×V50.7~78.0）",
+  "need": ">0",
+  "ok": true,
+  "note": ""
+ },
+ "front": {
+  "item": "轉盤 #62／前蓋 #63／圍邊 #27（都在 #24 前方 W'<-6）",
+  "value": "S1 最前點 W'-2.6（榫尖，在 #26 板內）",
+  "need": "W'>-3",
+  "ok": true,
+  "note": ""
+ },
+ "ebox_keepout": {
+  "U": [
+   91.1,
+   130.5
+  ],
+  "V": [
+   50.2,
+   78.5
+  ],
+  "W": [
+   32.0,
+   54.9
+  ]
+ },
+ "ebox": {
+  "item": "#37 背面 S1 禁區（背蓋＋後臂＋PCB 後端＋排針＋杜邦頭＋拔插手指空間 15）",
+  "value": "U(91.1, 130.5)×V(50.2, 78.5)×W'(32.0, 54.9)",
+  "need": "U 右界 ≤133（電子盒 d1/d2 已讓到 U≥133/134）",
+  "ok": true,
+  "note": ""
+ },
+ "wall_top": {
+  "item": "加高牆頂 V",
+  "value": "30.0（1 元開口右端頂緣 V≈31.4；翻倒時硬幣中心約 V45.6）",
+  "need": "≤ 開口右端頂緣",
+  "ok": true,
+  "note": ""
+ },
+ "material": {
+  "#13R 增加": 1034.0,
+  "S1-B": 190.0,
+  "S1-C": 731.0,
+  "S1-F": 687.0,
+  "S1-H ×3": 47.0,
+  "S1-P": 44.0
+ },
+ "sensitivity": [
+  {
+   "case": "名目",
+   "over": {},
+   "beam_margin": 2.1,
+   "front_W": 12.3,
+   "s5_gap": 2.3,
+   "fits_window": true,
+   "window_strip_if_recut": 3.45,
+   "tip_to_7": 13.4,
+   "exit_gap": 4.3
+  },
+  {
+   "case": "光束離 PCB 面 −1.0（beam_sb 4.0）",
+   "over": {
+    "beam_sb": 4.0
+   },
+   "beam_margin": 1.1,
+   "front_W": 12.3,
+   "s5_gap": 2.3,
+   "fits_window": true,
+   "window_strip_if_recut": 3.45,
+   "tip_to_7": 13.4,
+   "exit_gap": 4.3
+  },
+  {
+   "case": "光束離 PCB 面 −2.0",
+   "over": {
+    "beam_sb": 3.0
+   },
+   "beam_margin": 0.1,
+   "front_W": 12.3,
+   "s5_gap": 2.3,
+   "fits_window": true,
+   "window_strip_if_recut": 3.45,
+   "tip_to_7": 13.4,
+   "exit_gap": 4.3
+  },
+  {
+   "case": "臂高 +1.0（arm_top 13）",
+   "over": {
+    "arm_top": 13.0
+   },
+   "beam_margin": 3.1,
+   "front_W": 12.3,
+   "s5_gap": 2.3,
+   "fits_window": false,
+   "window_strip_if_recut": 3.45,
+   "tip_to_7": 12.4,
+   "exit_gap": 4.3
+  },
+  {
+   "case": "槽深 +1.0（slot_d 10）",
+   "over": {
+    "slot_d": 10.0
+   },
+   "beam_margin": 1.1,
+   "front_W": 12.3,
+   "s5_gap": 2.3,
+   "fits_window": true,
+   "window_strip_if_recut": 3.45,
+   "tip_to_7": 13.4,
+   "exit_gap": 4.3
+  },
+  {
+   "case": "槽寬 9.0",
+   "over": {
+    "slot_w": 9.0
+   },
+   "beam_margin": 2.1,
+   "front_W": 13.3,
+   "s5_gap": 3.3,
+   "fits_window": true,
+   "window_strip_if_recut": 3.45,
+   "tip_to_7": 13.4,
+   "exit_gap": 4.3
+  },
+  {
+   "case": "槽寬 12.0",
+   "over": {
+    "slot_w": 12.0
+   },
+   "beam_margin": 2.1,
+   "front_W": 10.3,
+   "s5_gap": 0.3,
+   "fits_window": true,
+   "window_strip_if_recut": 3.45,
+   "tip_to_7": 13.4,
+   "exit_gap": 4.3
+  },
+  {
+   "case": "臂厚 8.0",
+   "over": {
+    "arm_t": 8.0
+   },
+   "beam_margin": 2.1,
+   "front_W": 11.3,
+   "s5_gap": 1.3,
+   "fits_window": true,
+   "window_strip_if_recut": 3.45,
+   "tip_to_7": 13.4,
+   "exit_gap": 4.3
+  },
+  {
+   "case": "臂寬 7.4",
+   "over": {
+    "arm_w": 7.4
+   },
+   "beam_margin": 2.1,
+   "front_W": 12.3,
+   "s5_gap": 2.3,
+   "fits_window": false,
+   "window_strip_if_recut": 3.4,
+   "tip_to_7": 13.4,
+   "exit_gap": 3.8
+  },
+  {
+   "case": "本體離 PCB 邊 1.5",
+   "over": {
+    "body_e": 1.5
+   },
+   "beam_margin": 2.1,
+   "front_W": 12.3,
+   "s5_gap": 2.3,
+   "fits_window": false,
+   "window_strip_if_recut": 2.9,
+   "tip_to_7": 13.4,
+   "exit_gap": 3.3
+  },
+  {
+   "case": "PCB 寬 22",
+   "over": {
+    "pcb_W": 22.0
+   },
+   "beam_margin": 2.1,
+   "front_W": 12.3,
+   "s5_gap": 2.3,
+   "fits_window": false,
+   "window_strip_if_recut": 3.45,
+   "tip_to_7": 13.4,
+   "exit_gap": 4.3
+  },
+  {
+   "case": "元件高 3.0",
+   "over": {
+    "comp_h": 3.0
+   },
+   "beam_margin": 2.1,
+   "front_W": 12.3,
+   "s5_gap": 2.3,
+   "fits_window": true,
+   "window_strip_if_recut": 3.45,
+   "tip_to_7": 13.4,
+   "exit_gap": 4.3
+  },
+  {
+   "case": "PCB 前端多 1.8（本體置中）",
+   "over": {
+    "pcb_ovf": 1.8
+   },
+   "beam_margin": 2.1,
+   "front_W": 12.3,
+   "s5_gap": 2.3,
+   "fits_window": true,
+   "window_strip_if_recut": 3.45,
+   "tip_to_7": 13.4,
+   "exit_gap": 4.3
+  },
+  {
+   "case": "不墊泡棉（s_pcb 0）",
+   "over": {
+    "s_pcb": 0.0
+   },
+   "beam_margin": 1.1,
+   "front_W": 12.3,
+   "s5_gap": 2.3,
+   "fits_window": true,
+   "window_strip_if_recut": 3.45,
+   "tip_to_7": 14.4,
+   "exit_gap": 4.3
+  }
+ ],
+ "thresholds": {
+  "arm_top": {
+   "nominal": 12.0,
+   "ok_range": [
+    11.0,
+    12.6
+   ],
+   "fail_below": [
+    "光束餘量≥1.0（扣光窗半寬）"
+   ],
+   "fail_above": [
+    "槽底（本體頂）在死區（< 開口右緣 114.104）"
+   ]
+  },
+  "slot_d": {
+   "nominal": 9.0,
+   "ok_range": [
+    8.4,
+    10.0
+   ],
+   "fail_below": [
+    "槽底（本體頂）在死區（< 開口右緣 114.104）"
+   ],
+   "fail_above": [
+    "光束餘量≥1.0（扣光窗半寬）"
+   ]
+  },
+  "beam_sb": {
+   "nominal": 5.0,
+   "ok_range": [
+    4.0,
+    8.0
+   ],
+   "fail_below": [
+    "光束餘量≥1.0（扣光窗半寬）"
+   ],
+   "fail_above": []
+  },
+  "pcb_t": {
+   "nominal": 1.6,
+   "ok_range": [
+    0.8,
+    2.2
+   ],
+   "fail_below": [],
+   "fail_above": [
+    "槽底（本體頂）在死區（< 開口右緣 114.104）"
+   ]
+  },
+  "slot_w": {
+   "nominal": 10.0,
+   "ok_range": [
+    6.0,
+    11.3
+   ],
+   "fail_below": [],
+   "fail_above": [
+    "前臂／帽前面離 S5 掃掠 ≥1.0（W'≥11.0）"
+   ]
+  },
+  "arm_t": {
+   "nominal": 7.0,
+   "ok_range": [
+    4.0,
+    8.3
+   ],
+   "fail_below": [],
+   "fail_above": [
+    "前臂／帽前面離 S5 掃掠 ≥1.0（W'≥11.0）"
+   ]
+  },
+  "arm_w": {
+   "nominal": 6.4,
+   "ok_range": [
+    4.0,
+    8.2
+   ],
+   "fail_below": [],
+   "fail_above": [
+    "#37 窗下料條 ≥3.0（PCB 下緣＋0.4 ≤ V79.0）"
+   ]
+  },
+  "body_e": {
+   "nominal": 0.5,
+   "ok_range": [
+    0.0,
+    1.3
+   ],
+   "fail_below": [],
+   "fail_above": [
+    "#37 窗下料條 ≥3.0（PCB 下緣＋0.4 ≤ V79.0）"
+   ]
+  },
+  "pcb_W": {
+   "nominal": 20.0,
+   "ok_range": [
+    14.0,
+    21.5
+   ],
+   "fail_below": [],
+   "fail_above": [
+    "背蓋上緣不壓 B1 榫尾（PCB 上緣 ≥ V56.15）"
+   ]
+  },
+  "s_pcb": {
+   "nominal": 1.0,
+   "ok_range": [
+    0.0,
+    1.6
+   ],
+   "fail_below": [],
+   "fail_above": [
+    "槽底（本體頂）在死區（< 開口右緣 114.104）"
+   ]
+  },
+  "Vb": {
+   "nominal": 74.0,
+   "ok_range": [
+    72.5,
+    74.9
+   ],
+   "fail_below": [
+    "背蓋上緣不壓 B1 榫尾（PCB 上緣 ≥ V56.15）"
+   ],
+   "fail_above": [
+    "#37 窗下料條 ≥3.0（PCB 下緣＋0.4 ≤ V79.0）"
+   ]
+  }
+ }
+}

@@ -1,0 +1,2687 @@
+{
+ "up": {
+  "params": {
+   "slot_w": 10.0,
+   "slot_d": 9.0,
+   "beam_sb": 5.0,
+   "arm_t": 7.0,
+   "arm_w": 6.4,
+   "arm_top": 12.0,
+   "pcb_L": 27.6,
+   "pcb_W": 20.0,
+   "pcb_t": 1.6,
+   "pcb_e": 0.5,
+   "wing": "up",
+   "comp_h": 2.0,
+   "bump_h": 1.5,
+   "hdr_len": 8.0,
+   "hdr_up": 14.0,
+   "h": 2.5,
+   "delta_u": {
+    "S5": 0.0,
+    "S10": 0.0,
+    "S50": 0.0
+   },
+   "c": 0.4,
+   "c_body": 0.15,
+   "c_ntop": 1.0,
+   "g_strip": 0.2,
+   "c_slide": 1.0,
+   "c_back": 0.3,
+   "c_stop": 0.5,
+   "c_v": 0.3,
+   "lh_u": 1.8,
+   "lh_n": 3.6,
+   "fit": 0.1,
+   "cap_m": 3.0,
+   "t": 3.0,
+   "v_drawer": 97.5,
+   "chamfer": 2.0,
+   "min_web": 2.0,
+   "kerf": 0.15
+  },
+  "derived": {
+   "n_sb": -2.5,
+   "n_arm_top": 6.5,
+   "n_pcb_top": -5.5,
+   "n_pcb_bot": -7.1,
+   "n_comp": -3.5,
+   "n_bump": -8.6,
+   "n_strip": -2.3,
+   "n_shoulder": -3.2,
+   "slide": 9.8,
+   "n_win_bot": -18.8,
+   "pcb_up": 16.3,
+   "pcb_dn": 3.7,
+   "W_stop": 7.8,
+   "W_ra": [
+    0.8,
+    7.8
+   ],
+   "W_fa": [
+    -16.2,
+    -9.2
+   ],
+   "pcb_ov": 1.8,
+   "W_pcb": [
+    -18.0,
+    9.6
+   ],
+   "W_deep": 10.0,
+   "t_strip": 2.3,
+   "t_shoulder": 3.2
+  },
+  "rail": {
+   "V": "0.364032*U+9.9262",
+   "deg": 20.0031,
+   "resid": 0.0013
+  },
+  "stations": {
+   "S5": {
+    "beam_UV": [
+     137.58,
+     57.349
+    ],
+    "beam_to_up_open_end_U": 2.98,
+    "beam_to_dn_open_start_U": 2.98,
+    "win_to_openings": 3.62,
+    "win_to_slot24": 2.3,
+    "lh_to_open_up": 2.08,
+    "lh_to_open_dn": 2.08,
+    "lh_to_win": 3.0,
+    "lh_n_range": [
+     0.7,
+     4.3
+    ],
+    "strip24_body": 2.3,
+    "strip24_wing": 3.2,
+    "strip26_body": 3.62,
+    "strip26_wing": 4.52,
+    "breaks_edge": false,
+    "win_to_24_bottom": 19.23,
+    "win_to_other_holes24": 6.0,
+    "win_to_other_holes26": 6.0,
+    "engrave_hits": [
+     "「1」"
+    ],
+    "c1_to_turntable_ring": 3.09,
+    "front_arm_to_24front_rest": 3.2,
+    "front_arm_to_24front_fwd": 3.7,
+    "front_arm_to_coin_front": {
+     "5": 4.7,
+     "10": 4.7,
+     "50": 4.3
+    },
+    "rear_arm_inner_to_26back_rest": 0.8,
+    "rear_arm_inner_to_26back_fwd": 0.3,
+    "module_max_W": 9.6,
+    "module_to_37": 19.4,
+    "slot_bottom_to_strip": 0.2,
+    "arm_top_low_to_strip": 1.0,
+    "rear_arm_outside_bar_mm2": {
+     "up": 0.29,
+     "dn": 3.05,
+     "up_max": 0.44,
+     "dn_max": 1.4
+    },
+    "tip_fall_sweep": {
+     "1元": {
+      "tip_range_s": [
+       -17.07,
+       -16.54
+      ],
+      "hits": {
+       "PCB 零件區": {
+        "depth": 1.0,
+        "theta": 105.0,
+        "fall": 5.0,
+        "drift": 0.0
+       },
+       "PCB": {
+        "depth": 0.8,
+        "theta": 150.0,
+        "fall": 1.0,
+        "drift": 0.6
+       },
+       "PCB 焊點區": {
+        "depth": 0.75,
+        "theta": 105.0,
+        "fall": 9.0,
+        "drift": 0.0
+       },
+       "後臂": {
+        "depth": 1.7,
+        "theta": 90.0,
+        "fall": 6.0,
+        "drift": 0.6
+       }
+      }
+     },
+     "5元": {
+      "tip_range_s": [
+       11.78,
+       13.49
+      ],
+      "hits": {
+       "後臂": {
+        "depth": 2.38,
+        "theta": 75.0,
+        "fall": 0.0,
+        "drift": 0.0
+       },
+       "PCB 零件區": {
+        "depth": 1.0,
+        "theta": 125.0,
+        "fall": 3.0,
+        "drift": 0.0
+       },
+       "PCB": {
+        "depth": 0.79,
+        "theta": 130.0,
+        "fall": 4.0,
+        "drift": 0.0
+       },
+       "PCB 焊點區": {
+        "depth": 0.75,
+        "theta": 140.0,
+        "fall": 3.0,
+        "drift": 0.0
+       }
+      }
+     }
+    },
+    "fall_zone_intrusion": {
+     "1元": {
+      "vol_mm3": 834.0,
+      "depth_U": 16.14
+     },
+     "5元": {
+      "vol_mm3": 0.0,
+      "depth_U": 0.0
+     }
+    },
+    "wing_env_up": {
+     "U": [
+      118.47,
+      135.88
+     ],
+     "V": [
+      57.41,
+      68.54
+     ],
+     "W": [
+      0.0,
+      9.6
+     ],
+     "U_into": 17.41
+    },
+    "wing_env_dn": {
+     "U": [
+      138.88,
+      139.0
+     ],
+     "V": [
+      64.21,
+      64.61
+     ],
+     "W": [
+      0.0,
+      9.6
+     ],
+     "U_into": 0.13
+    },
+    "wing_top_below_lip_n": 4.82,
+    "exit_plane_clear_final": 23.66,
+    "exit_plane_clear_low": 14.45,
+    "front_parts_max_V": 82.61,
+    "front_parts_above_24corner_z": 13.33,
+    "to_13_U": 10.59,
+    "to_motor_U": 46.37,
+    "header_W": [
+     -18.0,
+     -10.0
+    ],
+    "header_in_front_of_24": true,
+    "header_to_turntable": 7.72,
+    "chord_at_hole_bottom": {
+     "5": 7.72,
+     "10": 8.42,
+     "50": 8.74
+    },
+    "touching_gap": {
+     "5-5": {
+      "at_beam": 8.04,
+      "at_hole_top_minus_hole": 2.64
+     },
+     "5-10": {
+      "at_beam": 9.27,
+      "at_hole_top_minus_hole": 3.62
+     },
+     "5-50": {
+      "at_beam": 9.85,
+      "at_hole_top_minus_hole": 4.08
+     },
+     "10-5": {
+      "at_beam": 9.27,
+      "at_hole_top_minus_hole": 3.62
+     },
+     "10-10": {
+      "at_beam": 10.67,
+      "at_hole_top_minus_hole": 4.77
+     },
+     "10-50": {
+      "at_beam": 11.33,
+      "at_hole_top_minus_hole": 5.31
+     },
+     "50-5": {
+      "at_beam": 9.85,
+      "at_hole_top_minus_hole": 4.08
+     },
+     "50-10": {
+      "at_beam": 11.33,
+      "at_hole_top_minus_hole": 5.31
+     },
+     "50-50": {
+      "at_beam": 12.03,
+      "at_hole_top_minus_hole": 5.89
+     }
+    },
+    "divider": {
+     "pid": "#7",
+     "pieces": 1,
+     "tabs": [
+      {
+       "V": [
+        17.0,
+        24.0
+       ],
+       "depth": 3.0,
+       "status": "保留",
+       "remain_V": [
+        17.0,
+        24.0
+       ]
+      },
+      {
+       "V": [
+        64.45,
+        74.45
+       ],
+       "depth": 3.0,
+       "status": "刪除",
+       "remain_V": null
+      },
+      {
+       "V": [
+        84.45,
+        92.45
+       ],
+       "depth": 6.0,
+       "status": "保留",
+       "remain_V": [
+        84.45,
+        92.45
+       ]
+      }
+     ],
+     "notch_bounds": [
+      -3.0,
+      51.5,
+      10.0,
+      74.46
+     ],
+     "open_bottom": false,
+     "stop_contact_V": [
+      51.5,
+      60.71
+     ],
+     "area_removed": 224.6
+    },
+    "P1_bounds_UV": [
+     114.7,
+     62.38,
+     137.44,
+     78.73
+    ],
+    "P1_area": 215.6,
+    "C1_bounds_UV": [
+     110.76,
+     61.32,
+     140.35,
+     82.61
+    ],
+    "C1_area": 345.7,
+    "pins": []
+   },
+   "S10": {
+    "beam_UV": [
+     167.177,
+     68.123
+    ],
+    "beam_to_up_open_end_U": 3.02,
+    "beam_to_dn_open_start_U": 3.02,
+    "win_to_openings": 3.63,
+    "win_to_slot24": 2.3,
+    "lh_to_open_up": 2.12,
+    "lh_to_open_dn": 2.12,
+    "lh_to_win": 3.0,
+    "lh_n_range": [
+     0.7,
+     4.3
+    ],
+    "strip24_body": 2.3,
+    "strip24_wing": 3.2,
+    "strip26_body": 3.63,
+    "strip26_wing": 4.53,
+    "breaks_edge": false,
+    "win_to_24_bottom": 8.46,
+    "win_to_other_holes24": 5.76,
+    "win_to_other_holes26": 5.76,
+    "engrave_hits": [
+     "「5」"
+    ],
+    "c1_to_turntable_ring": 34.59,
+    "front_arm_to_24front_rest": 3.2,
+    "front_arm_to_24front_fwd": 3.7,
+    "front_arm_to_coin_front": {
+     "5": 4.7,
+     "10": 4.7,
+     "50": 4.3
+    },
+    "rear_arm_inner_to_26back_rest": 0.8,
+    "rear_arm_inner_to_26back_fwd": 0.3,
+    "module_max_W": 9.6,
+    "module_to_37": 19.4,
+    "slot_bottom_to_strip": 0.2,
+    "arm_top_low_to_strip": 1.0,
+    "rear_arm_outside_bar_mm2": {
+     "up": 0.24,
+     "dn": 2.87,
+     "up_max": 0.39,
+     "dn_max": 1.36
+    },
+    "tip_fall_sweep": {
+     "5元": {
+      "tip_range_s": [
+       -19.72,
+       -18.01
+      ],
+      "hits": {
+       "PCB 零件區": {
+        "depth": 1.0,
+        "theta": 110.0,
+        "fall": 6.0,
+        "drift": 0.0
+       },
+       "PCB": {
+        "depth": 0.8,
+        "theta": 150.0,
+        "fall": 2.0,
+        "drift": 0.0
+       },
+       "PCB 焊點區": {
+        "depth": 0.75,
+        "theta": 155.0,
+        "fall": 1.0,
+        "drift": 0.0
+       },
+       "後臂": {
+        "depth": 1.14,
+        "theta": 90.0,
+        "fall": 7.0,
+        "drift": 0.6
+       }
+      }
+     },
+     "10元": {
+      "tip_range_s": [
+       13.22,
+       13.7
+      ],
+      "hits": {
+       "後臂": {
+        "depth": 2.53,
+        "theta": 75.0,
+        "fall": 0.0,
+        "drift": 0.0
+       },
+       "PCB 零件區": {
+        "depth": 1.0,
+        "theta": 120.0,
+        "fall": 0.0,
+        "drift": 0.0
+       },
+       "PCB": {
+        "depth": 0.79,
+        "theta": 135.0,
+        "fall": 4.0,
+        "drift": 0.0
+       },
+       "PCB 焊點區": {
+        "depth": 0.74,
+        "theta": 135.0,
+        "fall": 5.0,
+        "drift": 0.0
+       }
+      }
+     }
+    },
+    "fall_zone_intrusion": {
+     "5元": {
+      "vol_mm3": 830.0,
+      "depth_U": 16.1
+     },
+     "10元": {
+      "vol_mm3": 0.0,
+      "depth_U": 0.0
+     }
+    },
+    "wing_env_up": {
+     "U": [
+      148.06,
+      165.63
+     ],
+     "V": [
+      68.19,
+      79.37
+     ],
+     "W": [
+      0.0,
+      9.6
+     ],
+     "U_into": 17.56
+    },
+    "wing_env_dn": null,
+    "wing_top_below_lip_n": 4.83,
+    "exit_plane_clear_final": 12.88,
+    "exit_plane_clear_low": 3.68,
+    "front_parts_max_V": 93.39,
+    "front_parts_above_24corner_z": 4.0,
+    "to_13_U": 40.19,
+    "to_motor_U": 75.96,
+    "header_W": [
+     -18.0,
+     -10.0
+    ],
+    "header_in_front_of_24": true,
+    "header_to_turntable": 38.81,
+    "chord_at_hole_bottom": {
+     "10": 8.42,
+     "50": 8.74
+    },
+    "touching_gap": {
+     "10-10": {
+      "at_beam": 10.67,
+      "at_hole_top_minus_hole": 4.77
+     },
+     "10-50": {
+      "at_beam": 11.33,
+      "at_hole_top_minus_hole": 5.31
+     },
+     "50-10": {
+      "at_beam": 11.33,
+      "at_hole_top_minus_hole": 5.31
+     },
+     "50-50": {
+      "at_beam": 12.03,
+      "at_hole_top_minus_hole": 5.89
+     }
+    },
+    "divider": {
+     "pid": "#6",
+     "pieces": 1,
+     "tabs": [
+      {
+       "V": [
+        17.0,
+        27.0
+       ],
+       "depth": 3.0,
+       "status": "保留",
+       "remain_V": [
+        17.0,
+        27.0
+       ]
+      },
+      {
+       "V": [
+        84.45,
+        92.45
+       ],
+       "depth": 6.0,
+       "status": "刪除",
+       "remain_V": null
+      }
+     ],
+     "notch_bounds": [
+      -6.0,
+      62.3,
+      10.0,
+      92.45
+     ],
+     "open_bottom": false,
+     "stop_contact_V": [
+      62.3,
+      71.54
+     ],
+     "area_removed": 238.0
+    },
+    "P1_bounds_UV": [
+     144.29,
+     73.16,
+     167.04,
+     89.51
+    ],
+    "P1_area": 215.6,
+    "C1_bounds_UV": [
+     140.35,
+     72.1,
+     169.95,
+     93.39
+    ],
+    "C1_area": 345.7,
+    "pins": []
+   },
+   "S50": {
+    "beam_UV": [
+     199.846,
+     80.016
+    ],
+    "beam_to_up_open_end_U": 3.2,
+    "beam_to_dn_open_start_U": 3.2,
+    "win_to_openings": 3.64,
+    "win_to_slot24": 2.3,
+    "lh_to_open_up": 2.3,
+    "lh_to_open_dn": 2.3,
+    "lh_to_win": 3.0,
+    "lh_n_range": [
+     0.7,
+     4.3
+    ],
+    "strip24_body": 2.3,
+    "strip24_wing": 3.2,
+    "strip26_body": 3.63,
+    "strip26_wing": 4.53,
+    "breaks_edge": true,
+    "win_to_other_holes24": 34.43,
+    "win_to_other_holes26": 34.4,
+    "engrave_hits": [],
+    "c1_to_turntable_ring": 65.36,
+    "front_arm_to_24front_rest": 3.2,
+    "front_arm_to_24front_fwd": 3.7,
+    "front_arm_to_coin_front": {
+     "5": 4.7,
+     "10": 4.7,
+     "50": 4.3
+    },
+    "rear_arm_inner_to_26back_rest": 0.8,
+    "rear_arm_inner_to_26back_fwd": 0.3,
+    "module_max_W": 9.6,
+    "module_to_37": 19.4,
+    "slot_bottom_to_strip": 0.2,
+    "arm_top_low_to_strip": 1.0,
+    "rear_arm_outside_bar_mm2": {
+     "up": 0.06,
+     "dn": 2.14,
+     "up_max": 0.2,
+     "dn_max": 1.17
+    },
+    "tip_fall_sweep": {
+     "10元": {
+      "tip_range_s": [
+       -21.54,
+       -21.07
+      ],
+      "hits": {
+       "PCB 零件區": {
+        "depth": 1.0,
+        "theta": 105.0,
+        "fall": 6.0,
+        "drift": 0.6
+       },
+       "PCB": {
+        "depth": 0.8,
+        "theta": 120.0,
+        "fall": 8.0,
+        "drift": 0.3
+       },
+       "PCB 焊點區": {
+        "depth": 0.75,
+        "theta": 120.0,
+        "fall": 5.0,
+        "drift": 0.0
+       },
+       "後臂": {
+        "depth": 0.32,
+        "theta": 90.0,
+        "fall": 8.0,
+        "drift": 0.6
+       }
+      }
+     },
+     "50元": {
+      "tip_range_s": [
+       14.12,
+       17.27
+      ],
+      "hits": {
+       "後臂": {
+        "depth": 2.6,
+        "theta": 115.0,
+        "fall": 0.0,
+        "drift": 0.0
+       },
+       "PCB 零件區": {
+        "depth": 0.99,
+        "theta": 120.0,
+        "fall": 0.0,
+        "drift": 0.0
+       },
+       "PCB": {
+        "depth": 0.8,
+        "theta": 150.0,
+        "fall": 1.0,
+        "drift": 0.0
+       },
+       "PCB 焊點區": {
+        "depth": 0.75,
+        "theta": 120.0,
+        "fall": 5.0,
+        "drift": 0.0
+       }
+      }
+     }
+    },
+    "fall_zone_intrusion": {
+     "10元": {
+      "vol_mm3": 814.0,
+      "depth_U": 15.91
+     },
+     "50元": {
+      "vol_mm3": 0.0,
+      "depth_U": 0.0
+     }
+    },
+    "wing_env_up": {
+     "U": [
+      180.73,
+      198.38
+     ],
+     "V": [
+      80.08,
+      91.29
+     ],
+     "W": [
+      0.0,
+      9.6
+     ],
+     "U_into": 17.64
+    },
+    "wing_env_dn": null,
+    "wing_top_below_lip_n": 4.83,
+    "exit_plane_clear_final": 0.99,
+    "exit_plane_clear_low": -8.22,
+    "front_parts_max_V": 97.5,
+    "front_parts_above_24corner_z": 0.43,
+    "to_13_U": 72.86,
+    "to_motor_U": 108.63,
+    "header_W": [
+     -18.0,
+     -10.0
+    ],
+    "header_in_front_of_24": true,
+    "header_to_turntable": 73.35,
+    "chord_at_hole_bottom": {
+     "50": 8.74
+    },
+    "touching_gap": {
+     "50-50": {
+      "at_beam": 12.03,
+      "at_hole_top_minus_hole": 5.89
+     }
+    },
+    "divider": {
+     "pid": "#5",
+     "pieces": 1,
+     "tabs": [
+      {
+       "V": [
+        17.0,
+        27.0
+       ],
+       "depth": 3.0,
+       "status": "保留",
+       "remain_V": [
+        17.0,
+        27.0
+       ]
+      },
+      {
+       "V": [
+        35.0,
+        45.0
+       ],
+       "depth": 3.0,
+       "status": "保留",
+       "remain_V": [
+        35.0,
+        45.0
+       ]
+      },
+      {
+       "V": [
+        84.45,
+        92.45
+       ],
+       "depth": 6.0,
+       "status": "刪除",
+       "remain_V": null
+      }
+     ],
+     "notch_bounds": [
+      -6.0,
+      74.22,
+      10.07,
+      98.0
+     ],
+     "open_bottom": true,
+     "stop_contact_V": [
+      74.22,
+      83.47
+     ],
+     "area_removed": 235.2
+    },
+    "P1_bounds_UV": [
+     175.82,
+     85.05,
+     199.71,
+     97.5
+    ],
+    "P1_area": 207.4,
+    "C1_bounds_UV": [
+     168.26,
+     75.2,
+     209.08,
+     97.5
+    ],
+    "C1_area": 438.0,
+    "pins": [
+     {
+      "side": "上游",
+      "s": -20.2,
+      "n": -12.0,
+      "n_ok": [
+       -19.85,
+       -4.1
+      ],
+      "center_UV": [
+       175.9,
+       86.73
+      ],
+      "to_slot": 10.55,
+      "to_24_edge": 9.41,
+      "to_win": 2.05
+     },
+     {
+      "side": "下游",
+      "s": 7.6,
+      "n": -6.75,
+      "n_ok": [
+       -9.6,
+       -4.1
+      ],
+      "center_UV": [
+       203.82,
+       91.31
+      ],
+      "to_slot": 5.3,
+      "to_24_edge": 4.83,
+      "to_win": 2.05
+     }
+    ]
+   }
+  },
+  "slot26_tab6": {
+   "UV": [
+    165.68,
+    31.05,
+    168.58,
+    37.95
+   ],
+   "to_openings": 7.71,
+   "to_other": 4.1,
+   "inside26": true
+  },
+  "cable_hole": {
+   "UV": [
+    91.5,
+    103.5,
+    101.5,
+    108.0
+   ],
+   "in24": true,
+   "in26": true,
+   "to_holes24": 8.72,
+   "to_holes26": 8.72,
+   "to_24_edge": 3.19,
+   "to_26_edge": 3.0,
+   "to_turntable": 8.62,
+   "to_13": 3.38,
+   "to_motor": 19.4
+  },
+  "cable_len_est": {
+   "S5": 168.0,
+   "S10": 187.0,
+   "S50": 208.0
+  }
+ },
+ "down": {
+  "params": {
+   "slot_w": 10.0,
+   "slot_d": 9.0,
+   "beam_sb": 5.0,
+   "arm_t": 7.0,
+   "arm_w": 6.4,
+   "arm_top": 12.0,
+   "pcb_L": 27.6,
+   "pcb_W": 20.0,
+   "pcb_t": 1.6,
+   "pcb_e": 0.5,
+   "wing": "down",
+   "comp_h": 2.0,
+   "bump_h": 1.5,
+   "hdr_len": 8.0,
+   "hdr_up": 14.0,
+   "h": 2.5,
+   "delta_u": {
+    "S5": 0.0,
+    "S10": 0.0,
+    "S50": 0.0
+   },
+   "c": 0.4,
+   "c_body": 0.15,
+   "c_ntop": 1.0,
+   "g_strip": 0.2,
+   "c_slide": 1.0,
+   "c_back": 0.3,
+   "c_stop": 0.5,
+   "c_v": 0.3,
+   "lh_u": 1.8,
+   "lh_n": 3.6,
+   "fit": 0.1,
+   "cap_m": 3.0,
+   "t": 3.0,
+   "v_drawer": 97.5,
+   "chamfer": 2.0,
+   "min_web": 2.0,
+   "kerf": 0.15
+  },
+  "derived": {
+   "n_sb": -2.5,
+   "n_arm_top": 6.5,
+   "n_pcb_top": -5.5,
+   "n_pcb_bot": -7.1,
+   "n_comp": -3.5,
+   "n_bump": -8.6,
+   "n_strip": -2.3,
+   "n_shoulder": -3.2,
+   "slide": 9.8,
+   "n_win_bot": -18.8,
+   "pcb_up": 3.7,
+   "pcb_dn": 16.3,
+   "W_stop": 7.8,
+   "W_ra": [
+    0.8,
+    7.8
+   ],
+   "W_fa": [
+    -16.2,
+    -9.2
+   ],
+   "pcb_ov": 1.8,
+   "W_pcb": [
+    -18.0,
+    9.6
+   ],
+   "W_deep": 10.0,
+   "t_strip": 2.3,
+   "t_shoulder": 3.2
+  },
+  "rail": {
+   "V": "0.364032*U+9.9262",
+   "deg": 20.0031,
+   "resid": 0.0013
+  },
+  "stations": {
+   "S5": {
+    "beam_UV": [
+     137.58,
+     57.349
+    ],
+    "beam_to_up_open_end_U": 2.98,
+    "beam_to_dn_open_start_U": 2.98,
+    "win_to_openings": 3.62,
+    "win_to_slot24": 2.3,
+    "lh_to_open_up": 2.08,
+    "lh_to_open_dn": 2.08,
+    "lh_to_win": 3.0,
+    "lh_n_range": [
+     0.7,
+     4.3
+    ],
+    "strip24_body": 2.3,
+    "strip24_wing": 3.2,
+    "strip26_body": 3.62,
+    "strip26_wing": 4.52,
+    "breaks_edge": false,
+    "win_to_24_bottom": 14.92,
+    "win_to_other_holes24": 3.79,
+    "win_to_other_holes26": 3.79,
+    "engrave_hits": [
+     "「5」",
+     "「1」"
+    ],
+    "c1_to_turntable_ring": 15.69,
+    "front_arm_to_24front_rest": 3.2,
+    "front_arm_to_24front_fwd": 3.7,
+    "front_arm_to_coin_front": {
+     "5": 4.7,
+     "10": 4.7,
+     "50": 4.3
+    },
+    "rear_arm_inner_to_26back_rest": 0.8,
+    "rear_arm_inner_to_26back_fwd": 0.3,
+    "module_max_W": 9.6,
+    "module_to_37": 19.4,
+    "slot_bottom_to_strip": 0.2,
+    "arm_top_low_to_strip": 1.0,
+    "rear_arm_outside_bar_mm2": {
+     "up": 0.29,
+     "dn": 3.05,
+     "up_max": 0.44,
+     "dn_max": 1.4
+    },
+    "tip_fall_sweep": {
+     "1元": {
+      "tip_range_s": [
+       -17.07,
+       -16.54
+      ],
+      "hits": {
+       "PCB 焊點區": {
+        "depth": 0.75,
+        "theta": 130.0,
+        "fall": 8.0,
+        "drift": 0.6
+       },
+       "後臂": {
+        "depth": 1.7,
+        "theta": 90.0,
+        "fall": 6.0,
+        "drift": 0.6
+       },
+       "PCB 零件區": {
+        "depth": 0.98,
+        "theta": 105.0,
+        "fall": 6.0,
+        "drift": 0.6
+       },
+       "PCB": {
+        "depth": 0.8,
+        "theta": 100.0,
+        "fall": 9.0,
+        "drift": 0.6
+       }
+      }
+     },
+     "5元": {
+      "tip_range_s": [
+       11.78,
+       13.49
+      ],
+      "hits": {
+       "後臂": {
+        "depth": 2.38,
+        "theta": 75.0,
+        "fall": 0.0,
+        "drift": 0.0
+       },
+       "PCB 零件區": {
+        "depth": 1.0,
+        "theta": 110.0,
+        "fall": 6.0,
+        "drift": 0.0
+       },
+       "PCB": {
+        "depth": 0.8,
+        "theta": 150.0,
+        "fall": 2.0,
+        "drift": 0.0
+       },
+       "PCB 焊點區": {
+        "depth": 0.75,
+        "theta": 155.0,
+        "fall": 1.0,
+        "drift": 0.0
+       }
+      }
+     }
+    },
+    "fall_zone_intrusion": {
+     "1元": {
+      "vol_mm3": 223.0,
+      "depth_U": 4.3
+     },
+     "5元": {
+      "vol_mm3": 486.0,
+      "depth_U": 10.29
+     }
+    },
+    "wing_env_up": {
+     "U": [
+      130.31,
+      135.88
+     ],
+     "V": [
+      61.72,
+      68.54
+     ],
+     "W": [
+      0.0,
+      9.6
+     ],
+     "U_into": 5.57
+    },
+    "wing_env_dn": {
+     "U": [
+      138.88,
+      150.84
+     ],
+     "V": [
+      64.21,
+      73.36
+     ],
+     "W": [
+      0.0,
+      9.6
+     ],
+     "U_into": 11.97
+    },
+    "wing_top_below_lip_n": 4.82,
+    "exit_plane_clear_final": 19.35,
+    "exit_plane_clear_low": 10.14,
+    "front_parts_max_V": 86.92,
+    "front_parts_above_24corner_z": 9.59,
+    "to_13_U": 22.43,
+    "to_motor_U": 58.21,
+    "header_W": [
+     -18.0,
+     -10.0
+    ],
+    "header_in_front_of_24": true,
+    "header_to_turntable": 32.35,
+    "chord_at_hole_bottom": {
+     "5": 7.72,
+     "10": 8.42,
+     "50": 8.74
+    },
+    "touching_gap": {
+     "5-5": {
+      "at_beam": 8.04,
+      "at_hole_top_minus_hole": 2.64
+     },
+     "5-10": {
+      "at_beam": 9.27,
+      "at_hole_top_minus_hole": 3.62
+     },
+     "5-50": {
+      "at_beam": 9.85,
+      "at_hole_top_minus_hole": 4.08
+     },
+     "10-5": {
+      "at_beam": 9.27,
+      "at_hole_top_minus_hole": 3.62
+     },
+     "10-10": {
+      "at_beam": 10.67,
+      "at_hole_top_minus_hole": 4.77
+     },
+     "10-50": {
+      "at_beam": 11.33,
+      "at_hole_top_minus_hole": 5.31
+     },
+     "50-5": {
+      "at_beam": 9.85,
+      "at_hole_top_minus_hole": 4.08
+     },
+     "50-10": {
+      "at_beam": 11.33,
+      "at_hole_top_minus_hole": 5.31
+     },
+     "50-50": {
+      "at_beam": 12.03,
+      "at_hole_top_minus_hole": 5.89
+     }
+    },
+    "divider": {
+     "pid": "#7",
+     "pieces": 1,
+     "tabs": [
+      {
+       "V": [
+        17.0,
+        24.0
+       ],
+       "depth": 3.0,
+       "status": "保留",
+       "remain_V": [
+        17.0,
+        24.0
+       ]
+      },
+      {
+       "V": [
+        64.45,
+        74.45
+       ],
+       "depth": 3.0,
+       "status": "刪除",
+       "remain_V": null
+      },
+      {
+       "V": [
+        84.45,
+        92.45
+       ],
+       "depth": 6.0,
+       "status": "保留",
+       "remain_V": [
+        84.45,
+        92.45
+       ]
+      }
+     ],
+     "notch_bounds": [
+      -3.0,
+      51.5,
+      10.0,
+      80.46
+     ],
+     "open_bottom": false,
+     "stop_contact_V": [
+      51.5,
+      60.71
+     ],
+     "area_removed": 296.8
+    },
+    "P1_bounds_UV": [
+     126.54,
+     65.21,
+     149.28,
+     83.04
+    ],
+    "P1_area": 215.6,
+    "C1_bounds_UV": [
+     122.6,
+     65.63,
+     152.19,
+     86.92
+    ],
+    "C1_area": 345.7,
+    "pins": []
+   },
+   "S10": {
+    "beam_UV": [
+     167.177,
+     68.123
+    ],
+    "beam_to_up_open_end_U": 3.02,
+    "beam_to_dn_open_start_U": 3.02,
+    "win_to_openings": 3.63,
+    "win_to_slot24": 2.3,
+    "lh_to_open_up": 2.12,
+    "lh_to_open_dn": 2.12,
+    "lh_to_win": 3.0,
+    "lh_n_range": [
+     0.7,
+     4.3
+    ],
+    "strip24_body": 2.3,
+    "strip24_wing": 3.2,
+    "strip26_body": 3.63,
+    "strip26_wing": 4.53,
+    "breaks_edge": false,
+    "win_to_24_bottom": 4.15,
+    "win_to_other_holes24": 17.21,
+    "win_to_other_holes26": 17.21,
+    "engrave_hits": [
+     "「5」"
+    ],
+    "c1_to_turntable_ring": 47.19,
+    "front_arm_to_24front_rest": 3.2,
+    "front_arm_to_24front_fwd": 3.7,
+    "front_arm_to_coin_front": {
+     "5": 4.7,
+     "10": 4.7,
+     "50": 4.3
+    },
+    "rear_arm_inner_to_26back_rest": 0.8,
+    "rear_arm_inner_to_26back_fwd": 0.3,
+    "module_max_W": 9.6,
+    "module_to_37": 19.4,
+    "slot_bottom_to_strip": 0.2,
+    "arm_top_low_to_strip": 1.0,
+    "rear_arm_outside_bar_mm2": {
+     "up": 0.24,
+     "dn": 2.87,
+     "up_max": 0.39,
+     "dn_max": 1.36
+    },
+    "tip_fall_sweep": {
+     "5元": {
+      "tip_range_s": [
+       -19.72,
+       -18.01
+      ],
+      "hits": {
+       "PCB 零件區": {
+        "depth": 0.92,
+        "theta": 100.0,
+        "fall": 6.0,
+        "drift": 0.6
+       },
+       "後臂": {
+        "depth": 1.14,
+        "theta": 90.0,
+        "fall": 7.0,
+        "drift": 0.6
+       },
+       "PCB": {
+        "depth": 0.79,
+        "theta": 125.0,
+        "fall": 7.0,
+        "drift": 0.6
+       },
+       "PCB 焊點區": {
+        "depth": 0.75,
+        "theta": 125.0,
+        "fall": 9.0,
+        "drift": 0.6
+       }
+      }
+     },
+     "10元": {
+      "tip_range_s": [
+       13.22,
+       13.7
+      ],
+      "hits": {
+       "後臂": {
+        "depth": 2.53,
+        "theta": 75.0,
+        "fall": 0.0,
+        "drift": 0.0
+       },
+       "PCB 零件區": {
+        "depth": 1.0,
+        "theta": 105.0,
+        "fall": 6.0,
+        "drift": 0.0
+       },
+       "PCB": {
+        "depth": 0.8,
+        "theta": 120.0,
+        "fall": 8.0,
+        "drift": 0.0
+       },
+       "PCB 焊點區": {
+        "depth": 0.75,
+        "theta": 130.0,
+        "fall": 1.0,
+        "drift": 0.0
+       }
+      }
+     }
+    },
+    "fall_zone_intrusion": {
+     "5元": {
+      "vol_mm3": 220.0,
+      "depth_U": 4.26
+     },
+     "10元": {
+      "vol_mm3": 483.0,
+      "depth_U": 10.25
+     }
+    },
+    "wing_env_up": {
+     "U": [
+      159.9,
+      165.63
+     ],
+     "V": [
+      72.5,
+      79.37
+     ],
+     "W": [
+      0.0,
+      9.6
+     ],
+     "U_into": 5.72
+    },
+    "wing_env_dn": {
+     "U": [
+      168.63,
+      180.44
+     ],
+     "V": [
+      75.04,
+      84.13
+     ],
+     "W": [
+      0.0,
+      9.6
+     ],
+     "U_into": 11.81
+    },
+    "wing_top_below_lip_n": 4.83,
+    "exit_plane_clear_final": 8.57,
+    "exit_plane_clear_low": -0.63,
+    "front_parts_max_V": 97.5,
+    "front_parts_above_24corner_z": 0.43,
+    "to_13_U": 52.03,
+    "to_motor_U": 87.8,
+    "header_W": [
+     -18.0,
+     -10.0
+    ],
+    "header_in_front_of_24": true,
+    "header_to_turntable": 63.61,
+    "chord_at_hole_bottom": {
+     "10": 8.42,
+     "50": 8.74
+    },
+    "touching_gap": {
+     "10-10": {
+      "at_beam": 10.67,
+      "at_hole_top_minus_hole": 4.77
+     },
+     "10-50": {
+      "at_beam": 11.33,
+      "at_hole_top_minus_hole": 5.31
+     },
+     "50-10": {
+      "at_beam": 11.33,
+      "at_hole_top_minus_hole": 5.31
+     },
+     "50-50": {
+      "at_beam": 12.03,
+      "at_hole_top_minus_hole": 5.89
+     }
+    },
+    "divider": {
+     "pid": "#6",
+     "pieces": 1,
+     "tabs": [
+      {
+       "V": [
+        17.0,
+        27.0
+       ],
+       "depth": 3.0,
+       "status": "保留",
+       "remain_V": [
+        17.0,
+        27.0
+       ]
+      },
+      {
+       "V": [
+        84.45,
+        92.45
+       ],
+       "depth": 6.0,
+       "status": "刪除",
+       "remain_V": null
+      }
+     ],
+     "notch_bounds": [
+      -6.0,
+      62.3,
+      10.07,
+      98.0
+     ],
+     "open_bottom": true,
+     "stop_contact_V": [
+      62.3,
+      71.54
+     ],
+     "area_removed": 354.4
+    },
+    "P1_bounds_UV": [
+     156.13,
+     75.98,
+     178.88,
+     93.82
+    ],
+    "P1_area": 215.6,
+    "C1_bounds_UV": [
+     152.19,
+     76.41,
+     181.79,
+     97.5
+    ],
+    "C1_area": 345.7,
+    "pins": []
+   },
+   "S50": {
+    "beam_UV": [
+     199.846,
+     80.016
+    ],
+    "beam_to_up_open_end_U": 3.2,
+    "beam_to_dn_open_start_U": 3.2,
+    "win_to_openings": 3.64,
+    "win_to_slot24": 2.3,
+    "lh_to_open_up": 2.3,
+    "lh_to_open_dn": 2.3,
+    "lh_to_win": 3.0,
+    "lh_n_range": [
+     0.7,
+     4.3
+    ],
+    "strip24_body": 2.3,
+    "strip24_wing": 3.2,
+    "strip26_body": 3.63,
+    "strip26_wing": 4.53,
+    "breaks_edge": true,
+    "win_to_other_holes24": 22.59,
+    "win_to_other_holes26": 22.56,
+    "engrave_hits": [],
+    "c1_to_turntable_ring": 77.96,
+    "front_arm_to_24front_rest": 3.2,
+    "front_arm_to_24front_fwd": 3.7,
+    "front_arm_to_coin_front": {
+     "5": 4.7,
+     "10": 4.7,
+     "50": 4.3
+    },
+    "rear_arm_inner_to_26back_rest": 0.8,
+    "rear_arm_inner_to_26back_fwd": 0.3,
+    "module_max_W": 9.6,
+    "module_to_37": 19.4,
+    "slot_bottom_to_strip": 0.2,
+    "arm_top_low_to_strip": 1.0,
+    "rear_arm_outside_bar_mm2": {
+     "up": 0.06,
+     "dn": 2.14,
+     "up_max": 0.2,
+     "dn_max": 1.17
+    },
+    "tip_fall_sweep": {
+     "10元": {
+      "tip_range_s": [
+       -21.54,
+       -21.07
+      ],
+      "hits": {
+       "PCB": {
+        "depth": 0.75,
+        "theta": 100.0,
+        "fall": 8.0,
+        "drift": 0.6
+       },
+       "PCB 焊點區": {
+        "depth": 0.75,
+        "theta": 115.0,
+        "fall": 10.0,
+        "drift": 0.6
+       },
+       "PCB 零件區": {
+        "depth": 0.86,
+        "theta": 90.0,
+        "fall": 7.0,
+        "drift": 0.6
+       },
+       "後臂": {
+        "depth": 0.32,
+        "theta": 90.0,
+        "fall": 8.0,
+        "drift": 0.6
+       }
+      }
+     },
+     "50元": {
+      "tip_range_s": [
+       14.12,
+       17.27
+      ],
+      "hits": {
+       "後臂": {
+        "depth": 2.6,
+        "theta": 115.0,
+        "fall": 0.0,
+        "drift": 0.0
+       },
+       "PCB 零件區": {
+        "depth": 1.0,
+        "theta": 130.0,
+        "fall": 5.0,
+        "drift": 0.0
+       },
+       "PCB": {
+        "depth": 0.8,
+        "theta": 105.0,
+        "fall": 9.0,
+        "drift": 0.0
+       },
+       "PCB 焊點區": {
+        "depth": 0.75,
+        "theta": 130.0,
+        "fall": 3.0,
+        "drift": 0.0
+       }
+      }
+     }
+    },
+    "fall_zone_intrusion": {
+     "10元": {
+      "vol_mm3": 203.0,
+      "depth_U": 4.07
+     },
+     "50元": {
+      "vol_mm3": 441.0,
+      "depth_U": 10.06
+     }
+    },
+    "wing_env_up": {
+     "U": [
+      192.57,
+      198.38
+     ],
+     "V": [
+      84.39,
+      91.29
+     ],
+     "W": [
+      0.0,
+      9.6
+     ],
+     "U_into": 5.8
+    },
+    "wing_env_dn": {
+     "U": [
+      201.38,
+      213.11
+     ],
+     "V": [
+      86.96,
+      96.02
+     ],
+     "W": [
+      0.0,
+      9.6
+     ],
+     "U_into": 11.73
+    },
+    "wing_top_below_lip_n": 4.83,
+    "exit_plane_clear_final": -3.32,
+    "exit_plane_clear_low": -12.53,
+    "front_parts_max_V": 97.5,
+    "front_parts_above_24corner_z": 0.43,
+    "to_13_U": 84.7,
+    "to_motor_U": 120.47,
+    "header_W": [
+     -18.0,
+     -10.0
+    ],
+    "header_in_front_of_24": true,
+    "header_to_turntable": 98.23,
+    "chord_at_hole_bottom": {
+     "50": 8.74
+    },
+    "touching_gap": {
+     "50-50": {
+      "at_beam": 12.03,
+      "at_hole_top_minus_hole": 5.89
+     }
+    },
+    "divider": {
+     "pid": "#5",
+     "pieces": 1,
+     "tabs": [
+      {
+       "V": [
+        17.0,
+        27.0
+       ],
+       "depth": 3.0,
+       "status": "保留",
+       "remain_V": [
+        17.0,
+        27.0
+       ]
+      },
+      {
+       "V": [
+        35.0,
+        45.0
+       ],
+       "depth": 3.0,
+       "status": "保留",
+       "remain_V": [
+        35.0,
+        45.0
+       ]
+      },
+      {
+       "V": [
+        84.45,
+        92.45
+       ],
+       "depth": 6.0,
+       "status": "刪除",
+       "remain_V": null
+      }
+     ],
+     "notch_bounds": [
+      -6.0,
+      74.22,
+      10.07,
+      98.0
+     ],
+     "open_bottom": true,
+     "stop_contact_V": [
+      74.22,
+      83.47
+     ],
+     "area_removed": 235.2
+    },
+    "P1_bounds_UV": [
+     189.22,
+     87.87,
+     211.55,
+     97.5
+    ],
+    "P1_area": 112.9,
+    "C1_bounds_UV": [
+     181.67,
+     79.51,
+     220.92,
+     97.5
+    ],
+    "C1_area": 278.4,
+    "pins": [
+     {
+      "side": "上游",
+      "s": -7.6,
+      "n": -9.5,
+      "n_ok": [
+       -15.1,
+       -4.1
+      ],
+      "center_UV": [
+       188.6,
+       88.69
+      ],
+      "to_slot": 8.05,
+      "to_24_edge": 7.45,
+      "to_win": 2.05
+     },
+     {
+      "side": "下游",
+      "s": 20.2,
+      "n": -4.5,
+      "n_ok": [
+       -5.1,
+       -4.1
+      ],
+      "center_UV": [
+       216.43,
+       93.5
+      ],
+      "to_slot": 3.05,
+      "to_24_edge": 2.64,
+      "to_win": 2.05
+     }
+    ]
+   }
+  },
+  "slot26_tab6": {
+   "UV": [
+    165.68,
+    31.05,
+    168.58,
+    37.95
+   ],
+   "to_openings": 7.71,
+   "to_other": 4.1,
+   "inside26": true
+  },
+  "cable_hole": {
+   "UV": [
+    91.5,
+    103.5,
+    101.5,
+    108.0
+   ],
+   "in24": true,
+   "in26": true,
+   "to_holes24": 8.72,
+   "to_holes26": 8.72,
+   "to_24_edge": 3.19,
+   "to_26_edge": 3.0,
+   "to_turntable": 8.62,
+   "to_13": 3.38,
+   "to_motor": 19.4
+  },
+  "cable_len_est": {
+   "S5": 183.0,
+   "S10": 202.0,
+   "S50": 223.0
+  }
+ },
+ "center": {
+  "params": {
+   "slot_w": 10.0,
+   "slot_d": 9.0,
+   "beam_sb": 5.0,
+   "arm_t": 7.0,
+   "arm_w": 6.4,
+   "arm_top": 12.0,
+   "pcb_L": 27.6,
+   "pcb_W": 20.0,
+   "pcb_t": 1.6,
+   "pcb_e": 0.5,
+   "wing": "center",
+   "comp_h": 2.0,
+   "bump_h": 1.5,
+   "hdr_len": 8.0,
+   "hdr_up": 14.0,
+   "h": 2.5,
+   "delta_u": {
+    "S5": 0.0,
+    "S10": 0.0,
+    "S50": 0.0
+   },
+   "c": 0.4,
+   "c_body": 0.15,
+   "c_ntop": 1.0,
+   "g_strip": 0.2,
+   "c_slide": 1.0,
+   "c_back": 0.3,
+   "c_stop": 0.5,
+   "c_v": 0.3,
+   "lh_u": 1.8,
+   "lh_n": 3.6,
+   "fit": 0.1,
+   "cap_m": 3.0,
+   "t": 3.0,
+   "v_drawer": 97.5,
+   "chamfer": 2.0,
+   "min_web": 2.0,
+   "kerf": 0.15
+  },
+  "derived": {
+   "n_sb": -2.5,
+   "n_arm_top": 6.5,
+   "n_pcb_top": -5.5,
+   "n_pcb_bot": -7.1,
+   "n_comp": -3.5,
+   "n_bump": -8.6,
+   "n_strip": -2.3,
+   "n_shoulder": -3.2,
+   "slide": 9.8,
+   "n_win_bot": -18.8,
+   "pcb_up": 10.0,
+   "pcb_dn": 10.0,
+   "W_stop": 7.8,
+   "W_ra": [
+    0.8,
+    7.8
+   ],
+   "W_fa": [
+    -16.2,
+    -9.2
+   ],
+   "pcb_ov": 1.8,
+   "W_pcb": [
+    -18.0,
+    9.6
+   ],
+   "W_deep": 10.0,
+   "t_strip": 2.3,
+   "t_shoulder": 3.2
+  },
+  "rail": {
+   "V": "0.364032*U+9.9262",
+   "deg": 20.0031,
+   "resid": 0.0013
+  },
+  "stations": {
+   "S5": {
+    "beam_UV": [
+     137.58,
+     57.349
+    ],
+    "beam_to_up_open_end_U": 2.98,
+    "beam_to_dn_open_start_U": 2.98,
+    "win_to_openings": 3.62,
+    "win_to_slot24": 2.3,
+    "lh_to_open_up": 2.08,
+    "lh_to_open_dn": 2.08,
+    "lh_to_win": 3.0,
+    "lh_n_range": [
+     0.7,
+     4.3
+    ],
+    "strip24_body": 2.3,
+    "strip24_wing": 3.2,
+    "strip26_body": 3.62,
+    "strip26_wing": 4.52,
+    "breaks_edge": false,
+    "win_to_24_bottom": 17.08,
+    "win_to_other_holes24": 3.79,
+    "win_to_other_holes26": 3.79,
+    "engrave_hits": [
+     "「1」"
+    ],
+    "c1_to_turntable_ring": 9.39,
+    "front_arm_to_24front_rest": 3.2,
+    "front_arm_to_24front_fwd": 3.7,
+    "front_arm_to_coin_front": {
+     "5": 4.7,
+     "10": 4.7,
+     "50": 4.3
+    },
+    "rear_arm_inner_to_26back_rest": 0.8,
+    "rear_arm_inner_to_26back_fwd": 0.3,
+    "module_max_W": 9.6,
+    "module_to_37": 19.4,
+    "slot_bottom_to_strip": 0.2,
+    "arm_top_low_to_strip": 1.0,
+    "rear_arm_outside_bar_mm2": {
+     "up": 0.29,
+     "dn": 3.05,
+     "up_max": 0.44,
+     "dn_max": 1.4
+    },
+    "tip_fall_sweep": {
+     "1元": {
+      "tip_range_s": [
+       -17.07,
+       -16.54
+      ],
+      "hits": {
+       "PCB 零件區": {
+        "depth": 1.0,
+        "theta": 105.0,
+        "fall": 5.0,
+        "drift": 0.6
+       },
+       "PCB": {
+        "depth": 0.8,
+        "theta": 100.0,
+        "fall": 8.0,
+        "drift": 0.3
+       },
+       "PCB 焊點區": {
+        "depth": 0.75,
+        "theta": 105.0,
+        "fall": 9.0,
+        "drift": 0.3
+       },
+       "後臂": {
+        "depth": 1.7,
+        "theta": 90.0,
+        "fall": 6.0,
+        "drift": 0.6
+       }
+      }
+     },
+     "5元": {
+      "tip_range_s": [
+       11.78,
+       13.49
+      ],
+      "hits": {
+       "後臂": {
+        "depth": 2.38,
+        "theta": 75.0,
+        "fall": 0.0,
+        "drift": 0.0
+       },
+       "PCB 零件區": {
+        "depth": 1.0,
+        "theta": 110.0,
+        "fall": 6.0,
+        "drift": 0.0
+       },
+       "PCB": {
+        "depth": 0.8,
+        "theta": 150.0,
+        "fall": 2.0,
+        "drift": 0.0
+       },
+       "PCB 焊點區": {
+        "depth": 0.75,
+        "theta": 155.0,
+        "fall": 1.0,
+        "drift": 0.0
+       }
+      }
+     }
+    },
+    "fall_zone_intrusion": {
+     "1元": {
+      "vol_mm3": 529.0,
+      "depth_U": 10.22
+     },
+     "5元": {
+      "vol_mm3": 180.0,
+      "depth_U": 4.37
+     }
+    },
+    "wing_env_up": {
+     "U": [
+      124.39,
+      135.88
+     ],
+     "V": [
+      59.57,
+      68.54
+     ],
+     "W": [
+      0.0,
+      9.6
+     ],
+     "U_into": 11.49
+    },
+    "wing_env_dn": {
+     "U": [
+      138.88,
+      144.92
+     ],
+     "V": [
+      64.21,
+      71.2
+     ],
+     "W": [
+      0.0,
+      9.6
+     ],
+     "U_into": 6.05
+    },
+    "wing_top_below_lip_n": 4.82,
+    "exit_plane_clear_final": 21.5,
+    "exit_plane_clear_low": 12.29,
+    "front_parts_max_V": 84.77,
+    "front_parts_above_24corner_z": 11.46,
+    "to_13_U": 16.51,
+    "to_motor_U": 52.29,
+    "header_W": [
+     -18.0,
+     -10.0
+    ],
+    "header_in_front_of_24": true,
+    "header_to_turntable": 13.91,
+    "chord_at_hole_bottom": {
+     "5": 7.72,
+     "10": 8.42,
+     "50": 8.74
+    },
+    "touching_gap": {
+     "5-5": {
+      "at_beam": 8.04,
+      "at_hole_top_minus_hole": 2.64
+     },
+     "5-10": {
+      "at_beam": 9.27,
+      "at_hole_top_minus_hole": 3.62
+     },
+     "5-50": {
+      "at_beam": 9.85,
+      "at_hole_top_minus_hole": 4.08
+     },
+     "10-5": {
+      "at_beam": 9.27,
+      "at_hole_top_minus_hole": 3.62
+     },
+     "10-10": {
+      "at_beam": 10.67,
+      "at_hole_top_minus_hole": 4.77
+     },
+     "10-50": {
+      "at_beam": 11.33,
+      "at_hole_top_minus_hole": 5.31
+     },
+     "50-5": {
+      "at_beam": 9.85,
+      "at_hole_top_minus_hole": 4.08
+     },
+     "50-10": {
+      "at_beam": 11.33,
+      "at_hole_top_minus_hole": 5.31
+     },
+     "50-50": {
+      "at_beam": 12.03,
+      "at_hole_top_minus_hole": 5.89
+     }
+    },
+    "divider": {
+     "pid": "#7",
+     "pieces": 1,
+     "tabs": [
+      {
+       "V": [
+        17.0,
+        24.0
+       ],
+       "depth": 3.0,
+       "status": "保留",
+       "remain_V": [
+        17.0,
+        24.0
+       ]
+      },
+      {
+       "V": [
+        64.45,
+        74.45
+       ],
+       "depth": 3.0,
+       "status": "刪除",
+       "remain_V": null
+      },
+      {
+       "V": [
+        84.45,
+        92.45
+       ],
+       "depth": 6.0,
+       "status": "保留",
+       "remain_V": [
+        84.45,
+        92.45
+       ]
+      }
+     ],
+     "notch_bounds": [
+      -3.0,
+      51.5,
+      10.0,
+      80.46
+     ],
+     "open_bottom": false,
+     "stop_contact_V": [
+      51.5,
+      60.71
+     ],
+     "area_removed": 296.8
+    },
+    "P1_bounds_UV": [
+     120.62,
+     64.54,
+     143.36,
+     80.89
+    ],
+    "P1_area": 215.6,
+    "C1_bounds_UV": [
+     116.68,
+     63.48,
+     146.27,
+     84.77
+    ],
+    "C1_area": 345.7,
+    "pins": []
+   },
+   "S10": {
+    "beam_UV": [
+     167.177,
+     68.123
+    ],
+    "beam_to_up_open_end_U": 3.02,
+    "beam_to_dn_open_start_U": 3.02,
+    "win_to_openings": 3.63,
+    "win_to_slot24": 2.3,
+    "lh_to_open_up": 2.12,
+    "lh_to_open_dn": 2.12,
+    "lh_to_win": 3.0,
+    "lh_n_range": [
+     0.7,
+     4.3
+    ],
+    "strip24_body": 2.3,
+    "strip24_wing": 3.2,
+    "strip26_body": 3.63,
+    "strip26_wing": 4.53,
+    "breaks_edge": false,
+    "win_to_24_bottom": 6.3,
+    "win_to_other_holes24": 11.29,
+    "win_to_other_holes26": 11.29,
+    "engrave_hits": [
+     "「5」"
+    ],
+    "c1_to_turntable_ring": 40.89,
+    "front_arm_to_24front_rest": 3.2,
+    "front_arm_to_24front_fwd": 3.7,
+    "front_arm_to_coin_front": {
+     "5": 4.7,
+     "10": 4.7,
+     "50": 4.3
+    },
+    "rear_arm_inner_to_26back_rest": 0.8,
+    "rear_arm_inner_to_26back_fwd": 0.3,
+    "module_max_W": 9.6,
+    "module_to_37": 19.4,
+    "slot_bottom_to_strip": 0.2,
+    "arm_top_low_to_strip": 1.0,
+    "rear_arm_outside_bar_mm2": {
+     "up": 0.24,
+     "dn": 2.87,
+     "up_max": 0.39,
+     "dn_max": 1.36
+    },
+    "tip_fall_sweep": {
+     "5元": {
+      "tip_range_s": [
+       -19.72,
+       -18.01
+      ],
+      "hits": {
+       "PCB 零件區": {
+        "depth": 1.0,
+        "theta": 110.0,
+        "fall": 6.0,
+        "drift": 0.3
+       },
+       "PCB": {
+        "depth": 0.8,
+        "theta": 150.0,
+        "fall": 2.0,
+        "drift": 0.6
+       },
+       "PCB 焊點區": {
+        "depth": 0.75,
+        "theta": 135.0,
+        "fall": 10.0,
+        "drift": 0.3
+       },
+       "後臂": {
+        "depth": 1.14,
+        "theta": 90.0,
+        "fall": 7.0,
+        "drift": 0.6
+       }
+      }
+     },
+     "10元": {
+      "tip_range_s": [
+       13.22,
+       13.7
+      ],
+      "hits": {
+       "後臂": {
+        "depth": 2.53,
+        "theta": 75.0,
+        "fall": 0.0,
+        "drift": 0.0
+       },
+       "PCB 零件區": {
+        "depth": 1.0,
+        "theta": 115.0,
+        "fall": 3.0,
+        "drift": 0.0
+       },
+       "PCB": {
+        "depth": 0.8,
+        "theta": 135.0,
+        "fall": 1.0,
+        "drift": 0.0
+       },
+       "PCB 焊點區": {
+        "depth": 0.75,
+        "theta": 120.0,
+        "fall": 5.0,
+        "drift": 0.0
+       }
+      }
+     }
+    },
+    "fall_zone_intrusion": {
+     "5元": {
+      "vol_mm3": 525.0,
+      "depth_U": 10.18
+     },
+     "10元": {
+      "vol_mm3": 178.0,
+      "depth_U": 4.33
+     }
+    },
+    "wing_env_up": {
+     "U": [
+      153.98,
+      165.63
+     ],
+     "V": [
+      70.34,
+      79.37
+     ],
+     "W": [
+      0.0,
+      9.6
+     ],
+     "U_into": 11.64
+    },
+    "wing_env_dn": {
+     "U": [
+      168.63,
+      174.52
+     ],
+     "V": [
+      75.04,
+      81.97
+     ],
+     "W": [
+      0.0,
+      9.6
+     ],
+     "U_into": 5.89
+    },
+    "wing_top_below_lip_n": 4.83,
+    "exit_plane_clear_final": 10.73,
+    "exit_plane_clear_low": 1.52,
+    "front_parts_max_V": 95.54,
+    "front_parts_above_24corner_z": 2.13,
+    "to_13_U": 46.11,
+    "to_motor_U": 81.88,
+    "header_W": [
+     -18.0,
+     -10.0
+    ],
+    "header_in_front_of_24": true,
+    "header_to_turntable": 45.06,
+    "chord_at_hole_bottom": {
+     "10": 8.42,
+     "50": 8.74
+    },
+    "touching_gap": {
+     "10-10": {
+      "at_beam": 10.67,
+      "at_hole_top_minus_hole": 4.77
+     },
+     "10-50": {
+      "at_beam": 11.33,
+      "at_hole_top_minus_hole": 5.31
+     },
+     "50-10": {
+      "at_beam": 11.33,
+      "at_hole_top_minus_hole": 5.31
+     },
+     "50-50": {
+      "at_beam": 12.03,
+      "at_hole_top_minus_hole": 5.89
+     }
+    },
+    "divider": {
+     "pid": "#6",
+     "pieces": 1,
+     "tabs": [
+      {
+       "V": [
+        17.0,
+        27.0
+       ],
+       "depth": 3.0,
+       "status": "保留",
+       "remain_V": [
+        17.0,
+        27.0
+       ]
+      },
+      {
+       "V": [
+        84.45,
+        92.45
+       ],
+       "depth": 6.0,
+       "status": "刪除",
+       "remain_V": null
+      }
+     ],
+     "notch_bounds": [
+      -6.0,
+      62.3,
+      10.07,
+      98.0
+     ],
+     "open_bottom": true,
+     "stop_contact_V": [
+      62.3,
+      71.54
+     ],
+     "area_removed": 354.4
+    },
+    "P1_bounds_UV": [
+     150.21,
+     75.31,
+     172.96,
+     91.66
+    ],
+    "P1_area": 215.6,
+    "C1_bounds_UV": [
+     146.27,
+     74.25,
+     175.87,
+     95.54
+    ],
+    "C1_area": 345.7,
+    "pins": []
+   },
+   "S50": {
+    "beam_UV": [
+     199.846,
+     80.016
+    ],
+    "beam_to_up_open_end_U": 3.2,
+    "beam_to_dn_open_start_U": 3.2,
+    "win_to_openings": 3.64,
+    "win_to_slot24": 2.3,
+    "lh_to_open_up": 2.3,
+    "lh_to_open_dn": 2.3,
+    "lh_to_win": 3.0,
+    "lh_n_range": [
+     0.7,
+     4.3
+    ],
+    "strip24_body": 2.3,
+    "strip24_wing": 3.2,
+    "strip26_body": 3.63,
+    "strip26_wing": 4.53,
+    "breaks_edge": true,
+    "win_to_other_holes24": 28.52,
+    "win_to_other_holes26": 28.5,
+    "engrave_hits": [],
+    "c1_to_turntable_ring": 71.66,
+    "front_arm_to_24front_rest": 3.2,
+    "front_arm_to_24front_fwd": 3.7,
+    "front_arm_to_coin_front": {
+     "5": 4.7,
+     "10": 4.7,
+     "50": 4.3
+    },
+    "rear_arm_inner_to_26back_rest": 0.8,
+    "rear_arm_inner_to_26back_fwd": 0.3,
+    "module_max_W": 9.6,
+    "module_to_37": 19.4,
+    "slot_bottom_to_strip": 0.2,
+    "arm_top_low_to_strip": 1.0,
+    "rear_arm_outside_bar_mm2": {
+     "up": 0.06,
+     "dn": 2.14,
+     "up_max": 0.2,
+     "dn_max": 1.17
+    },
+    "tip_fall_sweep": {
+     "10元": {
+      "tip_range_s": [
+       -21.54,
+       -21.07
+      ],
+      "hits": {
+       "PCB 零件區": {
+        "depth": 1.0,
+        "theta": 115.0,
+        "fall": 3.0,
+        "drift": 0.6
+       },
+       "PCB": {
+        "depth": 0.8,
+        "theta": 115.0,
+        "fall": 5.0,
+        "drift": 0.3
+       },
+       "PCB 焊點區": {
+        "depth": 0.75,
+        "theta": 120.0,
+        "fall": 5.0,
+        "drift": 0.6
+       },
+       "後臂": {
+        "depth": 0.32,
+        "theta": 90.0,
+        "fall": 8.0,
+        "drift": 0.6
+       }
+      }
+     },
+     "50元": {
+      "tip_range_s": [
+       14.12,
+       17.27
+      ],
+      "hits": {
+       "後臂": {
+        "depth": 2.6,
+        "theta": 115.0,
+        "fall": 0.0,
+        "drift": 0.0
+       },
+       "PCB 零件區": {
+        "depth": 1.0,
+        "theta": 120.0,
+        "fall": 0.0,
+        "drift": 0.0
+       },
+       "PCB": {
+        "depth": 0.8,
+        "theta": 105.0,
+        "fall": 9.0,
+        "drift": 0.0
+       },
+       "PCB 焊點區": {
+        "depth": 0.75,
+        "theta": 130.0,
+        "fall": 3.0,
+        "drift": 0.0
+       }
+      }
+     }
+    },
+    "fall_zone_intrusion": {
+     "10元": {
+      "vol_mm3": 509.0,
+      "depth_U": 9.99
+     },
+     "50元": {
+      "vol_mm3": 167.0,
+      "depth_U": 4.14
+     }
+    },
+    "wing_env_up": {
+     "U": [
+      186.65,
+      198.38
+     ],
+     "V": [
+      82.23,
+      91.29
+     ],
+     "W": [
+      0.0,
+      9.6
+     ],
+     "U_into": 11.72
+    },
+    "wing_env_dn": {
+     "U": [
+      201.38,
+      207.19
+     ],
+     "V": [
+      86.96,
+      93.87
+     ],
+     "W": [
+      0.0,
+      9.6
+     ],
+     "U_into": 5.81
+    },
+    "wing_top_below_lip_n": 4.83,
+    "exit_plane_clear_final": -1.16,
+    "exit_plane_clear_low": -10.37,
+    "front_parts_max_V": 97.5,
+    "front_parts_above_24corner_z": 0.43,
+    "to_13_U": 78.78,
+    "to_motor_U": 114.55,
+    "header_W": [
+     -18.0,
+     -10.0
+    ],
+    "header_in_front_of_24": true,
+    "header_to_turntable": 79.62,
+    "chord_at_hole_bottom": {
+     "50": 8.74
+    },
+    "touching_gap": {
+     "50-50": {
+      "at_beam": 12.03,
+      "at_hole_top_minus_hole": 5.89
+     }
+    },
+    "divider": {
+     "pid": "#5",
+     "pieces": 1,
+     "tabs": [
+      {
+       "V": [
+        17.0,
+        27.0
+       ],
+       "depth": 3.0,
+       "status": "保留",
+       "remain_V": [
+        17.0,
+        27.0
+       ]
+      },
+      {
+       "V": [
+        35.0,
+        45.0
+       ],
+       "depth": 3.0,
+       "status": "保留",
+       "remain_V": [
+        35.0,
+        45.0
+       ]
+      },
+      {
+       "V": [
+        84.45,
+        92.45
+       ],
+       "depth": 6.0,
+       "status": "刪除",
+       "remain_V": null
+      }
+     ],
+     "notch_bounds": [
+      -6.0,
+      74.22,
+      10.07,
+      98.0
+     ],
+     "open_bottom": true,
+     "stop_contact_V": [
+      74.22,
+      83.47
+     ],
+     "area_removed": 235.2
+    },
+    "P1_bounds_UV": [
+     182.52,
+     87.21,
+     205.63,
+     97.5
+    ],
+    "P1_area": 160.1,
+    "C1_bounds_UV": [
+     174.96,
+     77.35,
+     215.0,
+     97.5
+    ],
+    "C1_area": 358.2,
+    "pins": [
+     {
+      "side": "上游",
+      "s": -13.9,
+      "n": -10.75,
+      "n_ok": [
+       -17.35,
+       -4.1
+      ],
+      "center_UV": [
+       182.25,
+       87.71
+      ],
+      "to_slot": 9.3,
+      "to_24_edge": 8.43,
+      "to_win": 2.05
+     },
+     {
+      "side": "下游",
+      "s": 13.9,
+      "n": -5.75,
+      "n_ok": [
+       -7.35,
+       -4.1
+      ],
+      "center_UV": [
+       210.09,
+       92.52
+      ],
+      "to_slot": 4.3,
+      "to_24_edge": 3.62,
+      "to_win": 2.05
+     }
+    ]
+   }
+  },
+  "slot26_tab6": {
+   "UV": [
+    165.68,
+    31.05,
+    168.58,
+    37.95
+   ],
+   "to_openings": 7.71,
+   "to_other": 4.1,
+   "inside26": true
+  },
+  "cable_hole": {
+   "UV": [
+    91.5,
+    103.5,
+    101.5,
+    108.0
+   ],
+   "in24": true,
+   "in26": true,
+   "to_holes24": 8.72,
+   "to_holes26": 8.72,
+   "to_24_edge": 3.19,
+   "to_26_edge": 3.0,
+   "to_turntable": 8.62,
+   "to_13": 3.38,
+   "to_motor": 19.4
+  },
+  "cable_len_est": {
+   "S5": 172.0,
+   "S10": 191.0,
+   "S50": 211.0
+  }
+ }
+}

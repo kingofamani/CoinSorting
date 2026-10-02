@@ -1,0 +1,153 @@
+{
+ "nominal_margins": {
+  "光束在光孔內（含收發窗半高）": 1.2,
+  "槽底低於保留條（P1 塞得進）": 0.2,
+  "低位臂頂低於保留條": 1.0,
+  "臂頂低於隔板缺口頂": 0.94,
+  "本體寬進得了窗窄段": 0.3,
+  "後臂內面在 #26 背面之後": 0.8,
+  "前臂內面離 #24 前面（板厚 3.2 時）": 2.7,
+  "PCB 後端不碰深缺口": 0.4,
+  "光束 s 在光孔內（收發窗寬 1.0）": 0.458,
+  "PCB 下游邊在窗內": 0.4,
+  "PCB 上游邊在窗內": 0.7,
+  "零件頂低於肩部": 0.3,
+  "焊點不碰 P1 讓位／窗底": 0.3
+ },
+ "thresholds": [
+  {
+   "param": "beam_sb",
+   "nominal": 5.0,
+   "minus": 1.2,
+   "minus_fail": "光束在光孔內（含收發窗半高）",
+   "plus": 1.2,
+   "plus_fail": "光束在光孔內（含收發窗半高）"
+  },
+  {
+   "param": "slot_d",
+   "nominal": 9.0,
+   "minus": 0.2,
+   "minus_fail": "槽底低於保留條（P1 塞得進）",
+   "plus": 1.2,
+   "plus_fail": "光束在光孔內（含收發窗半高）"
+  },
+  {
+   "param": "arm_top",
+   "nominal": 12.0,
+   "minus": 1.2,
+   "minus_fail": "光束在光孔內（含收發窗半高）",
+   "plus": 0.2,
+   "plus_fail": "槽底低於保留條（P1 塞得進）"
+  },
+  {
+   "param": "pcb_t",
+   "nominal": 1.6,
+   "minus": 1.2,
+   "minus_fail": "光束在光孔內（含收發窗半高）",
+   "plus": 0.2,
+   "plus_fail": "槽底低於保留條（P1 塞得進）"
+  },
+  {
+   "param": "arm_w",
+   "nominal": 6.4,
+   "minus": 0.9,
+   "minus_fail": "光束 s 在光孔內（收發窗寬 1.0）",
+   "plus": 0.3,
+   "plus_fail": "本體寬進得了窗窄段"
+  },
+  {
+   "param": "arm_t",
+   "nominal": 7.0,
+   "minus": 0.4,
+   "minus_fail": "PCB 後端不碰深缺口",
+   "plus": 0.8,
+   "plus_fail": "後臂內面在 #26 背面之後"
+  },
+  {
+   "param": "slot_w",
+   "nominal": 10.0,
+   "minus": 0.8,
+   "minus_fail": "PCB 後端不碰深缺口",
+   "plus": null,
+   "plus_fail": ""
+  },
+  {
+   "param": "pcb_L",
+   "nominal": 27.6,
+   "minus": null,
+   "minus_fail": "",
+   "plus": 0.8,
+   "plus_fail": "PCB 後端不碰深缺口"
+  },
+  {
+   "param": "pcb_W",
+   "nominal": 20.0,
+   "minus": null,
+   "minus_fail": "",
+   "plus": 0.7,
+   "plus_fail": "PCB 上游邊在窗內"
+  },
+  {
+   "param": "pcb_e",
+   "nominal": 0.5,
+   "minus": 0.45,
+   "minus_fail": "—",
+   "plus": 0.4,
+   "plus_fail": "PCB 下游邊在窗內"
+  },
+  {
+   "param": "comp_h",
+   "nominal": 2.0,
+   "minus": 1.95,
+   "minus_fail": "—",
+   "plus": 0.3,
+   "plus_fail": "零件頂低於肩部"
+  },
+  {
+   "param": "bump_h",
+   "nominal": 1.5,
+   "minus": 1.45,
+   "minus_fail": "—",
+   "plus": 0.3,
+   "plus_fail": "焊點不碰 P1 讓位／窗底"
+  }
+ ],
+ "h_study": [
+  {
+   "h": 2.0,
+   "strip24_body": 2.8,
+   "strip24_wing": 3.7,
+   "S10_web_bottom": 7.93,
+   "S50_exit_final": 0.46,
+   "gap_5_5": 9.35,
+   "gap_10_10": 12.14,
+   "gap_50_50": 13.58,
+   "lh_bottom": 0.2,
+   "S5_dn_tip_arm": 2.56
+  },
+  {
+   "h": 2.5,
+   "strip24_body": 2.3,
+   "strip24_wing": 3.2,
+   "S10_web_bottom": 8.46,
+   "S50_exit_final": 0.99,
+   "gap_5_5": 8.04,
+   "gap_10_10": 10.67,
+   "gap_50_50": 12.03,
+   "lh_bottom": 0.7,
+   "S5_dn_tip_arm": 2.38
+  },
+  {
+   "h": 3.0,
+   "strip24_body": 1.8,
+   "strip24_wing": 2.7,
+   "S10_web_bottom": 8.99,
+   "S50_exit_final": 1.52,
+   "gap_5_5": 6.9,
+   "gap_10_10": 9.39,
+   "gap_50_50": 10.68,
+   "lh_bottom": 1.2,
+   "S5_dn_tip_arm": 2.2
+  }
+ ]
+}
