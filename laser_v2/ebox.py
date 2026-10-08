@@ -86,6 +86,7 @@ from svgpathtools import parse_path
 from . import catalog as C
 from . import frames as F
 from . import params as PRM
+from . import textpath as TP
 
 HERE = Path(__file__).resolve().parent
 DESIGN = HERE / 'design'
@@ -152,6 +153,9 @@ NUT_M2 = dict(d_circ=4.62, t=1.6)
 SCREW_M2 = dict(L=8.0, head_d=3.8, head_h=1.3)
 WIRE_D = 1.4
 NOTCH26_TOP_V = 13.0   # #26 缺口多邊形上緣畫到 V13（頂邊 V14 外 1 mm，確保切穿）
+
+# 感測器線盒端 1×3 杜邦頭插哪一欄（spec a-2 第 5 步、a-3 第 3 步）；盒端標籤照這個寫「S5→G26」
+SENSOR_PINS = {'S1': 'G27', 'S5': 'G26', 'S10': 'G25', 'S50': 'G33'}
 
 CABLE_U = 168.0                            # 顯示器線越過機頂的 U（#37 頂邊 U 形缺口中心）
 CABLE_NOTCH_37 = dict(w=6.5, depth=4.5)    # 寬（U）× 深（V，從頂邊 V4 往下）
@@ -1063,6 +1067,7 @@ NEW_PART_INFO = {   # 代號 → (名稱, 數量, 說明)
              '盒子就抬不起來。L 形：頭比舌長出來的那端朝上，頭與舌齊平的那邊朝下（靠在勾頂上），放反會撞勾唇'),
 }
 LABEL_TEXT = {'EB-WL': 'EB-WL 左牆', 'EB-WR': 'EB-WR USB 側'}
+SPARE_PARTS = ('EB-K',)     # 極小零件：每套多切一整份備品（數量＝每套數量；使用者 2026-10-08 決定 3）
 
 
 def _clean(poly):
@@ -1094,24 +1099,11 @@ def _text_box(x, y, w, size, angle):
     return rect(x - 0.25 * size, x + 0.85 * size, y - w / 2, y + w / 2)
 
 
-def _label_pos(geom, text, size, margin=0.8, step=1.0):
-    """在零件區域座標裡找放得下代號文字、離邊與孔最遠的位置。回傳 (x, y, angle) 或 None。"""
-    w = _text_width(text, size)
-    inner = geom.buffer(-margin)
-    if inner.is_empty:
-        return None
-    x0, y0, x1, y1 = geom.bounds
-    best = None
-    for ang in (0, 90):
-        for x in np.arange(x0, x1 + 1e-9, step):
-            for y in np.arange(y0, y1 + 1e-9, step):
-                tb = _text_box(float(x), float(y), w, size, ang)
-                if not inner.contains(tb):
-                    continue
-                d = tb.distance(geom.boundary) - (0.3 if ang else 0.0)
-                if best is None or d > best[0] + 1e-9:
-                    best = (d, float(x), float(y), ang)
-    return None if best is None else best[1:]
+def _label_pos(geom, text, size):
+    """在零件區域座標裡找放得下代號文字、離邊與孔最遠的位置（textpath.fit_text：精確字墨外框，
+    字墨離切割線 ≥ TEXT_CLEAR＝1.0；橫排優先，直排要多 0.3 mm 才換）。回傳 (x, y, angle) 或 None。"""
+    f = TP.fit_text(geom, text, [size], angles=(0.0, 90.0), angle_penalty=0.3)
+    return None if f is None else (f['x'], f['y'], f['angle'])
 
 
 def _new_parts(M) -> tuple[list, dict]:
@@ -1137,13 +1129,15 @@ def _new_parts(M) -> tuple[list, dict]:
                 txt = code
                 pos = _label_pos(loc, txt, LABEL_SIZE)
             if pos is not None:
-                texts.append(dict(text=txt, x=round(pos[0], 2), y=round(pos[1], 2), size=LABEL_SIZE,
-                                  angle=pos[2], anchor='middle'))
+                texts.append(dict(text=txt, x=pos[0], y=pos[1], size=LABEL_SIZE, angle=pos[2], anchor='middle'))
         face_txt = {'−U': '朝 −U（U 小側）', '+U': '朝 +U', '−V': '朝上（−V）', '+V': '朝下（+V）',
                     "−W'": "朝前（−W'）", "+W'": "朝後（+W'，從機身背面看得到）"}.get(face, face)
         maps[code]['desc'] = ((f'{note}；' if note else '') + f'區域 a＝{a1}−{b[0]:.3f}、b＝{a2}−{b[1]:.3f}；'
                               f'板厚 {s.axis} {s.rng[0]:.3f}～{s.rng[1]:.3f}；雕刻面（上面）{face_txt}')
-        out.append(dict(id=code, name=nm, material=C.PLY, qty=qty, geom=loc, engrave=[], texts=texts, group=EB_GROUP))
+        npd = dict(id=code, name=nm, material=C.PLY, qty=qty, geom=loc, engrave=[], texts=texts, group=EB_GROUP)
+        if code in SPARE_PARTS:     # 外包兩邊都 <10 mm 的極小零件：每套多切一整份備品（使用者 2026-10-08 決定 3）
+            npd['spare'] = qty
+        out.append(npd)
     return out, maps
 
 
@@ -1718,6 +1712,9 @@ def _bom(M, pr) -> list[dict]:
     D = M.D
     L = M.WIRE_LEN
     sens = {k.split()[0]: v for k, v in L.items() if '3P' in k}
+
+    def pin_lbl(k):
+        return f'{k}→{SENSOR_PINS[k]}'
     out = [
         dict(cat='電子', item='TM1637 四位數七段顯示器（0.36 吋）', qty=1, unit='個', who='講師預組',
              note=f'暫定 PCB {D["pcb_w"]:g}×{D["pcb_h"]:g}、固定孔距（全距）{2 * D["hole_dx"]:g}×{2 * D["hole_dy"]:g}，待實量',
@@ -1733,10 +1730,17 @@ def _bom(M, pr) -> list[dict]:
         dict(cat='電子', item='4P 母對母杜邦連排線 30 cm', qty=1, unit='條', who='講師預組',
              note=f'顯示器↔擴展板（路徑約 {L["顯示器 4P（G14/G13/V/G）"]:.0f} mm）', src='ebox c-4'),
         dict(cat='電子', item='3P 母對母杜邦線 20 cm（盒端 1×3 G-V-S）', qty=1, unit='條', who='講師預組',
-             note='S1' + (f'（路徑約 {sens["S1"]:.0f} mm）' if 'S1' in sens else ''), src='ebox c-4'),
+             note='S1' + (f'（路徑約 {sens["S1"]:.0f} mm）' if 'S1' in sens else '') + f'；盒端貼標籤「{pin_lbl("S1")}」',
+             src='ebox c-4、a-2 第 5 步'),
         dict(cat='電子', item='3P 母對母杜邦線 40 cm（盒端 1×3 G-V-S）', qty=3, unit='條', who='講師預組',
              note='S5／S10／S50（路徑約 ' + '／'.join(f'{sens[k]:.0f}' for k in ('S5', 'S10', 'S50') if k in sens)
-                  + ' mm；S50 太緊改 50 cm）；貼標籤 S1→G27、S5→G26、S10→G25、S50→G33', src='ebox c-4、a-2 第 5 步'),
+                  + ' mm；S50 太緊改 50 cm）；盒端貼標籤' + ''.join(f'「{pin_lbl(k)}」' for k in ('S5', 'S10', 'S50')),
+             src='ebox c-4、a-2 第 5 步'),
+        dict(cat='耗材', item='感測器線盒端標籤（' + '、'.join(pin_lbl(k) for k in SENSOR_PINS) + '）',
+             qty=len(SENSOR_PINS), unit='張', who='講師預組',
+             note='每條感測器線的盒端 1×3 杜邦頭旁貼一張（寫要插的欄位）；模組端另貼站名標籤（S5／S10／S50、S1，見上）。'
+                  '老師在盒內插線時照盒端標籤對欄位',
+             src='ebox a-2 第 5 步'),
     ]
     if D['use_screws']:
         out += [dict(cat='五金', item='M2×8 尼龍螺絲＋M2 尼龍螺帽', qty=4, unit='組', who='講師預組',
@@ -1804,8 +1808,12 @@ def _notes(M, R, pr, maps) -> list:
     n.append('#37 雕刻在上面（朝機身背面）：掛勾槽旁往下箭頭、感測器線孔上方「感測器線」（angle=90，從背面看是正的）。')
     n.append('講師預組：盒體白膠（EB-E＋EB-F＋EB-S 子件 → WL＋EB-B → 放子件 → WR → EB-T）；TM1637 用 4 支 M2×8 尼龍螺絲鎖 #24'
              '（改熱熔膠時把 params.TM1637 的 use_screws 改成 False，#24 不切 M2 孔）；擴展板 4 支 M3×12＋墊高螺帽鎖 EB-B。'
-             '老師：裝 #24 →線放進 #37 頂邊缺口→插 4 條感測器線 → 掛盒（抬 {:.1f}、推、放）→（選用）從機身內側把 EB-K '
-             '舌頭往後塞進上層掛勾槽上段（頭長出來的那端朝上）。'.format(M.SLIDE))
+             '老師：裝 #24 →線放進 #37 頂邊缺口→插 4 條感測器線（照盒端標籤：'
+             + '、'.join(f'{k}→{v}' for k, v in SENSOR_PINS.items())
+             + f'）→ 掛盒（抬 {M.SLIDE:.1f}、推、放）→（選用）從機身內側把 EB-K '
+             '舌頭往後塞進上層掛勾槽上段（頭長出來的那端朝上）。')
+    n.append('極小零件 EB-K（外包兩邊都 <10 mm）每套多切一整份備品（×2），排在同一份切割檔（parts.csv「備品」欄；'
+             '使用者 2026-10-08 決定 3）。所有雕刻（箭頭、字）都是紅色 0.2 mm 線；代號字墨離切割線 ≥1.0。')
     n.append(f'模組尺寸：TM1637 pcb {D["pcb_w"]}×{D["pcb_h"]}、LED 塊 {D["body_w"]}×{D["body_h"]}、'
              f'固定孔距（全距）{2 * D["hole_dx"]:g}×{2 * D["hole_dy"]:g}（params.TM1637 的 hole_dx／hole_dy 是半距 '
              f'{D["hole_dx"]:g}／{D["hole_dy"]:g}）；擴展板 {pr.BOARD["L"]}×{pr.BOARD["W"]}；'
@@ -1900,12 +1908,17 @@ def self_test(cat=None, tol=0.01, verbose=True) -> dict:
             chk(f'新零件 {code} 孔（逐孔最近）', max(min(_hd(a, b) for b in hs) for a in rh))
         rows.append((f'新零件 {code} 數量 {p["qty"]}／參考 {ref["qty"]}', 0.0, p['qty'] == ref['qty']))
         chk(f'新零件 {code} 淨面積差（mm²）', abs(g.area - ref['net_area']), 0.05, is_geo=False)
-    # 文字位置在零件內
+    # 文字：精確字墨外框在零件內、離切割線 ≥ TEXT_CLEAR（使用者 2026-10-08）
     for p in res['new_parts']:
         for t in p['texts']:
-            tb = _text_box(t['x'], t['y'], _text_width(t['text'], t['size']), t['size'], t['angle'])
-            ok = p['geom'].buffer(-0.5).contains(tb)
-            rows.append((f'新零件 {p["id"]} 雕刻「{t["text"]}」在零件內（內縮 0.5）', 0.0 if ok else 1.0, ok))
+            tb = TP.ink_box(t['text'], t['x'], t['y'], t['size'], t['angle'], t['anchor'])
+            dd = p['geom'].boundary.distance(tb) if p['geom'].contains(tb) else -1.0
+            ok = dd >= TP.TEXT_CLEAR - 1e-6
+            rows.append((f'新零件 {p["id"]} 雕刻「{t["text"]}」em {t["size"]:g} 字墨離切割線 {dd:.2f}（≥{TP.TEXT_CLEAR:g}）',
+                         0.0 if ok else 1.0, ok))
+    k = [p for p in res['new_parts'] if p['id'] == 'EB-K']
+    ok = bool(k) and k[0].get('spare') == k[0]['qty']
+    rows.append((f'EB-K 每套另切備品 {k[0].get("spare") if k else None}（＝每套數量）', 0.0 if ok else 1.0, ok))
     # 檢查與警告
     bad = [r for r in res['checks'] if not r['ok']]
     rows.append((f'名目 checks 全過（{len(res["checks"])} 項，未過 {len(bad)}）', float(len(bad)), not bad))

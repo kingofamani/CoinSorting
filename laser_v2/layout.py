@@ -8,9 +8,12 @@
         s.material, s.no, s.w, s.h      # 材質、同材質內第幾張（1 起算）、板寬高 mm
         for pl in s.items:              # Placement
             pl.part, pl.copy, pl.M      # 零件、第幾份（0 起算）、3×3 矩陣（零件座標 → 板座標）
+            pl.spare                    # 這一份是不是備品（copy ≥ qty）
             pl.rot                      # 轉了幾度（0/90/180/270）
             pl.geom                     # 排好後的 shapely 外形（板座標）
         s.util                          # 利用率＝零件淨面積（外框減孔）／板面積
+        s.unplaced                      # 這個材質放不進現有板的備品（只記在該材質最後一張）
+    unplaced_spares(sheets)             # 全部放不下的備品說明（空＝備品全部排進去了）
 
 規則（params）
 --------------
@@ -18,6 +21,11 @@
   間距是「真實外形」距離（shapely 外形，含曲線取樣），不是外接框。
 * 合板、壓克力分開排（壓克力也用 255×355）；同一個 group 的零件排在同一張板；
   qty>1 的零件每一份各一個 Placement；零件只轉 0／90／180／270 度，不鏡像（雕刻面不能翻）。
+* 備品（V2Part.spare，每套多切幾份；使用者 2026-10-08：極小零件每套多一整份）：正式的 qty 份
+  照下面的演算法排完、張數定了以後，備品（copy＝qty … qty+spare−1）才逐件塞進「已經開的板」，
+  先試同零件正式份所在的板，再依板序；不會為備品開新板（不增加張數）。放不下的不排，
+  記在該材質最後一張的 Sheet.unplaced，用 unplaced_spares(sheets) 取出回報。
+  備品不受 group 限制（只是替換用）。
 * 彎曲條（#27 這種有很多開放鋸縫的零件）只轉 0／180 度，保持和原始檔相同的方向：
   原檔的彎曲條在直式 300×400 板上直放，鋸縫橫向；合板表層木紋通常沿板的長邊，
   這樣鋸縫和木紋垂直，轉 90 度會變成順紋，鋸縫之間的橋容易裂（假設板材木紋沿長邊）。
@@ -77,12 +85,26 @@ def _affine_params(M: np.ndarray) -> list[float]:
     return [M[0, 0], M[0, 1], M[1, 0], M[1, 1], M[0, 2], M[1, 2]]
 
 
+def qty_of(part) -> int:
+    """每套數量（V2Part.qty；沒有或 0 時當 1）。"""
+    return int(getattr(part, 'qty', 1) or 1)
+
+
+def spare_of(part) -> int:
+    """每套備品數（V2Part.spare；沒有這個欄位時 0）。"""
+    s = int(getattr(part, 'spare', 0) or 0)
+    if s < 0:
+        raise ValueError(f'{part.id} 的 spare={s}，備品數不可以是負的')
+    return s
+
+
 @dataclass
 class Placement:
     part: Any                 # V2Part
-    copy: int                 # 第幾份（0 起算）
+    copy: int                 # 第幾份（0 起算；copy ≥ qty 的是備品）
     M: np.ndarray             # 3×3：零件座標 → 板座標
     rot: int = 0              # 轉角（度）
+    spare: bool = False       # 這一份是不是備品
 
     @property
     def geom(self):
@@ -91,7 +113,11 @@ class Placement:
 
     @property
     def label(self) -> str:
-        q = getattr(self.part, 'qty', 1) or 1
+        """代號標籤：正式份 'PIN-S50（1/2）'，備品 'PIN-S50（備品 1/2）'、只有 1 份備品時 'S1-P（備品）'。"""
+        q = qty_of(self.part)
+        if self.spare:
+            n = spare_of(self.part)
+            return f'{self.part.id}（備品）' if n <= 1 else f'{self.part.id}（備品 {self.copy - q + 1}/{n}）'
         return self.part.id if q <= 1 else f'{self.part.id}（{self.copy + 1}/{q}）'
 
 
@@ -103,6 +129,11 @@ class Sheet:
     h: float
     items: list[Placement] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
+    unplaced: list[str] = field(default_factory=list)   # 放不進現有板的備品（只記在該材質最後一張）
+
+    @property
+    def n_spare(self) -> int:
+        return sum(1 for pl in self.items if pl.spare)
 
     @property
     def area(self) -> float:
@@ -338,17 +369,49 @@ class _Packer:
                 sheets.append(st)
         return sheets
 
+    def place_spares(self, sheets: list[_SheetState], units, gravity: str, holes: bool) -> list[str]:
+        """備品逐件塞進已經開的板（sheets 會被改動）；不開新板。先試同零件已排在的板，再依板序。
+        回傳放不下的備品說明。"""
+        unplaced = []
+        for members in units:
+            part, cp = members[0]
+            home = [k for k, st in enumerate(sheets) if any(it[0] is part for it in st.items)]
+            order = home + [k for k in range(len(sheets)) if k not in home]
+            sig = self._unit_sig(members, holes)
+            done = False
+            for k in order:
+                st = sheets[k]
+                if sig in st.fail:
+                    continue
+                trial = st.copy()
+                if self._place_unit(trial, members, gravity, holes):
+                    sheets[k] = trial
+                    done = True
+                    break
+                st.fail.add(sig)
+            if not done:
+                q = qty_of(part)
+                unplaced.append(f'{part.id}（備品第 {cp - q + 1}/{spare_of(part)} 份）')
+        return unplaced
+
 
 def _natkey(pid: str):
     return [int(t) if t.isdigit() else t for t in re.split(r'(\d+)', pid)]
 
 
+def _spare_units(parts) -> list[list[tuple[Any, int]]]:
+    """備品：每份各自一個單位（不受 group 限制），大件先、同大小依代號與份數。"""
+    units = [[(p, c)] for p in parts for c in range(qty_of(p), qty_of(p) + spare_of(p))]
+    units.sort(key=lambda u: (-_solid(u[0][0].geom).area, _natkey(u[0][0].id), u[0][1]))
+    return units
+
+
 def _units(parts) -> list[list[tuple[Any, int]]]:
-    """依 group 分成「一起放」的單位；每份（qty）各一個成員，成員依面積由大到小。"""
+    """依 group 分成「一起放」的單位；每份（qty）各一個成員，成員依面積由大到小。備品不在這裡（_spare_units）。"""
     by_group: dict[str, list] = {}
     singles = []
     for p in parts:
-        q = int(getattr(p, 'qty', 1) or 1)
+        q = qty_of(p)
         items = [(p, c) for c in range(q)]
         g = getattr(p, 'group', None)
         if g:
@@ -430,23 +493,42 @@ def layout(parts, verbose: bool = True) -> list[Sheet]:
             if NEST_IN_HOLES is True or q[0] < best[0][0]:
                 best = (q, sts, order, grav, True)
         _, sts, order, grav, holes = best
+        sp_units = _spare_units(by_mat[mat])
+        unplaced = []
+        if sp_units:                         # 備品：只塞進已經開的板，不增加張數
+            sts = [st.copy() for st in sts]
+            unplaced = packer.place_spares(sts, sp_units, grav, holes)
         for no, st in enumerate(sts, start=1):
-            sh = Sheet(mat, no, st.w, st.h, [Placement(p, c, M, d) for p, c, M, d in st.items])
+            sh = Sheet(mat, no, st.w, st.h, [Placement(p, c, M, d, spare=c >= qty_of(p)) for p, c, M, d in st.items])
             sh.notes.append(f'排序 {order}、靠齊 {grav}、{"允許" if holes else "不"}放進其他零件的孔')
+            if sh.n_spare:
+                sh.notes.append(f'含備品 {sh.n_spare} 件')
             if holes:
                 inside = _parts_in_holes(sh)
                 if inside:
                     sh.notes.append('放在其他零件孔內：' + '、'.join(inside) + '（雷切軟體請開「先切內部」）')
             _verify(sh)
             out.append(sh)
+        if unplaced:
+            last = out[-1] if out and out[-1].material == mat else None
+            msg = f'{mat}：{len(unplaced)} 件備品放不進現有的 {len(sts)} 張板（不加張數，沒有排）：' + '、'.join(unplaced)
+            if last is None:
+                raise RuntimeError(msg)
+            last.unplaced = list(unplaced)
+            last.notes.append(msg)
     if verbose:
         print(summary(out))
     return out
 
 
+def unplaced_spares(sheets) -> list[str]:
+    """放不進現有板的備品（各材質合起來）；空＝備品全部排進切割檔。"""
+    return [f'{s.material}：{u}' for s in sheets for u in getattr(s, 'unplaced', [])]
+
+
 def _lower_bound(parts) -> int:
     W, H = params.SHEET
-    tot = sum(p.geom.area * int(getattr(p, 'qty', 1) or 1) for p in parts)
+    tot = sum(p.geom.area * qty_of(p) for p in parts)          # 備品不開新板，不算
     return max(1, int(math.ceil(tot / (W * H))))
 
 
@@ -464,12 +546,16 @@ def summary(sheets: list[Sheet]) -> str:
     lines = ['排版結果：']
     for s in sheets:
         ex, ey = s.extent
-        lines.append(f'  {s.title}：{len(s.items)} 件，利用率 {s.util * 100:.1f}%'
+        lines.append(f'  {s.title}：{len(s.items)} 件' + (f'（含備品 {s.n_spare}）' if s.n_spare else '')
+                     + f'，利用率 {s.util * 100:.1f}%'
                      f'（外框 {s.outer_area / s.area * 100:.1f}%），排到 x≤{ex:.1f}、y≤{ey:.1f}')
     by = {}
     for s in sheets:
         by[s.material] = by.get(s.material, 0) + 1
     lines.append('  張數：' + '、'.join(f'{m} {n} 張' for m, n in by.items()))
+    un = unplaced_spares(sheets)
+    if un:
+        lines.append(f'  備品放不下（沒有排，不加張數）：{len(un)} 件：' + '、'.join(un))
     return '\n'.join(lines)
 
 

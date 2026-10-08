@@ -4,24 +4,34 @@
 ----
     from laser_v2 import qa
     rows = qa.check('分幣機雷切_光耦版_v2_草稿.svg', parts=parts)   # 或 qa.check(sheets)
+    rows = qa.check('laser_v2/out/sheet_合板_1.svg', mode='sheet')    # 上雷切機用的分頁檔
     bad = qa.failures(rows)                      # 每列 dict(name, ok, detail[, level])；level='warn' 不算失敗
     python -m laser_v2.qa <svg 檔> [...]          # 命令列：印出結果，有未通過項目時 exit 1
+                                                 # （檔名 sheet_*.svg／trial_*.svg 用分頁檔規則，其他用草稿規則）
 
-check(src, parts=None)
+check(src, parts=None, mode=None)
     src：SVG 檔路徑（str／Path），或 layout() 的 list[Sheet]（先在記憶體裡輸出成草稿 SVG 再檢查）。
-    parts：V2Part 清單（可省略）；有給就再核對「每個零件 × qty 都在、圖層對、沒有多出來的」。
+    parts：V2Part 清單（可省略）；有給就再核對「每個零件 × qty 都在、圖層對、沒有多出來的」，
+           以及備品（V2Part.spare）：data-copy ≥ qty 的群組要標 data-spare="1"、份數不超過 qty＋spare。
+    mode：'draft'（草稿：4 個圖層，含隱藏的註記層）或 'sheet'（上雷切機用的分頁檔：只有 3 個圖層，
+          不可以有註記層或綠色）；None＝依檔名自動判斷（sheet_*.svg、trial_*.svg → 'sheet'，其他 → 'draft'）。
 
 檢查項目（name）
 ----------------
 * XML 解析：檔案是合法 XML、根元素是 <svg>。
 * 頁面：每頁都是 params.SHEET（255×355），多頁時用 sodipodi:namedview 裡的 inkscape:page。
-* 圖層名稱：最上層剛好是 LAYERS 這 4 個 inkscape 圖層、順序相同；註記層 style="display:none"、其他層看得見；
-  圖層外面沒有任何圖形。
+* 圖層名稱：草稿：最上層剛好是 LAYERS 這 4 個 inkscape 圖層、順序相同；註記層 style="display:none"、
+  其他層看得見。分頁檔：剛好是前 3 個（沒有註記層），都看得見。圖層外面沒有任何圖形。
 * 沒有 <text>：整份檔沒有 text／tspan／flowRoot／textPath（文字都要先轉成路徑）。
-* 顏色：切割層只有黑 #000000（線寬 0.2）＝切割、紅 #ff0000＝雕刻；註記層只有綠 #008000；
+* 顏色：切割層只有黑 #000000（線寬 0.2）＝切割、紅 #ff0000＝雕刻；註記層只有綠 #008000（分頁檔沒有綠色）；
   只用 <path>（不用 rect／circle／use／image 等）。
-* 零件代號：每個零件群組都有 data-part 與 inkscape:label；註記層有對應的群組；(代號, 份) 不重複；
-  所有切割／雕刻路徑都在某個零件群組裡；有給 parts 時核對數量與圖層。
+* 雕刻樣式：每個雕刻元素都是 compose.STYLE_ENGRAVE（fill:none;stroke:#ff0000;stroke-width:0.2，和原始檔一樣的
+  0.2 mm 紅線）；不可以用填色雕刻（雷切軟體紅色圖層設「線／向量雕刻」）。
+* 零件代號：每個零件群組都有 data-part 與 inkscape:label；草稿的註記層有對應的群組（分頁檔沒有註記群組）；
+  (代號, 份) 不重複；data-spare 和代號標籤一致（備品標籤寫「備品」）；
+  所有切割／雕刻路徑都在某個零件群組裡；有給 parts 時核對數量、備品與圖層。
+* 零件內切割順序：每個零件群組裡，外框（面積最大的封閉切割線）是最後一個元素；
+  孔、開放線（彎曲條鋸縫等）、雕刻都寫在外框前面（雷切軟體照順序切時，零件最後才和板分開）。
 * 外框閉合：每個零件有一個封閉外框；其他封閉子路徑（孔）都在外框內；開放線（彎曲條鋸縫等）在外框內；
   外框與孔組成的外形是合法多邊形（不自交）。
 * 雕刻在零件內：雕刻線都在所屬零件的材料上（外框內、不在孔裡）。
@@ -69,6 +79,27 @@ TEXT_TAGS = {'text', 'tspan', 'flowRoot', 'flowPara', 'flowRegion', 'textPath'}
 SHAPE_TAGS = {'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'use', 'image'}
 NAMED = {'black': '#000000', 'red': '#ff0000', 'green': '#008000', '#000': '#000000', '#f00': '#ff0000'}
 MAX_LIST = 8          # detail 最多列幾筆
+MODES = ('draft', 'sheet')
+SHEET_LAYERS = LAYERS[:3]   # 上雷切機用的分頁檔：沒有註記層
+WIDTH_TOL = 1e-4      # mm：線寬容許誤差
+
+
+def _style_dict(style: str) -> dict:
+    out = {}
+    for kv in style.split(';'):
+        if ':' in kv:
+            k, v = kv.split(':', 1)
+            out[k.strip()] = v.strip().lower()
+    return out
+
+
+try:                       # 雕刻樣式以 compose.STYLE_ENGRAVE 為準（compose 不能用時用同樣的值）
+    from .compose import STYLE_ENGRAVE
+except Exception:          # noqa: BLE001
+    STYLE_ENGRAVE = f'fill:none;stroke:{params.STROKE_ENGRAVE_COLOR};stroke-width:0.2'
+_ENG = _style_dict(STYLE_ENGRAVE)
+ENGRAVE_FILL = _ENG.get('fill', 'none')
+ENGRAVE_WIDTH = float(re.sub(r'[a-z]+$', '', _ENG.get('stroke-width', '0.2')))
 
 
 # ---------------------------------------------------------------------------
@@ -161,6 +192,7 @@ class _Elem:
     d: str | None            # 已套上累積 transform 的 d（只有 path）
     kind: str | None         # data-kind（outer/hole/line）
     eid: str | None
+    seq: int = 0             # 文件中的順序（0 起算）
 
 
 @dataclass
@@ -168,7 +200,7 @@ class _Doc:
     pages: list = field(default_factory=list)       # [(x, y, w, h)]
     layers: list = field(default_factory=list)      # [(label, style dict)]
     elems: list = field(default_factory=list)       # list[_Elem]
-    groups: list = field(default_factory=list)      # [(layer, data-part, data-copy, label, data-layer)]
+    groups: list = field(default_factory=list)      # [(layer, data-part, data-copy, label, data-layer, data-spare)]
     stray: list = field(default_factory=list)       # 圖層外的圖形 tag
 
 
@@ -209,7 +241,7 @@ def _parse(root) -> _Doc:
                 doc.layers.append((layer, own))
             if e.get('data-part') is not None:
                 part = (e.get('data-part'), e.get('data-copy', '0'), e.get(f'{{{INK_NS}}}label') or '')
-                doc.groups.append((layer, part[0], part[1], part[2], e.get('data-layer')))
+                doc.groups.append((layer, part[0], part[1], part[2], e.get('data-layer'), e.get('data-spare')))
             for c in e:
                 walk(c, M, st, layer, part)
             return
@@ -225,7 +257,7 @@ def _parse(root) -> _Doc:
             except ValueError:
                 w = None
             doc.elems.append(_Elem(tag, layer, part, _color(st.get('stroke')), _color(st.get('fill')), w,
-                                   d, e.get('data-kind'), e.get('id')))
+                                   d, e.get('data-kind'), e.get('id'), len(doc.elems)))
             return
         for c in e:
             walk(c, M, st, layer, part)
@@ -273,11 +305,13 @@ def _check_pages(doc: _Doc):
                  f'{len(doc.pages)} 頁，每頁 {W:g}×{H:g}' if not bad and not over else _lst(bad + over))]
 
 
-def _check_layers(doc: _Doc):
+def _check_layers(doc: _Doc, mode: str = 'draft'):
     labels = [l for l, _ in doc.layers]
+    want = LAYERS if mode == 'draft' else SHEET_LAYERS
     errs = []
-    if tuple(labels) != LAYERS:
-        errs.append(f'圖層是 {labels}，應為 {list(LAYERS)}')
+    if tuple(labels) != want:
+        errs.append(f'圖層是 {labels}，應為 {list(want)}'
+                    + ('（上雷切機用的分頁檔不可以有註記層）' if mode == 'sheet' and NOTE_LAYER in labels else ''))
     for l, st in doc.layers:
         hidden = st.get('display') == 'none'
         if l == NOTE_LAYER and not hidden:
@@ -286,7 +320,9 @@ def _check_layers(doc: _Doc):
             errs.append(f'「{l}」被隱藏了')
     if doc.stray:
         errs.append(f'圖層外有 {len(doc.stray)} 個圖形（{_lst(Counter(doc.stray).items())}）')
-    return [_row('圖層名稱', not errs, '4 個圖層名稱與順序正確，註記層隱藏' if not errs else _lst(errs))]
+    ok_txt = ('4 個圖層名稱與順序正確，註記層隱藏' if mode == 'draft'
+              else '3 個圖層（原始零件、v2 修改、v2 新增）名稱與順序正確，沒有註記層（上雷切機用）')
+    return [_row('圖層名稱', not errs, ok_txt if not errs else _lst(errs))]
 
 
 def _check_text(doc: _Doc, raw: str):
@@ -296,7 +332,7 @@ def _check_text(doc: _Doc, raw: str):
                  else f'有 {max(n, n_raw)} 個文字元素（文字要先轉成路徑）')]
 
 
-def _check_colors(doc: _Doc):
+def _check_colors(doc: _Doc, mode: str = 'draft'):
     errs = []
     for e in doc.elems:
         where = f'{e.layer}/{e.part[0] if e.part else "-"}/{e.eid or e.tag}'
@@ -306,7 +342,9 @@ def _check_colors(doc: _Doc):
             continue
         cols = {c for c in (e.stroke, e.fill) if c not in (None, 'none')}
         if e.layer == NOTE_LAYER:
-            if cols - {NOTE_COLOR}:
+            if mode == 'sheet':
+                errs.append(f'{where}：上雷切機用的分頁檔不可以有註記')
+            elif cols - {NOTE_COLOR}:
                 errs.append(f'{where}：註記層出現 {sorted(cols)}')
             continue
         if NOTE_COLOR in cols or cols - {CUT_COLOR, ENGRAVE_COLOR}:
@@ -317,57 +355,105 @@ def _check_colors(doc: _Doc):
             errs.append(f'{where}：切割線寬 {e.width}（應為 {CUT_WIDTH}）')
         if not cols:
             errs.append(f'{where}：沒有顏色（看不見的線）')
-    return [_row('顏色', not errs, f'只有切割 {CUT_COLOR}（{CUT_WIDTH} mm）、雕刻 {ENGRAVE_COLOR}、註記 {NOTE_COLOR}'
+    ok_txt = (f'只有切割 {CUT_COLOR}（{CUT_WIDTH} mm）、雕刻 {ENGRAVE_COLOR}、註記 {NOTE_COLOR}' if mode == 'draft'
+              else f'只有切割 {CUT_COLOR}（{CUT_WIDTH} mm）、雕刻 {ENGRAVE_COLOR}，沒有註記綠色')
+    return [_row('顏色', not errs, ok_txt if not errs else _lst(errs))]
+
+
+def _check_engrave_style(doc: _Doc):
+    """雕刻元素都要是 STYLE_ENGRAVE（0.2 mm 紅線、不填色），和原始檔一樣。"""
+    errs, n = [], 0
+    for e in doc.elems:
+        if e.tag != 'path' or e.layer == NOTE_LAYER or not _is_engrave(e):
+            continue
+        n += 1
+        where = f'{e.layer}/{e.part[0] if e.part else "-"}/{e.eid or e.tag}'
+        fill = e.fill if e.fill is not None else 'none'
+        why = []
+        if fill != ENGRAVE_FILL:
+            why.append(f'填色 {fill}')
+        if e.stroke != ENGRAVE_COLOR:
+            why.append(f'線色 {e.stroke}')
+        elif e.width is None or abs(e.width - ENGRAVE_WIDTH) > WIDTH_TOL:
+            why.append(f'線寬 {e.width}')
+        if why:
+            errs.append(f'{where}：雕刻是{"、".join(why)}（應為 {ENGRAVE_WIDTH:g} mm 紅線、不填色；'
+                        '紅色圖層設線雕刻時填色會被忽略或變成掃描）')
+    return [_row('雕刻樣式', not errs, f'{n} 個雕刻元素都是 {STYLE_ENGRAVE}（0.2 mm 紅線，和原始檔一樣）'
                  if not errs else _lst(errs))]
 
 
-def _check_ids(doc: _Doc, parts):
+def _check_ids(doc: _Doc, parts, mode: str = 'draft'):
     errs = []
     cut_groups = [g for g in doc.groups if g[0] != NOTE_LAYER]
     note_groups = [g for g in doc.groups if g[0] == NOTE_LAYER]
-    for layer, pid, cp, label, dl in cut_groups:
+    for layer, pid, cp, label, dl, sp in cut_groups:
         if not pid:
             errs.append(f'{layer}：有零件群組沒有 data-part')
         elif not label.startswith(pid):
             errs.append(f'{pid}：inkscape:label「{label}」不是以代號開頭')
         if dl is not None and LAYER_OF.get(dl) != layer:
             errs.append(f'{pid}：data-layer={dl} 卻放在「{layer}」')
-    keys = Counter((pid, cp) for _, pid, cp, _, _ in cut_groups)
+        if sp not in (None, '0', '1'):
+            errs.append(f'{pid}（第 {cp} 份）：data-spare={sp!r}（應為 0 或 1）')
+        elif (sp == '1') != ('備品' in label):
+            errs.append(f'{pid}（第 {cp} 份）：data-spare={sp} 和代號標籤「{label}」不一致')
+    keys = Counter((pid, cp) for _, pid, cp, _, _, _ in cut_groups)
     dup = [f'{k[0]}#{k[1]}×{n}' for k, n in keys.items() if n > 1]
     if dup:
         errs.append('代號重複：' + _lst(dup))
-    nkeys = Counter((pid, cp) for _, pid, cp, _, _ in note_groups)
-    miss = [f'{k[0]}（第 {int(k[1]) + 1} 份）' for k in keys if k not in nkeys]
-    extra = [f'{k[0]}' for k in nkeys if k not in keys]
-    if miss:
-        errs.append('註記層缺代號：' + _lst(miss))
-    if extra:
-        errs.append('註記層多出：' + _lst(extra))
+    nkeys = Counter((pid, cp) for _, pid, cp, _, _, _ in note_groups)
+    if mode == 'draft':
+        miss = [f'{k[0]}（第 {int(k[1]) + 1} 份）' for k in keys if k not in nkeys]
+        extra = [f'{k[0]}' for k in nkeys if k not in keys]
+        if miss:
+            errs.append('註記層缺代號：' + _lst(miss))
+        if extra:
+            errs.append('註記層多出：' + _lst(extra))
+    elif nkeys:
+        errs.append(f'上雷切機用的分頁檔有 {sum(nkeys.values())} 個註記群組（不應該有註記）')
     loose = [e.eid or e.tag for e in doc.elems if e.layer != NOTE_LAYER and e.part is None]
     if loose:
         errs.append(f'有 {len(loose)} 條線不屬於任何零件群組：' + _lst(loose))
     n_parts = len(keys)
+    n_spare = sum(1 for g in cut_groups if g[5] == '1')
+    sp_note = ''
     if parts is not None:
         want = Counter()
+        allow = set()
         layer_want = {}
+        n_sp_want = 0
         for p in parts:
             q = int(getattr(p, 'qty', 1) or 1)
+            sp = int(getattr(p, 'spare', 0) or 0)
+            n_sp_want += sp
             for c in range(q):
                 want[(p.id, str(c))] += 1
+            allow |= {(p.id, str(c)) for c in range(q, q + sp)}
             layer_want[p.id] = LAYER_OF.get(getattr(p, 'layer', 'original'))
         got = Counter(keys)
         lack = [f'{k[0]}（第 {int(k[1]) + 1} 份）' for k in want if k not in got]
-        more = [f'{k[0]}（第 {int(k[1]) + 1} 份）' for k in got if k not in want]
+        more = [f'{k[0]}（第 {int(k[1]) + 1} 份）' for k in got if k not in want and k not in allow]
         if lack:
             errs.append('少了零件：' + _lst(lack))
         if more:
             errs.append('多出零件：' + _lst(more))
-        wrong = [f'{pid} 在「{layer}」應在「{layer_want[pid]}」' for layer, pid, _, _, _ in cut_groups
+        spare_flag = {(pid, cp): sp for _, pid, cp, _, _, sp in cut_groups}
+        bad_sp = [f'{k[0]}（第 {int(k[1]) + 1} 份）' for k in got
+                  if (k in want or k in allow) and (k in allow) != (spare_flag.get(k) == '1')]
+        if bad_sp:
+            errs.append('data-spare 和 qty／spare 不一致：' + _lst(bad_sp))
+        wrong = [f'{pid} 在「{layer}」應在「{layer_want[pid]}」' for layer, pid, _, _, _, _ in cut_groups
                  if pid in layer_want and layer_want[pid] != layer]
         if wrong:
             errs.append('圖層不對：' + _lst(wrong))
+        n_sp_got = sum(1 for k in got if k in allow)
+        if n_sp_want:
+            sp_note = f'；備品 {n_sp_got}/{n_sp_want} 件' + ('' if n_sp_got == n_sp_want else '（放不下的見排版檢查）')
     by_layer = Counter(g[0] for g in cut_groups)
-    det = f'{n_parts} 件（' + '、'.join(f'{l} {by_layer.get(l, 0)}' for l in LAYERS[:3]) + '），每件都有代號與註記'
+    det = (f'{n_parts} 件（' + '、'.join(f'{l} {by_layer.get(l, 0)}' for l in LAYERS[:3]) + '）'
+           + (f'，其中備品 {n_spare} 件' if n_spare else '')
+           + ('，每件都有代號與註記' if mode == 'draft' else '，每件都有代號（分頁檔沒有註記）') + sp_note)
     return [_row('零件代號', not errs, det if not errs else _lst(errs))], n_parts
 
 
@@ -381,7 +467,9 @@ class _PartGeom:
     engrave: list = field(default_factory=list)
     poly: object = None
     bbox: tuple | None = None
-    subs: list = field(default_factory=list)       # [(eid, idx, pts, closed, kind)]
+    subs: list = field(default_factory=list)       # [(eid, idx, pts, closed, kind, (seq, idx))]
+    eng_keys: list = field(default_factory=list)   # 雕刻子路徑的 (seq, idx)
+    outer_key: tuple | None = None                 # 外框的 (seq, idx)
 
 
 def _collect(doc: _Doc):
@@ -393,10 +481,11 @@ def _collect(doc: _Doc):
         pg = parts.setdefault(k, _PartGeom(k, e.part[2] or e.part[0]))
         if _is_cut(e):
             for i, (pts, closed) in enumerate(sample_d(e.d)):
-                pg.subs.append((e.eid, i, pts, closed, e.kind))
+                pg.subs.append((e.eid, i, pts, closed, e.kind, (e.seq, i)))
         elif _is_engrave(e):
-            for pts, closed in sample_d(e.d):
+            for i, (pts, closed) in enumerate(sample_d(e.d)):
                 pg.engrave.append(pts)
+                pg.eng_keys.append((e.seq, i))
     return parts
 
 
@@ -410,6 +499,7 @@ def _build_geoms(parts: dict):
             continue
         (outer_s, outer_p) = max(closed, key=lambda c: abs(c[1].area))
         pg.outer = outer_s[2]
+        pg.outer_key = outer_s[5]
         if outer_s[4] not in (None, 'outer'):
             errs.append(f'{pg.name}：面積最大的封閉線標成 {outer_s[4]}')
         shell = Polygon(outer_p.exterior)
@@ -465,6 +555,21 @@ def _check_closed(parts: dict, errs_geom: list, micro: list):
     return [_row('外框閉合', ok, det)]
 
 
+def _check_order(parts: dict):
+    """零件內切割順序：外框（面積最大的封閉切割線）要是群組裡最後一個（孔、開放線、雕刻都在它前面）。"""
+    errs, n = [], 0
+    for pg in parts.values():
+        if pg.outer_key is None:
+            continue
+        n += 1
+        keys = [s[5] for s in pg.subs] + list(pg.eng_keys)
+        after = [k for k in keys if k > pg.outer_key]
+        if after:
+            errs.append(f'{pg.name}：外框後面還有 {len(after)} 條線（孔／內部線／雕刻要寫在外框前面）')
+    return [_row('零件內切割順序', not errs, f'{n} 個零件都是雕刻、孔、內部線在前，外框最後'
+                 if not errs else _lst(errs))]
+
+
 def _check_engrave(parts: dict):
     """雕刻要落在零件的材料上（外框內、不在孔裡）；雕刻線和切割線重合的長度另列為「注意」。"""
     errs, warn = [], []
@@ -497,7 +602,7 @@ def _check_overlap(parts: dict):
     errs = []
     lines, owner = [], []
     for pg in parts.values():
-        for eid, i, pts, closed, kind in pg.subs:
+        for eid, i, pts, closed, kind, _ in pg.subs:
             if len(pts) < 2:
                 continue
             ls = LineString(pts)
@@ -578,15 +683,27 @@ def _check_gap(parts: dict, page_of: dict):
 # ---------------------------------------------------------------------------
 # 公開 API
 # ---------------------------------------------------------------------------
-def check(src, parts=None) -> list[dict]:
-    """檢查一份 v2 雷切 SVG（檔案路徑），或 layout() 的 list[Sheet]（先輸出成記憶體中的草稿 SVG）。"""
+def guess_mode(path) -> str:
+    """依檔名判斷：sheet_*.svg、trial_*.svg（laser_v2/out 裡上雷切機用的分頁檔）→ 'sheet'，其他 → 'draft'。"""
+    name = Path(path).name
+    return 'sheet' if re.match(r'(sheet|trial)_.+[.]svg$', name) else 'draft'
+
+
+def check(src, parts=None, mode: str | None = None) -> list[dict]:
+    """檢查一份 v2 雷切 SVG（檔案路徑），或 layout() 的 list[Sheet]（先輸出成記憶體中的草稿 SVG）。
+    mode：'draft'（含隱藏註記層）／'sheet'（上雷切機用，不含註記層）；None＝依檔名判斷（guess_mode）。"""
     if isinstance(src, (str, Path)):
         raw = Path(src).read_text(encoding='utf-8')
+        mode = mode or guess_mode(src)
     elif isinstance(src, list):
         from . import export as _export          # 延後匯入，避免 export ↔ qa 循環
-        raw = _export.render_draft(src)
+        mode = mode or 'draft'
+        raw = _export.render_draft(src) if mode == 'draft' else _export._render(
+            src, _export.page_offsets(src), _export.COMMENT_SHEET, [], notes=False)
     else:
         raise TypeError(f'qa.check 不支援 {type(src).__name__}')
+    if mode not in MODES:
+        raise ValueError(f"qa.check 的 mode 只能是 {MODES}，收到 {mode!r}")
     try:
         root = ET.fromstring(raw.encode('utf-8'))
         doc = _parse(root)
@@ -594,14 +711,16 @@ def check(src, parts=None) -> list[dict]:
         return [_row('XML 解析', False, f'{type(e).__name__}: {e}')]
     rows = [_row('XML 解析', True, f'{len(doc.elems)} 個圖形元素')]
     rows += _check_pages(doc)
-    rows += _check_layers(doc)
+    rows += _check_layers(doc, mode)
     rows += _check_text(doc, raw)
-    rows += _check_colors(doc)
-    r, _ = _check_ids(doc, parts)
+    rows += _check_colors(doc, mode)
+    rows += _check_engrave_style(doc)
+    r, _ = _check_ids(doc, parts, mode)
     rows += r
     pgs = _collect(doc)
     errs, micro = _build_geoms(pgs)
     rows += _check_closed(pgs, errs, micro)
+    rows += _check_order(pgs)
     rows += _check_engrave(pgs)
     rows += _check_overlap(pgs)
     r, page_of = _check_bounds(pgs, doc.pages)
@@ -632,7 +751,7 @@ if __name__ == '__main__':
     bad_any = False
     for f in sys.argv[1:]:
         rows = check(f)
-        print(f'== {f}')
+        print(f'== {f}（{guess_mode(f)}）')
         print(report(rows))
         bad_any |= bool(failures(rows))
     sys.exit(1 if bad_any else 0)

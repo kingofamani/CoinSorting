@@ -25,7 +25,7 @@ K. 榫槽配對：間隔條 #5/#6/#7、櫃側板 #13R/#21 在 #24、#26、#37 �
    （干涉不比原始檔大），新切出的槽都有榫（沒有空槽）。
 W. 新切割造成的細料：每個新／重生的切割環到同零件其他環的距離 ≥ MIN_WEB（比原始檔近才算），
    以及形態學 opening 找出 edit 附近寬度 < MIN_WEB 的料。
-L. 排版：S1-B 與 #13R 同一張、ebox 群組同一張、張數在交接估計內。
+L. 排版：S1-B 與 #13R 同一張、ebox 群組同一張、張數在交接估計內、備品（V2Part.spare）都排進現有的板。
 S. S1 最前實體到 S5 實際最深 W'（mods_s1 的 s5_gap 用規格常數 10.0，這裡改用 mods_crosstrack 實際值）。
 
 每一筆檢查是 dict(sec, name, ok, value, expected, note)；ok=None 表示「資訊」（不算通過或失敗）。
@@ -887,6 +887,8 @@ def check_layout(sheets, parts) -> list[dict]:
     where: dict[str, set] = {}
     for s in sheets:
         for pl in s.items:
+            if getattr(pl, 'spare', False):      # 備品不受 group 限制（layout 只塞進已經開的板），下面另外檢查
+                continue
             where.setdefault(pl.part.id, set()).add((s.material, s.no))
     groups: dict[str, list[str]] = {}
     for p in parts:
@@ -906,6 +908,19 @@ def check_layout(sheets, parts) -> list[dict]:
     rows.append(_row('L', '壓克力張數', acr >= 1, acr, '≥1（另排）'))
     missing = [p.id for p in parts if p.id not in where]
     rows.append(_row('L', '每個零件都有排', not missing, '、'.join(missing) or '全部', '全部'))
+    # 備品（使用者 2026-10-08：極小零件每套多一整份；layout 只塞進已經開的板，不加張數）
+    from .layout import unplaced_spares
+    want = {p.id: int(getattr(p, 'spare', 0) or 0) for p in parts if int(getattr(p, 'spare', 0) or 0)}
+    got: dict[str, int] = {}
+    for s in sheets:
+        for pl in s.items:
+            if getattr(pl, 'spare', False):
+                got[pl.part.id] = got.get(pl.part.id, 0) + 1
+    un = unplaced_spares(sheets)
+    if want or un:
+        rows.append(_row('L', '備品都排進現有的板（不增加張數）', not un and got == want,
+                         f'{sum(got.values())}/{sum(want.values())} 件', '全部',
+                         ('放不下：' + '、'.join(un)) if un else '、'.join(f'{k}×{v}' for k, v in want.items())))
     return rows
 
 

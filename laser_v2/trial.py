@@ -10,9 +10,13 @@
 輸出
 ----
 * 分幣機雷切_光耦版_v2_試切小樣.svg（repo 根目錄）：格式同 v2 草稿（export.py：Inkscape 多頁、255×355、
-  4 個圖層「原始零件」「v2 修改」「v2 新增」「註記（不切割）」、文字全部轉成路徑），並跑 qa.check。
-  裁出來的局部放「v2 修改」層，v2 新零件與試切輔助件放「v2 新增」層。
+  4 個圖層「原始零件」「v2 修改」「v2 新增」「註記（不切割）」、文字全部轉成路徑），並跑 qa.check(mode='draft')。
+  裁出來的局部放「v2 修改」層，v2 新零件與試切輔助件放「v2 新增」層。給人看的，含隱藏註記層。
+* laser_v2/out/trial_<材質>_<n>.svg：**上雷切機用**的分頁檔（同 sheet_*.svg：3 個圖層、不含註記層；
+  qa.check(mode='sheet')）。
 * laser_v2/out/trial_<材質>_<n>.png：預覽圖。
+* 備品：外包兩邊都 <10 mm（export.SMALL_PART）的極小零件，照正式檔的規則每套多排一整份（spare＝qty；
+  compose 已給 V2Part.spare 的照它），只塞進已經開的板（仍 1 張板），放不下列為檢查未通過。
 * laser_v2/out/trial_report.md：每片是什麼、要測什麼（對應三份 spec 的 T 編號）、怎麼判定過關、
   不過關時改哪個參數，以及本模組的檢查結果。
 
@@ -608,7 +612,23 @@ def build_trial(parts: list, results: dict) -> tuple[list, dict]:
     out.extend(aux)
     for q in aux:
         info_by[q.id] = dict(piece=q, grp='TA')
+    set_spares(out)
     return out, dict(info=info_by, a0=a0s, aux=ainfo)
+
+
+def is_tiny(p) -> bool:
+    """極小零件：外包兩邊都 < export.SMALL_PART（10 mm）。"""
+    x0, y0, x1, y1 = p.geom.bounds
+    return max(x1 - x0, y1 - y0) < X.SMALL_PART
+
+
+def set_spares(tparts: list) -> None:
+    """備品（使用者 2026-10-08）：極小零件每套多排一整份。compose 已經給 spare 的照它，否則 spare＝qty。"""
+    for p in tparts:
+        sp = int(getattr(p, 'spare', 0) or 0)
+        if not sp and is_tiny(p):
+            sp = int(getattr(p, 'qty', 1) or 1)
+        p.spare = sp
 
 
 # ---------------------------------------------------------------------------
@@ -631,6 +651,15 @@ def _edit_regions(results: dict, src_part_id: str, orig_part) -> list[tuple[str,
             elif e['op'] == 'translate_cut':
                 out.append((e.get('tag') or '', None))
     return out
+
+
+def _need_tags(spec) -> tuple:
+    """裁切件必須完整包含的 edit tag。TM1637 用熱熔膠（params.TM1637['use_screws']=False，params 文件寫明的選項）時
+    #24 本來就不切 M2 孔，不列「TM1637 M2」。"""
+    tags = tuple(spec.get('need_tags', ()))
+    if not (params.TM1637 or {}).get('use_screws', True):
+        tags = tuple(t for t in tags if t != 'TM1637 M2')
+    return tags
 
 
 def check_pieces(tinfo: dict, results: dict) -> list[dict]:
@@ -671,7 +700,8 @@ def check_pieces(tinfo: dict, results: dict) -> list[dict]:
         # 必要特徵：各子系統對這片的 edit（依 tag 找），連同周圍 1 mm 的料都和最終零件相同
         regs = _edit_regions(results, _orig(p), p)
         missing = []
-        for key in s.get('need_tags', ()):
+        need_tags = _need_tags(s)
+        for key in need_tags:
             hits = [g for t, g in regs if key in t and g is not None and not g.is_empty]
             if not hits:
                 missing.append(f'{key}（找不到這個 edit）')
@@ -691,7 +721,7 @@ def check_pieces(tinfo: dict, results: dict) -> list[dict]:
         for src in s.get('need_eng', ()):
             if src not in v.engrave_src:
                 missing.append(f'雕刻 {src}（被刪掉）')
-        need = list(s.get('need_tags', ())) + list(s.get('need_src', ())) + list(s.get('need_eng', ()))
+        need = list(need_tags) + list(s.get('need_src', ())) + list(s.get('need_eng', ()))
         rows.append(_row('必要特徵完整', not missing, f'{len(need) - len(missing)}/{len(need)}', '全部',
                          note='；'.join(missing) if missing else '、'.join(need), piece=pid))
         if I['dropped']:
@@ -822,9 +852,18 @@ def check_layout(sheets, tparts) -> list[dict]:
     rows = []
     n = len(sheets)
     rows.append(_row('張數', n <= MAX_SHEETS, f'{n} 張', f'目標 1 張、最多 {MAX_SHEETS} 張'))
+    un = L.unplaced_spares(sheets)
+    n_sp = sum(1 for s in sheets for pl in s.items if pl.spare)
+    want = sum(int(getattr(p, 'spare', 0) or 0) for p in tparts)
+    if want or un:
+        ids = '、'.join(f'{p.id}×{int(p.spare)}' for p in tparts if int(getattr(p, 'spare', 0) or 0))
+        rows.append(_row('備品都排進現有的板（不加張數）', not un, f'{n_sp}/{want} 件', '全部',
+                         note=('放不下：' + '、'.join(un)) if un else ids))
     where = {}
     for s in sheets:
         for pl in s.items:
+            if pl.spare:                          # 備品不受 group 限制（上面「備品都排進現有的板」另外檢查）
+                continue
             where.setdefault(pl.part.id, set()).add(s.no)
     groups = {}
     for p in tparts:
@@ -841,24 +880,35 @@ def check_layout(sheets, tparts) -> list[dict]:
 # 輸出
 # ---------------------------------------------------------------------------
 COMMENT = ('分幣機 v2 試切小樣（laser_v2.trial 產生；改 laser_v2/params.py 後重跑 build_v2，請勿手改）。'
-           '黑 0.2 mm＝切割、紅＝雕刻、綠＝註記（隱藏圖層，不切割）')
+           '黑 0.2 mm＝切割、紅 0.2 mm 線＝雕刻（雷切軟體設線／向量雕刻，不要填色／掃描）、'
+           '綠＝註記（隱藏圖層，不切割）。上雷切機請用 laser_v2/out/trial_*.svg（不含註記）')
+COMMENT_SHEET = ('分幣機 v2 試切小樣，上雷切機用（laser_v2.trial 產生；改 laser_v2/params.py 後重跑 build_v2，請勿手改）。'
+                 '黑 0.2 mm＝切割；紅 0.2 mm 線＝雕刻，紅色圖層設「線／向量雕刻（低功率切割）」，不要用填色／掃描。'
+                 '不含註記。每個零件先雕刻、切孔與內部線，外框最後切。' + X.LAYER_ORDER_TIP)
 
 
 def write_outputs(sheets, tparts, out_root: Path, out_dir: Path, png: bool = True) -> dict:
+    """試切 SVG（多頁、含隱藏註記層，給人看）＋每張板一個上雷切機用的 trial_<材質>_<n>.svg（不含註記）＋預覽 PNG。"""
     warn: list[str] = []
     svg = out_root / TRIAL_SVG
     svg.write_text(X._render(sheets, X.page_offsets(sheets), COMMENT, warn), encoding='utf-8')
-    pngs = []
-    if png:
-        count = {}
-        for s in sheets:
-            count[s.material] = count.get(s.material, 0) + 1
-        for s in sheets:
-            f = out_dir / f'trial_{s.material}_{s.no}.png'
-            X.preview_png(s, f, count[s.material])
-            pngs.append(f)
-    rows = qa.check(svg, parts=tparts)
-    return dict(svg=svg, pngs=pngs, qa=rows, warnings=list(dict.fromkeys(warn)))
+    count = {}
+    for s in sheets:
+        count[s.material] = count.get(s.material, 0) + 1
+    pngs, sheet_svgs = [], []
+    for s in sheets:
+        f = out_dir / f'trial_{s.material}_{s.no}.svg'
+        f.write_text(X.render_sheet(s, count[s.material], warn=warn, notes=False, comment=COMMENT_SHEET),
+                     encoding='utf-8')
+        sheet_svgs.append(f)
+        if png:
+            g = out_dir / f'trial_{s.material}_{s.no}.png'
+            X.preview_png(s, g, count[s.material])
+            pngs.append(g)
+    rows = qa.check(svg, parts=tparts, mode='draft')
+    qa_sheets = {f.name: qa.check(f, mode='sheet') for f in sheet_svgs}
+    return dict(svg=svg, pngs=pngs, sheet_svgs=sheet_svgs, qa=rows, qa_sheets=qa_sheets,
+                warnings=list(dict.fromkeys(warn)))
 
 
 # ---------------------------------------------------------------------------
@@ -950,9 +1000,12 @@ GUIDE = {
                '1 元貼 #37 由上往下推過，靠左、靠右燈都會亮；插卡匣＋鎖 2 支螺絲 ≤1 分鐘',
                '後臂位置→params.T_PLY、mods_s1.DES["wb_recess"]；光束 <118→mods_s1.DES["s_pcb"]（泡棉加厚，最多 1.6）'
                '或實量後改 params.MODULE（arm_top、slot_d、beam_sb、pcb_t）；窗太緊→params.C_SENSOR'),
-    'S1-*': ('卡匣：S1-B 座塊、S1-C 座板、S1-F 背蓋、S1-P 填塊、S1-H 導流帽 ×3', 's1 T1、T2、T7（T8 耐久要整台）',
-             'S1-B 黏 S1-C 後插進牆槽順；背蓋 2 支 M3 尼龍螺絲鎖上後整面貼 #37；後臂內面→背蓋前面 2.7±0.2',
-             '同 TB-#37；導流帽鬆→改瞬間膠（spec R1）'),
+    'S1-*': ('卡匣：S1-B 座塊、S1-C 座板、S1-F 背蓋、S1-P 填塊、S1-H 導流帽 ×3；量 S1 模組前臂（靠 #26 那臂）'
+             'PCB 背面焊腳的位置與高度', 's1 T1、T2、T7（T8 耐久要整台）',
+             'S1-B 黏 S1-C 後插進牆槽順；背蓋 2 支 M3 尼龍螺絲鎖上後整面貼 #37；後臂內面→背蓋前面 2.7±0.2；'
+             '前臂背面凸出 >1.0 mm 的焊點都落在 S1-B 讓位孔內（V≤74.7）或 W\'>29，PCB 貼上泡棉後沒有被焊點頂高',
+             '同 TB-#37；導流帽鬆→改瞬間膠（spec R1）；焊點落在讓位孔外→回報（S1-B 讓位孔／#13R 牆槽要改，mods_s1；'
+             '焊點高度是 params.MODULE 的 back_h，見 report.md 第四節）'),
 }
 
 GUIDE_ORDER = {
@@ -977,21 +1030,52 @@ def write_report(path: Path, tparts, tinfo, sheets, rows, qa_rows, files: dict, 
     Lr.append('由 `python -m laser_v2.trial`（或 `python -m laser_v2.build_v2` 最後一步）產生。'
               '小樣直接從 v2 最終零件（含 crosstrack、S1、電子盒全部修改與 #26 齒孔修正）裁出來，'
               '模組實量後改 `laser_v2/params.py` 重跑，小樣會跟著更新。\n')
-    Lr.append('## 一、檔案\n')
-    Lr.append(f'- 試切檔：`{files["svg"]}`（{len(sheets)} 頁，255×355；圖層同 v2 草稿：裁出來的局部在「v2 修改」，'
-              'v2 新零件與試切輔助件在「v2 新增」；註記層預設隱藏）。')
+    machine = files.get('sheet_svgs') or []
+    Lr.append('> **上雷切機用 ' + ('、'.join(f'`{p}`' for p in machine) if machine else '`laser_v2/out/trial_*.svg`')
+              + '**（不含註記）。黑＝切割、紅＝雕刻（全部是 0.2 mm 線，和原始檔一樣）：紅色圖層在雷切軟體設'
+              '「線／向量雕刻（低功率切割）」，**不要用填色／掃描**。repo 根目錄的試切 SVG 含隱藏註記層，是給人看的，不要直接上機。\n')
+    Lr.append('## 一、檔案與上雷切機設定\n')
+    Lr.append('- **上雷切機**：' + ('、'.join(f'`{p}`' for p in machine) if machine else '（沒有）')
+              + '：每張板一個檔，只有「原始零件」「v2 修改」「v2 新增」3 個圖層，沒有註記層。')
+    Lr.append(f'- 試切 SVG（給人看）：`{files["svg"]}`（{len(sheets)} 頁，255×355；圖層同 v2 草稿：裁出來的局部在「v2 修改」，'
+              'v2 新零件與試切輔助件在「v2 新增」；多一個隱藏的「註記（不切割）」層），不要直接上機。')
     if files.get('pngs'):
         Lr.append('- 預覽圖：' + '、'.join(f'`{p}`' for p in files['pngs']))
-    Lr.append('- 顏色：黑 0.2 mm＝切割、紅＝雕刻（代號 TA-#24 等）、綠＝註記（不切割）。\n')
+    Lr.append('- 顏色：黑 0.2 mm 線＝切割；紅 0.2 mm 線＝雕刻（代號 TA-#24 等、定位框線、▲），雷切軟體設'
+              '「線／向量雕刻（低功率切割）」，不要用填色／掃描；綠＝註記（只在試切 SVG 的隱藏圖層）。')
+    Lr.append('- 零件內的順序：每個零件先寫雕刻，再寫孔與內部線，外框最後；雷切軟體照檔案順序切時零件不會先掉，'
+              '軟體會自己排序的話開「先切內部（inner first）」。')
+    Lr.append(f'- {X.LAYER_ORDER_TIP}。')
+    Lr.append(f'- {X.SMALL_TEXT_TIP}（兩個都在這張小樣上）。'
+              '刻不清楚時先調功率／速度；調了還是糊，回報是哪幾個字（放大字或改成較簡單的字，要先決定再改）。')
+    Lr.append('- 重跑時，`laser_v2/out` 裡產生器命名的 `trial_<材質>_<n>.svg`／`.png` 會被覆寫，這次沒有的會被移除'
+              '（SVG 還要檔頭有產生器註解才刪）；自己手改的檔請改名（例如加「_手改」）或存到別處。\n')
     Lr.append('## 二、用板\n')
     for s in sheets:
         ex, ey = s.extent
-        Lr.append(f'- {s.title}：{len(s.items)} 件，利用率 {s.util * 100:.1f}%（外框 {s.outer_area / s.area * 100:.1f}%），'
+        n_sp = sum(1 for pl in s.items if pl.spare)
+        Lr.append(f'- {s.title}：{len(s.items)} 件' + (f'（含備品 {n_sp} 件）' if n_sp else '')
+                  + f'，利用率 {s.util * 100:.1f}%（外框 {s.outer_area / s.area * 100:.1f}%），'
                   f'排到 x≤{ex:.0f}、y≤{ey:.0f}（板邊留 {params.SHEET_MARGIN:g} mm，'
                   f'用 {s.w:g}×{math.ceil(ey + params.SHEET_MARGIN):g} 的板也切得下）。')
     n_items = sum(int(getattr(p, 'qty', 1) or 1) for p in tparts)
-    Lr.append(f'\n共 {len(tparts)} 種、{n_items} 件。spec 建議 MDF 和合板各切一次（保留條 2.3 會不會燒斷），'
-              '每種板材各切 1 份。\n')
+    n_sp_all = sum(1 for s in sheets for pl in s.items if pl.spare)
+    Lr.append(f'\n共 {len(tparts)} 種、{n_items} 件' + (f'（另備品 {n_sp_all} 件）' if n_sp_all else '')
+              + '。spec 建議 MDF 和合板各切一次（保留條 2.3 會不會燒斷），每種板材各切 1 份。')
+    sp = [p for p in tparts if int(getattr(p, 'spare', 0) or 0)]
+    if sp:
+        placed = {}
+        for s in sheets:
+            for pl in s.items:
+                if pl.spare:
+                    placed[pl.part.id] = placed.get(pl.part.id, 0) + 1
+        Lr.append('\n**備品已排進切割檔**（和正式檔同一規則：外包兩邊都 <10 mm 的極小零件每套多一整份，不加張數）：'
+                  + '、'.join(f'{p.id}×{placed.get(p.id, 0)}' + ('' if placed.get(p.id, 0) == p.spare else f'（應 {p.spare}）')
+                             for p in sp) + '。切完和正式件分開收，掉進蜂巢的直接用備品。')
+        un = L.unplaced_spares(sheets)
+        if un:
+            Lr.append(f'\n**放不下的備品（沒有排，不加張數）**：' + '、'.join(un))
+    Lr.append('')
 
     Lr.append('## 三、每一片\n')
     Lr.append('代號雕在零件上：TA／TB 是小樣的組別（不是 spec 的 T 編號）。裁切範圍用組裝座標（frames.py：U 往左、'
@@ -1018,6 +1102,7 @@ def write_report(path: Path, tparts, tinfo, sheets, rows, qa_rows, files: dict, 
         Lr.append('')
 
     Lr.append('## 四、怎麼組、怎麼測\n')
+    Lr.append('組裝提醒：感測器排線貼 S10／S50（TA 組）、S1（TB 組）標籤，依標籤裝站（#24 正面不刻站名）。\n')
     Lr.append('**TA 組（機身左段）**')
     Lr.append(f'1. TA-#24 疊在 TA-#26 前面（雕刻面朝前），左下兩個 #21 齒孔插 TA-PIN（前露 1、後露 3）。')
     Lr.append('2. TA-#6、TA-#5（雕刻面朝右，也就是 U 小、轉盤那一側）的前小榫插 TA-#26（#6 兩支、#5 一支），'
@@ -1076,18 +1161,26 @@ def write_report(path: Path, tparts, tinfo, sheets, rows, qa_rows, files: dict, 
                   f'{_md(r["note"])} |')
     Lr.append('')
     qb = qa.failures(qa_rows)
-    Lr.append(f'**qa.check（雷切檔衛生）**：{len(qa_rows) - len(qb)}/{len(qa_rows)} 項通過。\n')
+    Lr.append(f'**qa.check（雷切檔衛生）**：試切 SVG {len(qa_rows) - len(qb)}/{len(qa_rows)} 項通過。\n')
     Lr.append('| 項目 | 結果 | 說明 |')
     Lr.append('|---|---|---|')
     for q in qa_rows:
         flag = 'OK' if q['ok'] else ('注意' if q.get('level') == 'warn' else '**未通過**')
         Lr.append(f'| {_md(q["name"])} | {flag} | {_md(q["detail"])} |')
     Lr.append('')
+    if files.get('qa_sheets'):
+        Lr.append('上雷切機用的分頁檔（分頁檔規則：只有 3 個圖層、沒有註記層、沒有綠色）：')
+        for name, qrows in files['qa_sheets'].items():
+            b = qa.failures(qrows)
+            Lr.append(f'- `{name}`：{len(qrows) - len(b)}/{len(qrows)} 項通過' +
+                      ('' if not b else '；未通過：' + '；'.join(f'{q["name"]}（{_md(q["detail"])}）' for q in b)))
+        Lr.append('')
     Lr.append('## 七、待決（照預設產生）\n')
     Lr.append('- 待決：試切板材（照預設：spec 建議 MDF 與合板各切一次，比較保留條 2.3）。')
     Lr.append('- 待決：模組、TM1637、擴展板都還沒實量（照預設：params.py 暫定值；實量後重跑再切）。')
-    Lr.append('- 待決：支架、定位銷、TA-#24 連接條是試切專用設計（照預設：放進小樣，實機不用）。')
-    Lr.append(f'\n產生耗時 {elapsed:.1f} s。')
+    Lr.append('- 待決：支架、定位銷、TA-#24 連接條是試切專用設計（照預設：放進小樣，實機不用）。\n')
+    Lr.extend(X.params_used_section('## 八、本次使用的參數（laser_v2/params.py，產生這份小樣時的值）'))
+    Lr.append(f'產生耗時 {elapsed:.1f} s。')
     path.write_text('\n'.join(Lr) + '\n', encoding='utf-8')
 
 
@@ -1097,10 +1190,12 @@ def remove_stale(out_root, out_dir) -> list[Path]:
     out_root = Path(out_root) if out_root else REPO
     out_dir = Path(out_dir) if out_dir else REPO / 'laser_v2' / 'out'
     removed = []
-    for f in [out_root / TRIAL_SVG, out_dir / REPORT_NAME] + sorted(out_dir.glob('trial_*.png')):
+    for f in (out_root / TRIAL_SVG, out_dir / REPORT_NAME):
         if f.is_file():
             f.unlink()
             removed.append(f)
+    # trial_<材質>_<n>.svg／.png：只刪產生器自己的命名（SVG 還要有產生器檔頭註解）；使用者的複本、手改檔不動
+    removed += X.remove_stale_outputs(out_dir, 'trial', ())[0]
     return removed
 
 
@@ -1146,8 +1241,8 @@ def run(parts: list, results: dict, cat: dict | None = None, out_root=None, out_
             print('[trial] 草稿已更新；試切小樣沒有產生，上一次的舊檔已移除：'
                   + ('、'.join(str(p) for p in removed) if removed else '（沒有舊檔）'))
             print(f'      {report}（寫明原因）')
-        return dict(svg=None, report=report, pngs=[], sheets=[], parts=[], rows=[row], qa=[], failures=[row],
-                    qa_failures=[], info=None, removed=removed)
+        return dict(svg=None, report=report, pngs=[], sheet_svgs=[], sheets=[], parts=[], rows=[row], qa=[],
+                    qa_sheets={}, failures=[row], qa_failures=[], info=None, removed=removed)
     try:
         from . import mods_crosstrack
         if cat is None:
@@ -1161,10 +1256,11 @@ def run(parts: list, results: dict, cat: dict | None = None, out_root=None, out_
     sheets = L.layout(tparts, verbose=False)
     rows += check_layout(sheets, tparts)
     res = write_outputs(sheets, tparts, out_root, out_dir, png=png)
-    keep = {Path(f).resolve() for f in res['pngs']}
-    for f in sorted(out_dir.glob('trial_*.png')):     # 這次沒有重畫的舊預覽圖（張數變少或 --no-png）會和小樣對不上
-        if f.resolve() not in keep:
-            f.unlink()
+    # 這次沒有重寫的舊檔（張數變少或 --no-png）會和小樣對不上；只刪產生器自己的命名（使用者的複本、手改檔不動）
+    _, stale_kept = X.remove_stale_outputs(out_dir, 'trial', res['pngs'] + res['sheet_svgs'], {s.material for s in sheets})
+    for f in stale_kept:
+        print(f'[trial] 提醒：{f.name} 的檔名像上一次的試切分頁檔，但檔頭沒有產生器註解（可能是手改過的），沒有刪；'
+              '這次沒有這張板，不要拿它去切', file=sys.stderr)
 
     def rel(p: Path) -> str:
         try:
@@ -1173,23 +1269,33 @@ def run(parts: list, results: dict, cat: dict | None = None, out_root=None, out_
             return str(p)
     report = out_dir / REPORT_NAME
     write_report(report, tparts, tinfo, sheets, rows, res['qa'],
-                 dict(svg=rel(res['svg']), pngs=[rel(p) for p in res['pngs']]), time.time() - t0)
+                 dict(svg=rel(res['svg']), pngs=[rel(p) for p in res['pngs']],
+                      sheet_svgs=[rel(p) for p in res['sheet_svgs']], qa_sheets=res['qa_sheets']),
+                 time.time() - t0)
     fails = [r for r in rows if r['ok'] is False]
     qfails = qa.failures(res['qa'])
+    for name, qrows in res['qa_sheets'].items():
+        qfails += [dict(r, name=f'{name}：{r["name"]}') for r in qa.failures(qrows)]
     if verbose:
         n_items = sum(int(getattr(p, 'qty', 1) or 1) for p in tparts)
-        print(f'試切小樣：{len(tparts)} 種、{n_items} 件；' + '、'.join(
+        n_sp = sum(1 for s in sheets for pl in s.items if pl.spare)
+        print(f'試切小樣：{len(tparts)} 種、{n_items} 件' + (f'＋備品 {n_sp} 件' if n_sp else '') + '；' + '、'.join(
             f'{s.title} 利用率 {s.util * 100:.1f}%' for s in sheets))
         for r in fails:
             print(f'[trial] 未通過 [{r["piece"]}] {r["name"]}：{r["value"]}（期望 {r["expected"]}）'
                   + (f'；{r["note"]}' if r['note'] else ''))
         for q in qfails:
             print(f'[trial] QA 未通過：{q["name"]}：{q["detail"]}')
-        print(f'試切檢查 {len(rows)} 項（未通過 {len(fails)}）；QA {len(res["qa"]) - len(qfails)}/{len(res["qa"])}')
+        print(f'試切檢查 {len(rows)} 項（未通過 {len(fails)}）；QA（試切 SVG）'
+              f'{len(res["qa"]) - len(qa.failures(res["qa"]))}/{len(res["qa"])}、分頁檔 {len(res["qa_sheets"])} 個'
+              + ('' if len(qfails) == len(qa.failures(res['qa'])) else '（有未通過）'))
         print(f'輸出：{res["svg"]}')
+        for f in res['sheet_svgs']:
+            print(f'      {f}（上雷切機用，不含註記）')
         print(f'      {report}')
-    return dict(svg=res['svg'], report=report, pngs=res['pngs'], sheets=sheets, parts=tparts, rows=rows,
-                qa=res['qa'], failures=fails, qa_failures=qfails, info=tinfo)
+    return dict(svg=res['svg'], report=report, pngs=res['pngs'], sheet_svgs=res['sheet_svgs'], sheets=sheets,
+                parts=tparts, rows=rows, qa=res['qa'], qa_sheets=res['qa_sheets'], failures=fails,
+                qa_failures=qfails, info=tinfo)
 
 
 def final_parts():

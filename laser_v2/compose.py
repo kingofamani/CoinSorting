@@ -38,6 +38,9 @@ delete_cut 只把那個孔補成實心，不算碰到別的子路徑。
   重生後若和原始環完全相同（例如 edit 在大孔裡面、沒有實際改到邊），仍輸出原始 d。
 * 被碰到的開放切割線：落在 subtract（或平移後的孔）裡的部分裁掉，其餘同上（遠離的線段保留原曲線）；
   被裁成好幾段就輸出好幾條。落在 union 加料區裡要警告（切線會切在加料上），線本身不改。
+* 重生的子路徑（環與裁過的開放線）和新零件的外框／孔：長度 < MIN_SEG（0.001 mm）的線段刪掉
+  （GEOS 節點幾乎重合造成；相鄰線段的端點接過去，閉合不變）。沒被碰到的原始 d 一律不動。
+  刪掉的段數記在 V2Part.stats['short_dropped']。
 * cut_d 的順序：外框、孔（依原始順序；合併的環放在其中最前面那個孔的位置；全新的孔放最後）、開放線。
 * cut_src：
   - 保留的子路徑用原始 src。translate_cut 只平移、沒被碰到的孔也維持原 src（d 是平移後的原始曲線，
@@ -55,21 +58,30 @@ delete_cut 只把那個孔補成實心，不算碰到別的子路徑。
 
 雕刻
 ----
+* 樣式（使用者 2026-10-08 決定 2）：所有 v2 新增雕刻一律 STYLE_ENGRAVE＝'fill:none;stroke:#ff0000;stroke-width:0.2'，
+  和原始檔的雕刻完全相同；紅色圖層在雷切軟體設「線／向量雕刻」。
 * move_engrave 用 catalog.transform_engrave 平移整個元素；delete_engrave 刪除；
-  add_engrave 的 d 包成 <path style="fill:none;stroke:#ff0000;stroke-width:0.2">（和原始雕刻相同；
-  edit 可帶 style 覆寫）；add_engrave_text 用 textpath.text_to_d 轉成 <path style="fill:#ff0000;stroke:none">，
-  輸出不會有 <text>。新增雕刻的 data-src 是 'new-engrave-k'／'text:文字'。
+  add_engrave 的 d 包成 <path style=STYLE_ENGRAVE>（edit 帶別的 style 會被忽略並警告）；
+  add_engrave_text 用 textpath.text_to_d 轉成外框線字 <path style=STYLE_ENGRAVE>（每個輪廓都封閉，
+  中空字的外框與字腔都會刻），輸出不會有 <text>。新增雕刻的 data-src 是 'new-engrave-k'／'text:文字'。
 * 雕刻（套完雕刻操作之後）的 bbox 和 subtract 挖掉的區域相交 → 警告（子系統應該先 move_engrave）。
   新增的文字或平移後的雕刻跑到零件外或壓到孔 → 警告。
+* 新增的字（修改零件的 add_engrave_text、新零件的 texts）：字墨離最終切割線（外框、孔、開放線）
+  < TEXT_CLEAR（1.0）、離其他雕刻線或別的字 < ENGRAVE_GAP（0.4）、字形輪廓線雕有問題
+  （textpath.outline_problems）→ 警告。量到的距離記在 V2Part.stats['texts']
+  （[(data-src, 離切割, 離其他雕刻), …]）。
 
 新零件（new_parts）
 ------------------
-geom（Polygon，可含孔）→ 外框＋孔的折線 d；engrave（d 字串）→ 線雕刻；texts → 文字填色雕刻。
+geom（Polygon，可含孔）→ 外框＋孔的折線 d；engrave（d 字串）→ 線雕刻；texts → 外框線字雕刻（同樣式）。
 num=0、page=0、layer='new'，qty、group、material（'合板'／'壓克力'）照子系統給的值。
+spare（選用，整數 ≥0，預設 0；使用者 2026-10-08 決定 3）：每套另外多切的備品數，放到 V2Part.spare；
+layout 排 qty＋spare 份，parts.csv 分開列「備品」。
 
 V2Part 額外欄位
 ---------------
-INTERFACE.md 規定的 layer／name／qty／tags／group 之外，另有 orig_id（改代號前的代號）、applied（套用紀錄）、
+INTERFACE.md 規定的 layer／name／qty／tags／group 之外，另有 spare（每套備品數，原始零件 0）、
+orig_id（改代號前的代號）、applied（套用紀錄）、
 n_regen／n_kept（重生／原樣保留的切割子路徑數）、warnings、stats（保留曲線段數、折線段數、消失的孔…）。
 原始零件的 name 用 frames 裡的說明（例如 #24「前面板」），沒有的用代號。
 
@@ -95,6 +107,7 @@ import math
 import re
 from dataclasses import dataclass, field
 
+import shapely
 from shapely.geometry import LineString, Point, Polygon, box
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import linemerge, nearest_points, unary_union
@@ -112,6 +125,7 @@ SLIVER_AREA = 0.01    # mm²：小於此值的碎塊、微小孔丟掉並警告
 THIN_W = 0.02         # mm：edit 附近寬度小於此值的細縫、尖刺要警告
 WEB_WARN = 1.0        # mm：edit 造成、比這個窄的料要警告（設計規格的 min_web 是 2.0）
 MIN_PIECE = 0.01      # mm：開放線裁切後短於此值的碎段丟掉
+MIN_SEG = 0.001       # mm：重生／新產生的子路徑裡短於此值的線段刪掉（GEOS 節點幾乎重合造成的長度 0 線段）
 RING_MATCH_AREA = 1e-4  # mm²：座標被 GEOS 微調時，用面積差判斷「同一個環」
 
 CUT_OPS = ('delete_cut', 'translate_cut', 'union', 'subtract')
@@ -123,8 +137,12 @@ REQUIRED = {
     'move_engrave': ('part', 'src', 'dx', 'dy'), 'delete_engrave': ('part', 'src'),
     'add_engrave': ('part', 'd'), 'add_engrave_text': ('part', 'text', 'x', 'y', 'size'),
 }
-STYLE_ENGRAVE_LINE = f'fill:none;stroke:{params.STROKE_ENGRAVE_COLOR};stroke-width:0.2'
-STYLE_ENGRAVE_FILL = f'fill:{params.STROKE_ENGRAVE_COLOR};stroke:none'
+# 雕刻樣式（使用者 2026-10-08 決定 2）：和原始檔一樣，紅色 0.2 mm 線；v2 新增的字也是外框線字（不填色）。
+# 紅色圖層在雷切軟體設「線／向量雕刻」。所有 v2 新增雕刻（線、記號、文字）都用這一個樣式；qa 以它為準。
+STYLE_ENGRAVE = f'fill:none;stroke:{params.STROKE_ENGRAVE_COLOR};stroke-width:0.2'
+STYLE_ENGRAVE_LINE = STYLE_ENGRAVE     # 舊名（相容）；2026-10-08 起不再有填色樣式
+TEXT_CLEAR = textpath.TEXT_CLEAR       # mm：v2 新增的字，字墨離任何切割線的下限（不足時發警告）
+ENGRAVE_GAP = textpath.ENGRAVE_GAP     # mm：字墨離其他雕刻線的下限（不足時發警告）
 LAYERS = ('original', 'modified', 'new')
 
 DEFECT_SYS = '原始檔修正'
@@ -154,6 +172,7 @@ class V2Part(_cat.Part):
     n_kept: int = 0                    # 原樣保留的切割子路徑數（含只平移的孔）
     warnings: list[str] = field(default_factory=list)
     stats: dict = field(default_factory=dict)          # 細節：保留曲線段數、折線段數、消失的孔…
+    spare: int = 0                     # 每套另外多切的備品數（決定 3；layout 排 qty＋spare 份）
 
     def svg_fragment(self, cut_style: str = params.STROKE_CUT, group_id: str | None = None) -> str:
         gid = group_id or 'part-' + re.sub(r'[^0-9A-Za-z_-]+', '_', self.id).strip('_')
@@ -236,13 +255,77 @@ def _elem_d(elem: str) -> str | None:
     return m.group(1) if m and re.match(r'\s*<path\b', elem) else None
 
 
-def _ring_d(coords) -> str:
-    """shapely 環座標 → 'M … L … Z'（catalog 的數字格式）。"""
+def _dedupe_ring(coords) -> tuple[list, int]:
+    """環座標去掉和前一點距離 < MIN_SEG 的點（含最後一點和第一點），回傳 (點, 刪掉的點數)。"""
     pts = list(coords)
     if len(pts) > 1 and pts[0] == pts[-1]:
         pts = pts[:-1]
+    out = []
+    for p in pts:
+        if out and math.hypot(p[0] - out[-1][0], p[1] - out[-1][1]) < MIN_SEG:
+            continue
+        out.append(p)
+    while len(out) > 3 and math.hypot(out[-1][0] - out[0][0], out[-1][1] - out[0][1]) < MIN_SEG:
+        out.pop()
+    if len(out) < 3:            # 退化（不該發生）：保留原樣
+        return pts, 0
+    return out, len(pts) - len(out)
+
+
+def _ring_d(coords, stat: dict | None = None) -> str:
+    """shapely 環座標 → 'M … L … Z'（catalog 的數字格式）。長度 < MIN_SEG 的線段（幾乎重合的點）刪掉。"""
+    pts, n = _dedupe_ring(coords)
+    if stat is not None:
+        stat['short_dropped'] = stat.get('short_dropped', 0) + n
     f = _cat._f
     return 'M ' + ' L '.join(f'{f(x)},{f(y)}' for x, y in pts) + ' Z'
+
+
+def _seg_short(seg) -> bool:
+    """線段長度 < MIN_SEG（曲線看端點與控制點都擠在 MIN_SEG 內）。"""
+    if abs(seg.end - seg.start) >= MIN_SEG:
+        return False
+    if isinstance(seg, Line):
+        return True
+    if isinstance(seg, Arc):
+        return abs(seg.delta) < 1e-6 or max(abs(seg.radius.real), abs(seg.radius.imag)) * abs(math.radians(seg.delta)) < MIN_SEG
+    return all(abs(p - seg.start) < MIN_SEG for p in seg.bpoints())
+
+
+def _with_start(seg, z: complex):
+    """同一條線段，起點換成 z（只用在刪掉 < MIN_SEG 的線段後接起相鄰線段，位移 < MIN_SEG）。"""
+    if isinstance(seg, Line):
+        return Line(z, seg.end)
+    if isinstance(seg, QuadraticBezier):
+        return QuadraticBezier(z, seg.control, seg.end)
+    if isinstance(seg, CubicBezier):
+        return CubicBezier(z, seg.control1, seg.control2, seg.end)
+    if isinstance(seg, Arc):
+        return Arc(z, seg.radius, seg.rotation, seg.large_arc, seg.sweep, seg.end)
+    raise TypeError(type(seg))
+
+
+def _drop_short(segs: list, closed: bool) -> tuple[list, int]:
+    """刪掉長度 < MIN_SEG 的線段，下一段的起點接到被刪那段的起點（閉合環最後再把第一段接到最後一段的終點）。
+    回傳 (線段, 刪掉的段數)；全部都太短時原樣回傳。"""
+    out: list = []
+    n = 0
+    carry = None                  # 被刪線段的起點：下一段要從這裡開始
+    for s in segs:
+        if _seg_short(s):
+            n += 1
+            if carry is None:
+                carry = s.start
+            continue
+        if carry is not None:
+            s = _with_start(s, carry) if out else s     # 開頭被刪：直接從下一段的起點開始
+            carry = None
+        out.append(s)
+    if not out:
+        return list(segs), 0
+    if closed and out[-1].end != out[0].start:
+        out[0] = _with_start(out[0], out[-1].end)
+    return out, n
 
 
 # ---------------------------------------------------------------------------
@@ -435,7 +518,15 @@ def _clip_open(sub: _Sub, clip) -> tuple[list[str], int, int]:
         else:
             chains.append(list(segs))
         end = s1
-    return [_cat.path_to_d(SvgPath(*c), closed=False) for c in chains if c], nk, nl
+    out, nshort = [], 0
+    for c in chains:
+        if not c:
+            continue
+        c, k = _drop_short(c, closed=False)
+        nshort += k
+        out.append(_cat.path_to_d(SvgPath(*c), closed=False))
+    sub.n_short = nshort
+    return out, nk, nl
 
 
 # ---------------------------------------------------------------------------
@@ -680,7 +771,8 @@ def _apply_cut(part: _cat.Part, ops: dict, log: list[str], warns: list[str]) -> 
                 for k, p in enumerate(smp):
                     kept_idx.setdefault(p, []).append((s, j, k, m))
     out: list[tuple[tuple, str, str, bool]] = []    # (排序鍵, d, src, closed)
-    stats = dict(kept_segments=0, poly_lines=0, vanished=[], filled=[], regen_src=[], new_src=[], touched=[])
+    stats = dict(kept_segments=0, poly_lines=0, vanished=[], filled=[], regen_src=[], new_src=[], touched=[],
+                 short_dropped=0)
     in_regen: set[_Sub] = set()
     regen_info = []
     for ri, rk, coords in regen:
@@ -716,6 +808,8 @@ def _apply_cut(part: _cat.Part, ops: dict, log: list[str], warns: list[str]) -> 
             log.append(f'孔 {s.src} 消失（併進外框缺口）')
     n_new = 0
     for ri, rk, coords, segs, contrib in regen_info:
+        segs, k = _drop_short(segs, closed=True)
+        stats['short_dropped'] += k
         d = _cat.path_to_d(SvgPath(*segs), closed=True)
         if rk == 'ext':
             key = (0, 0)
@@ -754,6 +848,7 @@ def _apply_cut(part: _cat.Part, ops: dict, log: list[str], warns: list[str]) -> 
         ds, nk, nl = _clip_open(s, clip)
         stats['kept_segments'] += nk
         stats['poly_lines'] += nl
+        stats['short_dropped'] += getattr(s, 'n_short', 0)
         if not ds:
             stats['vanished'].append(s.src)
             log.append(f'開放切割線 {s.src} 整條被挖掉')
@@ -783,9 +878,62 @@ def _engrave_elem(d: str, src: str, style: str, text: str | None = None) -> str:
 
 
 def _text_elem(t: dict, src: str) -> str:
+    """文字 → 外框線字 <path>（STYLE_ENGRAVE；每個輪廓都封閉，中空字的外框與字腔都會刻）。"""
     d = textpath.text_to_d(str(t['text']), float(t['x']), float(t['y']), float(t['size']),
                            float(t.get('angle', 0.0) or 0.0), t.get('anchor', 'start') or 'start')
-    return _engrave_elem(d, src, STYLE_ENGRAVE_FILL, str(t['text']))
+    return _engrave_elem(d, src, STYLE_ENGRAVE, str(t['text']))
+
+
+def _restyle(elem: str) -> tuple[str, bool]:
+    """現成的雕刻元素 → 樣式換成 STYLE_ENGRAVE。回傳 (元素, 原本樣式是否不同)。"""
+    m = re.search(r'\bstyle="([^"]*)"', elem)
+    if m:
+        return elem[:m.start(1)] + STYLE_ENGRAVE + elem[m.end(1):], m.group(1) != STYLE_ENGRAVE
+    return re.sub(r'^(\s*<\w+)', lambda q: f'{q.group(1)} style="{STYLE_ENGRAVE}"', elem, count=1), True
+
+
+def _d_lines(d: str, tol: float = 0.01) -> list[LineString]:
+    """d（可含多個子路徑）→ 取樣的 LineString（雕刻線、切割線的距離檢查用）。"""
+    out = []
+    for sp in parse_path(d).continuous_subpaths():
+        pts: list = []
+        for seg in sp:
+            q = _flatten(seg, tol)
+            pts.extend(q if not pts else q[1:])
+        if len(pts) >= 2:
+            out.append(LineString(pts))
+    return out
+
+
+def _check_texts(engrave, esrc, geom, cut_d, cut_closed, warns: list[str]) -> list[tuple]:
+    """v2 新增的字（data-src 'text:…'）：字墨離最終切割線 ≥ TEXT_CLEAR、離其他雕刻線與別的字 ≥ ENGRAVE_GAP、
+    字形輪廓線雕沒問題；不合格發警告。回傳 [(src, 離切割, 離其他雕刻或字), …]（mm，取 3 位）。"""
+    texts = [(el, s) for el, s in zip(engrave, esrc) if s.startswith('text:')]
+    if not texts:
+        return []
+    cuts = [geom.boundary] + [ln for d, cl in zip(cut_d, cut_closed) if not cl for ln in _d_lines(d)]
+    cut_u = unary_union(cuts)
+    others = [ln for el, s in zip(engrave, esrc) if not s.startswith('text:') and (d := _elem_d(el)) is not None
+              for ln in _d_lines(d)]
+    oth = unary_union(others) if others else None
+    regs = {s: _d_region(_elem_d(el)) for el, s in texts}
+    out = []
+    for el, s in texts:
+        reg = regs[s]
+        dc = float(reg.distance(cut_u))
+        de = [float(reg.distance(oth))] if oth is not None else []
+        de += [float(reg.distance(r2)) for s2, r2 in regs.items() if s2 != s]
+        de_min = min(de) if de else None
+        name = s[5:]
+        if dc < TEXT_CLEAR - 1e-6:
+            warns.append(f'新增的字「{name}」離切割線只有 {dc:.2f} mm（要求 ≥{TEXT_CLEAR:g}）')
+        if de_min is not None and de_min < ENGRAVE_GAP - 1e-6:
+            warns.append(f'新增的字「{name}」離其他雕刻只有 {de_min:.2f} mm（要求 ≥{ENGRAVE_GAP:g}，不可壓到框線或記號）')
+        m = re.search(r'data-text="([^"]*)"', el)
+        for msg in textpath.outline_problems(html.unescape(m.group(1)) if m else name):
+            warns.append(f'新增的字「{name}」線雕問題：{msg}')
+        out.append((s, round(dc, 3), None if de_min is None else round(de_min, 3)))
+    return out
 
 
 def _uniq(src: str, used: set[str]) -> str:
@@ -821,7 +969,9 @@ def _apply_engrave(pid, engrave, esrc, ops, removed, geom, log, warns):
     for k, e in enumerate(ops['add_engrave']):
         src = _uniq(e.get('src') or f'new-engrave-{k + 1}', used)
         used.add(src)
-        engrave.append(_engrave_elem(str(e['d']), src, e.get('style') or STYLE_ENGRAVE_LINE))
+        if e.get('style') and e['style'] != STYLE_ENGRAVE:
+            warns.append(f'{_fmt_edit(e)} 帶的 style {e["style"]!r} 不用：v2 新增雕刻一律 STYLE_ENGRAVE')
+        engrave.append(_engrave_elem(str(e['d']), src, STYLE_ENGRAVE))
         esrc.append(src)
         added.add(src)
         log.append(f'{_fmt_edit(e)}：新增雕刻 {src}')
@@ -948,7 +1098,15 @@ def _new_part(spec: dict, sys_name: str) -> V2Part:
         raise ComposeError(f'〈{sys_name}〉新零件 {pid} 的 qty {spec.get("qty")!r} 不是整數') from None
     if qty < 1:
         raise ComposeError(f'〈{sys_name}〉新零件 {pid} 的 qty {qty} < 1')
-    cut_d = [_ring_d(g.exterior.coords)] + [_ring_d(r.coords) for r in g.interiors]
+    sp = spec.get('spare', 0)
+    try:
+        spare = int(sp or 0)
+    except (TypeError, ValueError):
+        raise ComposeError(f'〈{sys_name}〉新零件 {pid} 的 spare {sp!r} 不是整數') from None
+    if spare < 0 or spare != (sp or 0):
+        raise ComposeError(f'〈{sys_name}〉新零件 {pid} 的 spare {sp!r} 要是 ≥0 的整數')
+    st: dict = dict(sys=sys_name, n_texts=len(spec.get('texts') or []), short_dropped=0)
+    cut_d = [_ring_d(g.exterior.coords, st)] + [_ring_d(r.coords, st) for r in g.interiors]
     cut_src = [f'{pid}:outer'] + [f'{pid}:hole{k + 1}' for k in range(len(g.interiors))]
     engrave, esrc = [], []
     used: set[str] = set()
@@ -958,9 +1116,12 @@ def _new_part(spec: dict, sys_name: str) -> V2Part:
         if str(d).lstrip().startswith('<'):
             if '<text' in str(d):
                 raise ComposeError(f'〈{sys_name}〉新零件 {pid} 的 engrave 不可以是 <text>，請用 texts')
-            engrave.append(str(d).strip())
+            el, changed = _restyle(str(d).strip())
+            if changed:
+                warns.append(f'engrave{k + 1} 的樣式改成 STYLE_ENGRAVE（v2 新增雕刻一律紅色 0.2 mm 線）')
+            engrave.append(el)
         else:
-            engrave.append(_engrave_elem(str(d), src, STYLE_ENGRAVE_LINE))
+            engrave.append(_engrave_elem(str(d), src, STYLE_ENGRAVE))
         esrc.append(src)
     for t in spec.get('texts') or []:
         for f_ in ('text', 'x', 'y', 'size'):
@@ -974,13 +1135,14 @@ def _new_part(spec: dict, sys_name: str) -> V2Part:
         off = _d_region(_elem_d(el)).difference(g).area
         if off > 1e-3:
             warns.append(f'文字「{t["text"]}」有 {off:.2f} mm² 跑到零件外或壓到孔')
+    st['texts'] = _check_texts(engrave, esrc, g, cut_d, [True] * len(cut_d), warns)
     tag = spec.get('tag')
+    applied = [f'新增零件〈{sys_name}〉'] + ([f'每套另切備品 {spare} 個'] if spare else [])
     return V2Part(id=pid, num=0, page=0, material=material, cut_d=cut_d, engrave=engrave, geom=g,
                   bbox=tuple(float(v) for v in g.bounds), cut_src=cut_src, cut_closed=[True] * len(cut_d),
                   engrave_src=esrc, layer='new', name=str(spec.get('name') or pid), qty=qty,
                   tags=[tag] if tag else [], group=spec.get('group'), orig_id=None,
-                  applied=[f'新增零件〈{sys_name}〉'], n_regen=len(cut_d), n_kept=0, warnings=warns,
-                  stats=dict(sys=sys_name, n_texts=len(spec.get('texts') or [])))
+                  applied=applied, n_regen=len(cut_d), n_kept=0, warnings=warns, stats=st, spare=spare)
 
 
 def _as_original(p: _cat.Part, name: str) -> V2Part:
@@ -1009,6 +1171,9 @@ def _apply_part(p: _cat.Part, edits: list[dict], name: str) -> V2Part:
         engrave, esrc = list(p.engrave), list(p.engrave_src)
         if removed is not None:
             _apply_engrave(p.id, engrave, esrc, ops, removed, geom, log, warns)   # 只做檢查
+    if ops['add_engrave_text']:
+        stats = dict(stats)
+        stats['texts'] = _check_texts(engrave, esrc, geom, cut_d, cut_closed, warns)
     tags = []
     for e in edits:
         t = e.get('tag') or f"{e['op']}〈{e['_sys']}〉"
@@ -1133,7 +1298,7 @@ def compose_report(parts: list[V2Part]) -> str:
     for v in parts:
         idn = v.id if (v.orig_id in (None, v.id)) else f'{v.id}（原 {v.orig_id}）'
         tags = '；'.join(v.tags) if v.tags else '—'
-        L.append(f'| {idn} | {v.name} | {v.layer} | {v.qty} | {v.group or ""} | '
+        L.append(f'| {idn} | {v.name} | {v.layer} | {v.qty}{f"＋備品 {v.spare}" if v.spare else ""} | {v.group or ""} | '
                  f'{len(v.cut_d)}（{v.n_kept}／{v.n_regen}） | {len(v.engrave)} | {tags} |')
     for v in parts:
         if v.layer == 'original':
@@ -1155,8 +1320,13 @@ def compose_report(parts: list[V2Part]) -> str:
             if st.get('filled'):
                 L.append(f'- 被填實：{", ".join(st["filled"])}')
         else:
-            L.append(f'- 材質 {v.material}、每套 {v.qty} 個、外形 {v.size[0]:.2f}×{v.size[1]:.2f} mm、'
-                     f'孔 {len(v.cut_d) - 1}、雕刻 {len(v.engrave)}')
+            L.append(f'- 材質 {v.material}、每套 {v.qty} 個' + (f'（另切備品 {v.spare} 個）' if v.spare else '')
+                     + f'、外形 {v.size[0]:.2f}×{v.size[1]:.2f} mm、孔 {len(v.cut_d) - 1}、雕刻 {len(v.engrave)}')
+        if st.get('short_dropped'):
+            L.append(f'- 刪掉長度 < {MIN_SEG:g} mm 的線段 {st["short_dropped"]} 段（重生／新產生的子路徑）')
+        if st.get('texts'):
+            L.append('- 新增的字（字墨離切割／離其他雕刻，mm）：' + '；'.join(
+                f'「{s_[5:]}」{dc:.2f}／{"—" if de is None else f"{de:.2f}"}' for s_, dc, de in st['texts']))
         for a in v.applied:
             L.append(f'- {a}')
         for w in v.warnings:
@@ -1181,6 +1351,11 @@ def _cut_region(v, tol: float = 0.001) -> BaseGeometry:
     out = rings[0].difference(unary_union(rings[1:])) if len(rings) > 1 else rings[0]
     ps = _polygons(out)
     return ps[0] if len(ps) == 1 else unary_union(ps)
+
+
+def _segments_all(d: str) -> list:
+    """d（可含多個子路徑）的所有線段（不拿掉長度 0 的線段；檢查用）。"""
+    return list(parse_path(d))
 
 
 def _fine_ring(d: str, tol: float = 0.0002) -> LineString:
@@ -1289,7 +1464,10 @@ def _selftest() -> list[str]:
     hand = (xe - 3.0) * 10 - (12.0 - xe) * 10 - (6.5 * 5.0 - a8) - (4 * 3 - (19.3879 - 18.0) * 3.0) - 16 - 16
     chk(abs(got - hand) < 0.05, f'面積變化和手算一致 {hand:+.3f}（左緣 x={xe:.4f}：+加料 −缺口 −吞孔(6.5×5−孔) −併孔 −16 新孔 −16 挖雕刻）')
     R = _cut_region(v, FLAT_TOL)
-    chk(R.symmetric_difference(v.geom).area < 1e-3, f'輸出 d（同樣取樣）重建的區域與 geom 差 {R.symmetric_difference(v.geom).area:.2e} mm²')
+    hd_R = float(shapely.hausdorff_distance(R.boundary, v.geom.boundary, densify=0.5))
+    chk(R.symmetric_difference(v.geom).area < 0.01 and hd_R <= 2 * MIN_SEG,
+        f'輸出 d（同樣取樣）重建的區域與 geom 差 {R.symmetric_difference(v.geom).area:.2e} mm²、邊界最大差 {hd_R:.4f} mm'
+        f'（刪掉 {v.stats.get("short_dropped", 0)} 段 < {MIN_SEG} mm 的線段，位置差 < {MIN_SEG}）')
     ref = [_fine_ring(p24.cut_d[0]), notch.exterior, tab.exterior]
     err = _outer_ring_err(v, ref)
     chk(err < 0.02, f'重生外框每段端點與中點離原外框／edit 邊界最多 {err:.4f} mm（≤0.02）')
@@ -1301,10 +1479,16 @@ def _selftest() -> list[str]:
     b0, b1 = _d_bbox(_elem_d(e_old)), _d_bbox(_elem_d(e_new))
     chk(all(abs(b1[i] - b0[i] - (0, -5, 0, -5)[i]) < 1e-3 for i in range(4)), 'move_engrave：text16-7-2 平移 (0,-5)')
     et = v.engrave[v.engrave_src.index('text:S50')]
-    chk(STYLE_ENGRAVE_FILL in et and '<text' not in ''.join(v.engrave), '新增文字轉成填色 <path>，沒有 <text>')
+    chk(f'style="{STYLE_ENGRAVE}"' in et and STYLE_ENGRAVE == 'fill:none;stroke:#ff0000;stroke-width:0.2'
+        and '<text' not in ''.join(v.engrave), '新增文字轉成外框線字 <path>（STYLE_ENGRAVE＝紅色 0.2 mm 線，不填色），沒有 <text>')
+    st_txt = dict((a, b) for a, b, _ in v.stats.get('texts', []))
+    chk('text:S50' in st_txt, f"stats['texts'] 記下新增字離切割線的距離（「S50」{st_txt.get('text:S50')} mm）")
     chk(any('text2-1-3' in w and '挖到' in w for w in v.warnings), '雕刻被 subtract 挖到有警告（text2-1-3）')
     chk(any('測試槽內' in w and '沒有作用' in w for w in v.warnings), '在孔裡的 subtract 警告「沒有作用」')
-    chk(not any('S50' in w for w in v.warnings), '新增文字沒有壓到孔')
+    chk(not any('S50' in w and ('跑到零件外' in w or '壓到孔' in w) for w in v.warnings), '新增文字沒有壓到孔')
+    shorts = [(q.id, src) for q in (v,) for src, d in zip(q.cut_src, q.cut_d) if src.endswith('*')
+              for sg in _segments_all(d) if abs(sg.end - sg.start) < MIN_SEG]
+    chk(not shorts, f'重生子路徑沒有長度 < {MIN_SEG} mm 的線段（{shorts[:3]}）')
     chk(set(v.tags) >= {'測試缺口', '測試加料', '測試吞孔', '測試移雕刻', '測試文字'} and v.layer == 'modified',
         f'layer=modified、tags 收齊（{len(v.tags)} 個）')
     # 弧線被切到：轉盤圓弧（左緣 x≈2.6）
@@ -1367,8 +1551,8 @@ def _selftest() -> list[str]:
     chk(nv.layer == 'new' and nv.num == 0 and nv.page == 0 and nv.qty == 2 and nv.group == 'S1-wall'
         and nv.material == '合板', f'新零件 layer={nv.layer} num={nv.num} page={nv.page} qty={nv.qty} group={nv.group} 材質={nv.material}')
     chk(len(nv.cut_d) == 2 and all(nv.cut_closed) and len(nv.engrave) == 3
-        and sum(STYLE_ENGRAVE_FILL in e for e in nv.engrave) == 2 and '<text' not in ''.join(nv.engrave),
-        f'新零件切割 {len(nv.cut_d)} 條（外框＋孔）、雕刻 {len(nv.engrave)}（文字 2 個轉成填色 path）')
+        and all(f'style="{STYLE_ENGRAVE}"' in e for e in nv.engrave) and '<text' not in ''.join(nv.engrave),
+        f'新零件切割 {len(nv.cut_d)} 條（外框＋孔）、雕刻 {len(nv.engrave)}（線 1＋文字 2，全部 STYLE_ENGRAVE 外框線）')
     chk(abs(_cut_region(nv).area - geom.area) < 0.05 and not nv.warnings, f'新零件面積 {_cut_region(nv).area:.3f}（geom {geom.area:.3f}），沒有警告')
     w = next(q for q in parts if q.id == 'S1-W')
     chk(w.material == '壓克力' and any('超出很多' in x for x in w.warnings), '文字超出零件有警告；材質壓克力')
@@ -1420,8 +1604,56 @@ def _selftest() -> list[str]:
             chk(key in str(ex), f'{label}：raise「{str(ex).splitlines()[0][:70]}…」' + (
                 f'／{str(ex).splitlines()[-1].strip()[:60]}' if len(str(ex).splitlines()) > 1 else ''))
 
+    # ⑦ 2026-10-08：備品 spare、雕刻樣式統一、字離切割線、長度 0 線段
+    print('\n⑦ 備品 spare、雕刻樣式、字的距離、短線段')
+    sq = box(0, 0, 3, 3)
+    res7 = {'t': dict(
+        edits=[dict(op='add_engrave', part='#24', d='M 60,170 L 64,170', style='fill:#ff0000;stroke:none', tag='測試樣式'),
+               dict(op='add_engrave_text', part='#24', text='S5', x=4.2, y=285.0, size=3, tag='測試貼邊字')],
+        new_parts=[dict(id='T-PIN', name='測試插銷', geom=sq, qty=2, spare=2),
+                   dict(id='T-TXT', name='測試字', geom=box(0, 0, 20, 8), qty=1,
+                        engrave=['M 2,6 L 18,6', '<path d="M 1,1 L 2,1" style="fill:#ff0000"/>'],
+                        texts=[dict(text='口回80', x=10, y=5.9, size=3, anchor='middle'),
+                               dict(text='B', x=0.6, y=3.0, size=2.5)])])}
+    parts7 = {q.id: q for q in compose(cat, res7, fix_defects=False)}
+    pin, tt, v24 = parts7['T-PIN'], parts7['T-TXT'], parts7['#24']
+    chk(pin.spare == 2 and pin.qty == 2 and tt.spare == 0 and parts7['#5'].spare == 0
+        and any('備品 2' in a for a in pin.applied), f'spare：T-PIN qty {pin.qty}＋備品 {pin.spare}；沒給的是 0；原始零件 0')
+    for bad_sp in (-1, 'x', 1.5):
+        try:
+            compose(cat, {'t': dict(new_parts=[dict(id='T-BAD', geom=sq, spare=bad_sp)])}, fix_defects=False)
+            chk(False, f'spare={bad_sp!r} 應該 raise')
+        except ComposeError as ex:
+            chk('spare' in str(ex), f'spare={bad_sp!r} raise：{ex}')
+    e_line = v24.engrave[v24.engrave_src.index('new-engrave-1')]
+    chk(f'style="{STYLE_ENGRAVE}"' in e_line and any('測試樣式' in w and '不用' in w for w in v24.warnings),
+        'add_engrave 帶別的 style：一律改成 STYLE_ENGRAVE 並警告')
+    chk(all(f'style="{STYLE_ENGRAVE}"' in e for e in tt.engrave) and any('engrave2' in w and '樣式' in w for w in tt.warnings),
+        '新零件現成的 <path> 雕刻元素：樣式換成 STYLE_ENGRAVE 並警告')
+    chk(any('「S5」離切割線只有' in w for w in v24.warnings), '修改零件上新增的字離切割線 < 1.0：警告')
+    chk(any('「B」離切割線只有' in w for w in tt.warnings) and any('「口回80」離其他雕刻只有' in w for w in tt.warnings),
+        '新零件：字貼邊（< 1.0）、字壓到雕刻線（< 0.4）都有警告')
+    el = tt.engrave[tt.engrave_src.index('text:口回80')]
+    dd = _elem_d(el)
+    n_sub = len(parse_path(dd).continuous_subpaths())
+    chk(n_sub == 2 + 4 + 3 + 2 and dd.count('Z') == n_sub, f'「口回80」外框線字 {n_sub} 個封閉輪廓（口 2、回 4、8 3、0 2：字腔都在）')
+    # 長度 0 線段：_drop_short、_ring_d
+    z = [Line(0j, 10 + 0j), Line(10 + 0j, 10.0004 + 0j), Line(10.0004 + 0j, 10 + 10j),
+         CubicBezier(10 + 10j, 7 + 12j, 3 + 12j, 0.0003 + 10j), Line(0.0003 + 10j, 10j), Line(10j, 0j)]
+    out, n = _drop_short(z, closed=True)
+    cont = all(out[i].end == out[i + 1].start for i in range(len(out) - 1)) and out[-1].end == out[0].start
+    chk(n == 2 and len(out) == 4 and cont and not any(abs(q.end - q.start) < MIN_SEG for q in out),
+        f'_drop_short（閉合）：刪 {n} 段（直線 0.0004、曲線後 0.0003），剩 {len(out)} 段、首尾相接')
+    out2, n2 = _drop_short([Line(0j, 0.0002 + 0j), Line(0.0002 + 0j, 5 + 0j), Line(5 + 0j, 5.0001 + 0j)], closed=False)
+    chk(n2 == 2 and len(out2) == 1 and abs(out2[0].start - 0.0002) < 1e-12, f'_drop_short（開放）：頭尾的短段刪掉（{n2}）')
+    stt: dict = {}
+    dr = _ring_d([(0, 0), (5, 0), (5.0003, 0), (5, 5), (0, 5), (0.0002, 0.0001), (0, 0)], stt)
+    chk(stt.get('short_dropped') == 2 and dr.count('L') == 3, f'_ring_d 去掉幾乎重合的點：{dr}')
+
     rep = compose_report(compose(cat, res, fix_defects=False))
     chk('#13R（原 #13）' in rep and 'S1-T' in rep, f'compose_report 產生 {len(rep.splitlines())} 行')
+    rep7 = compose_report(list(parts7.values()))
+    chk('2＋備品 2' in rep7 and '另切備品 2 個' in rep7, 'compose_report 列出備品')
     print(f'\n（全部測試 {time.time() - t0:.1f} s）')
     return errs
 

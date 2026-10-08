@@ -76,6 +76,7 @@ from svgpathtools import parse_path
 
 from . import frames as F
 from . import params as PR
+from . import textpath as TP
 
 REPO = FsPath(__file__).resolve().parents[1]
 DESIGN_DIR = REPO / 'laser_v2' / 'design' / 'crosstrack_final'
@@ -123,7 +124,7 @@ DESIGN = dict(
     div_text_size=3.0,                 # 隔板「S5 v2」字高（em，mm）
     div_text_at=(16.0, 21.5),          # 隔板文字中心偏好位置 (W', V)
     div_text_avoid=(-7.0, 4.0, 0.0, 33.0),   # 隔板文字避開 W'、V 範圍（電子盒會減 #5 前上角 W'≤2、V≤30.31）
-    c1_text_sizes=(2.5, 2.2, 2.0, 1.8),
+    c1_text_sizes=(3.0, 2.8, 2.5, 2.2, 2.1, 2.0, 1.8),   # C1 站名 em（依序試；字墨離切割 ≥1.0、離框線／▲ ≥0.4）
     engrave_edge=0.3,   # 新零件上的雕刻線離切割邊的最小距離
     # 2026-10-07 補（檢查與雕刻記號用，不改任何切割外形）
     locate_wall_min=0.4,  # 窄段下游壁（光束定位面）本體貼得到的高度下限＝n_sb−n_shoulder（名目 0.7）；
@@ -225,6 +226,14 @@ def page_affine(pid: str, axes=('U', 'V')) -> list[float]:
 
 def to_page(pid: str, g, axes=('U', 'V')):
     return affinity.affine_transform(g, page_affine(pid, axes))
+
+
+def _inv_affine(A) -> list[float]:
+    """shapely 仿射參數 [a,b,d,e,xoff,yoff] 的反變換。"""
+    a, b, d, e, xo, yo = (float(v) for v in A)
+    M = np.linalg.inv(np.array([[a, b], [d, e]]))
+    o = -M @ np.array([xo, yo])
+    return [M[0, 0], M[0, 1], M[1, 0], M[1, 1], o[0], o[1]]
 
 
 def _page_delta(pid: str, dA: float, dB: float, axes=('U', 'V')) -> tuple[float, float]:
@@ -623,44 +632,12 @@ def _cut_src_of(part, page_poly, tol=0.05):
     return None
 
 
-def _text_wh(text: str, size: float) -> tuple[float, float]:
-    """雕刻文字外框估計（微軟正黑體：英數約 0.62 em 寬、大寫高約 0.75 em；中文 1 em）。"""
-    cjk = [ch for ch in text if ord(ch) > 0x2E80]
-    w = sum((1.0 if ord(ch) > 0x2E80 else 0.62) * size for ch in text)
-    h = (0.9 if cjk else 0.75) * size
-    return w, h
-
-
-def _place_text(free, text, sizes, prefer=None, step=0.2):
-    """在 free（多邊形）裡找放得下文字外框的位置 → (size, cx, cy, w, h)；放不下回傳 None。"""
-    if free.is_empty:
-        return None
-    fz = free.buffer(1e-6)
-
-    def grid(lo, hi):
-        if hi < lo:
-            return []
-        n = max(1, int(math.ceil((hi - lo) / step)) + 1)
-        return [(lo + hi) / 2] if n == 1 else list(np.linspace(lo, hi, n))
-    for size in sizes:
-        w, h = _text_wh(text, size)
-        if prefer is not None:
-            cx, cy = prefer
-            if fz.contains(box(cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2)):
-                return size, cx, cy, w, h
-        x0, y0, x1, y1 = free.bounds
-        best = None
-        bnd = free.boundary
-        for cx in grid(x0 + w / 2, x1 - w / 2):
-            for cy in grid(y0 + h / 2, y1 - h / 2):
-                bb = box(cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2)
-                if fz.contains(bb):
-                    dd = bnd.distance(bb)
-                    if best is None or dd > best[0] + 1e-9:
-                        best = (dd, cx, cy)
-        if best:
-            return size, float(best[1]), float(best[2]), w, h
-    return None
+def _place_text(region, text, sizes, *, avoid=None, prefer=None, angles=(0.0,), step=0.2):
+    """在 region（零件實料，邊界＝切割線）放雕刻字：字墨外框離切割線 ≥ textpath.TEXT_CLEAR（1.0）、
+    離 avoid（黏貼框、▲ 記號、插銷方塊、要留空的區域）≥ textpath.ENGRAVE_GAP（0.4）。
+    sizes 依序試（先大字）；同一個字高下 angles 排前面的優先（橫排放得下就不直排）。
+    回傳 textpath.fit_text 的 dict（text/x/y/size/angle/anchor＋ink、slack）；放不下回傳 None。"""
+    return TP.fit_text(region, text, sizes, avoid=avoid, prefer=prefer, angles=angles, step=step, angle_penalty=100.0)
 
 
 def _clipped_outline_d(g, clip) -> str:
@@ -761,17 +738,18 @@ def _edits_and_parts(M: dict, cat: dict):
         if R['div_add'] is not None:
             g_new = g_new.union(R['div_add'])
         aw0, aw1, av0, av1 = P['div_text_avoid']
-        free = g_new.difference(box(aw0, av0, aw1, av1)).buffer(-1.0)
-        free = max(getattr(free, 'geoms', [free]), key=lambda g: g.area) if not free.is_empty else free
-        pl = _place_text(free, text, (P['div_text_size'], 2.5, 2.0), prefer=P['div_text_at'], step=0.5)
+        # 在頁座標排（字一律 angle 0、和頁面同向）：實料＝v2 外形，避開電子盒會再減的前上角
+        reg_pg = to_page(div, g_new, ('W', 'V'))
+        av_pg = to_page(div, box(aw0, av0, aw1, av1), ('W', 'V'))
+        pref = to_page(div, Point(*P['div_text_at']), ('W', 'V')).coords[0]
+        pl = _place_text(reg_pg, text, (P['div_text_size'], 2.5, 2.0), avoid=av_pg, prefer=pref, step=0.5)
         if pl is None:
             R['div_text'] = None
             continue
-        size, cW, cV, w, h = pl
-        x, y = to_page(div, Point(cW, cV + h / 2), ('W', 'V')).coords[0]
-        R['div_text'] = dict(text=text, W=cW, V=cV, size=size, box=box(cW - w / 2, cV - h / 2, cW + w / 2, cV + h / 2))
-        add('add_engrave_text', div, f"中心 W'{cW:.1f} V{cV:.1f}", text=text, x=round(x, 4), y=round(y, 4), size=size, angle=0.0,
-            anchor='middle', tag=f'{div} 雕刻「{text}」')
+        ink_wv = affinity.affine_transform(pl['ink'], _inv_affine(page_affine(div, ('W', 'V'))))
+        c = ink_wv.centroid
+        R['div_text'] = dict(text=text, W=c.x, V=c.y, size=pl['size'], box=ink_wv, clear=round(TP.TEXT_CLEAR + pl['slack'], 2))
+        add('add_engrave_text', div, f"中心 W'{c.x:.1f} V{c.y:.1f}", **TP.text_spec(pl), tag=f'{div} 雕刻「{text}」')
 
     # ---- 新零件 ----
     for k, R in S.items():
@@ -794,7 +772,11 @@ def _edits_and_parts(M: dict, cat: dict):
         R['c1_mark'] = None
         if not R['breaks_edge']:
             cb0, cb1 = c1.bounds[1], c1.bounds[3]
-            bump = p1_on_c1.intersection(box(c1.bounds[0] - 1, cb0 - 20.0, c1.bounds[2] + 1, cb0))
+            # 伸出 C1 上緣的才是頂住凸塊。P1 本體上緣和 C1 上緣同一條線（n_wing）：留 0.01，免得浮點誤差把整條
+            # 上緣當成凸塊（back_h＝2.0 時曾經整個 P1 寬都被當成凸塊，▲ 變成全寬、站名沒地方放）
+            bump = p1_on_c1.intersection(box(c1.bounds[0] - 1, cb0 - 20.0, c1.bounds[2] + 1, cb0 - 0.01))
+            bump = unary_union([q for q in getattr(bump, 'geoms', [bump]) if q.geom_type == 'Polygon' and q.area > 1e-3]) \
+                if not bump.is_empty else bump
             g_ = P['c1_mark_gap']
             y_top = p1_on_c1.bounds[3] + g_
             y_bot = cb1 - max(g_, P['engrave_edge'])
@@ -803,23 +785,20 @@ def _edits_and_parts(M: dict, cat: dict):
                 mark = Polygon([(bx0, y_bot), ((bx0 + bx1) / 2, y_top), (bx1, y_bot)])
                 eng.append('M ' + ' L '.join(f'{x:.4f},{y:.4f}' for x, y in list(mark.exterior.coords)[:-1]) + ' Z')
                 R['c1_mark'] = dict(x=(round(bx0, 3), round(bx1, 3)), y=(round(y_top, 3), round(y_bot, 3)))
-        free = c1.difference(p1_on_c1.buffer(0.4))
-        for q in pin_sq:
-            free = free.difference(q.buffer(0.4))
-        if mark is not None:     # 站名放在 ▲ 的另一端（說明裡用「站名在另一端」輔助辨認）
-            free = free.difference(mark.buffer(0.4))
+        # 站名：字墨離 C1 切割邊 ≥1.0、離 P1 黏貼框／插銷方塊／▲ ≥0.4（不可壓到）；有 ▲ 時放在另一端
+        # （說明裡用「站名在另一端」輔助辨認）。直排、橫排都試，先取放得下的最大字。
+        avoid = [p1_on_c1] + list(pin_sq)
+        if mark is not None:
+            avoid.append(mark)
             xm = (c1.bounds[0] + c1.bounds[2]) / 2
-            side = box(c1.bounds[0] - 1, c1.bounds[1] - 1, xm, c1.bounds[3] + 1) if mark.centroid.x > xm \
-                else box(xm, c1.bounds[1] - 1, c1.bounds[2] + 1, c1.bounds[3] + 1)
-            free = free.intersection(side)
-        free = free.buffer(-0.4)
-        if not free.is_empty:
-            free = max(getattr(free, 'geoms', [free]), key=lambda g: g.area)
-        pl = _place_text(free, k, P['c1_text_sizes'])
+            avoid.append(box(xm, c1.bounds[1] - 1, c1.bounds[2] + 1, c1.bounds[3] + 1) if mark.centroid.x > xm
+                         else box(c1.bounds[0] - 1, c1.bounds[1] - 1, xm, c1.bounds[3] + 1))
+        pl = _place_text(c1, k, P['c1_text_sizes'], avoid=unary_union(avoid), angles=(0.0, -90.0, 90.0))
         texts = []
+        R['c1_text'] = None
         if pl:
-            size, cx, cy, w, h = pl
-            texts.append(dict(text=k, x=round(cx, 4), y=round(cy + h / 2, 4), size=size, angle=0.0, anchor='middle'))
+            texts.append(TP.text_spec(pl))
+            R['c1_text'] = dict(size=pl['size'], angle=pl['angle'], clear=round(TP.TEXT_CLEAR + pl['slack'], 2))
         R['c1_local'], R['p1_local'], R['p1_on_c1'], R['pin_sq'] = c1, p1, p1_on_c1, pin_sq
         p1_where = '頂住凸塊在上緣' + ('、對齊 C1 下緣 ▲ 記號那一端' if mark is not None else '')
         new_parts.append(dict(id=f'P1-{k}', name=f'{k} 鎖塊 P1（黏在 C1 雕刻外框內，{p1_where}）',
@@ -829,8 +808,10 @@ def _edits_and_parts(M: dict, cat: dict):
     npins = sum(1 for R in S.values() for p in R['pins'] if p)
     if npins:
         ks = '／'.join(k for k, R in S.items() if any(R['pins']))
+        # 3×3 極小零件：每套多切一整份備品（使用者 2026-10-08 決定 3；掉進蜂巢台或弄丟時用）
         new_parts.append(dict(id='PIN-' + ks.replace('／', '-'), name=f'{ks} 插銷（黏在 C1 雕刻方塊上）',
-                              material='合板', qty=npins, geom=box(0, 0, P['pin'], P['pin']), engrave=[], texts=[]))
+                              material='合板', qty=npins, spare=npins, geom=box(0, 0, P['pin'], P['pin']),
+                              engrave=[], texts=[]))
     return edits, new_parts, touched
 
 
@@ -1136,26 +1117,32 @@ def _checks(M: dict, cat: dict, edits: list) -> tuple[list, dict]:
 
 
 def _new_part_checks(new_parts, P) -> list:
-    """新零件：外形有效且 1 塊；雕刻線與文字外框都在零件內（離切割邊 ≥ engrave_edge）。"""
+    """新零件：外形有效且 1 塊；雕刻線離切割邊 ≥ engrave_edge；字墨外框離切割線 ≥ TEXT_CLEAR、
+    離雕刻線（P1 框、插銷方塊、▲）≥ ENGRAVE_GAP。"""
     out = []
     for p in new_parts:
         g = p['geom']
         ok_geom = g.is_valid and isinstance(g, Polygon)
         inner = g.buffer(-P['engrave_edge'] + 0.01)
         bad = 0
+        lines = []
         for d in p['engrave']:
             for sp in parse_path(d).continuous_subpaths():
-                for t in np.linspace(0, 1, 50):
-                    z = sp.point(t)
-                    if not inner.contains(Point(z.real, z.imag)):
-                        bad += 1
+                pts = [sp.point(t) for t in np.linspace(0, 1, 50)]
+                lines.append(LineString([(z.real, z.imag) for z in pts]))
+                bad += sum(1 for z in pts if not inner.contains(Point(z.real, z.imag)))
+        eng = unary_union(lines) if lines else None
+        tx = []
         for t in p['texts']:
-            w, h = _text_wh(t['text'], t['size'])
-            if not g.contains(box(t['x'] - w / 2, t['y'] - h, t['x'] + w / 2, t['y'])):
+            ink = TP.ink_box(t['text'], t['x'], t['y'], t['size'], t.get('angle', 0.0), t.get('anchor', 'start'))
+            dc = g.boundary.distance(ink) if g.contains(ink) else -1.0
+            de = eng.distance(ink) if eng is not None else None
+            tx.append(f"「{t['text']}」em {t['size']:g}、離切割 {dc:.2f}" + ('' if de is None else f'、離雕刻 {de:.2f}'))
+            if dc < TP.TEXT_CLEAR - 1e-6 or (de is not None and de < TP.ENGRAVE_GAP - 1e-6):
                 bad += 1
-        out.append(dict(name=f"新零件 {p['id']}：外形 1 塊、雕刻與文字在零件內", ok=bool(ok_geom and bad == 0),
-                        value=dict(valid=ok_geom, outside_points=bad), expected='valid、0',
-                        note='文字外框是估計（英數 0.62 em 寬、0.75 em 高）'))
+        out.append(dict(name=f"新零件 {p['id']}：外形 1 塊、雕刻在零件內、字離切割 ≥{TP.TEXT_CLEAR:g}、離雕刻線 ≥{TP.ENGRAVE_GAP:g}",
+                        ok=bool(ok_geom and bad == 0), value=dict(valid=ok_geom, bad=bad), expected='valid、0',
+                        note='；'.join(tx) or '沒有字'))
     return out
 
 
@@ -1184,6 +1171,42 @@ def _drawers_below_exit(B, R, Bx):
 # ---------------------------------------------------------------------------
 # build()（INTERFACE.md）
 # ---------------------------------------------------------------------------
+def station_guide(M) -> str:
+    """老師認站的說明（#24 正面不刻站名，使用者 2026-10-08 決定 4）：沿滑道由上游往下游（U 由小到大）
+    每站的窗是第幾個、長什麼樣；原有雕刻「1」就在哪個窗旁邊也寫出來（它是 1 元開口的幣值，不是站名，
+    最容易讓人把 S5 裝錯成 S10）。"""
+    B, S = M['B'], M['S']
+    order = sorted(S, key=lambda k: S[k]['win_in24'].centroid.x)       # U 小＝上游
+    src1 = next((s for s, n in ENG_NAME.items() if n == '「1」'), None)
+    g1 = None
+    if src1 is not None:
+        mv = M['moves'].get(src1)
+        g1 = mv['new'] if mv and mv.get('new') is not None else B.ENG24.get(src1)
+    near1 = None
+    if g1 is not None:
+        k1 = min(S, key=lambda k: g1.distance(S[k]['win_in24']))
+        if g1.distance(S[k1]['win_in24']) < 10.0:
+            near1 = k1
+    items, nwin = [], 0
+    for k in order:
+        R = S[k]
+        if R['breaks_edge']:
+            npin = sum(1 for q in R['pins'] if q)
+            desc = ('最下游、' if k == order[-1] else '') + '開到 #24 下緣的缺口' + (
+                f'（兩側各有 1 個方孔，只有 {k} 的鎖塊塞得進）' if npin == 2 else '')
+        else:
+            nwin += 1
+            desc = f'第 {nwin} 個感測窗' + ('（旁邊刻「1」）' if k == near1 else '')
+        items.append(f'{desc}裝 {k}')
+    same = [k for k in order if not S[k]['breaks_edge']]
+    tail = ''
+    if len(same) >= 2:
+        tail = (f"。{'、'.join(same)} 的窗、模組、鎖塊形狀都一樣，裝反了要到 a-3 第 5 步丟硬幣才會發現"
+                '（計數對調，程式的 C5≥C10≥C50 檢查會報錯）：把兩站的模組連同鎖塊對調即可')
+    return ('認站：沿滑道從轉盤那端（上游）往下游數，' + '；'.join(items)
+            + '。窗旁刻的數字是開口／抽屜的幣值，不是站名' + tail)
+
+
 def build(cat: dict, module: dict | None = None) -> dict:
     """S5／S10／S50 滑升式感測座的修改（INTERFACE.md）。module＝暫時取代 params.MODULE（自我測試用）。"""
     return _run(cat, module)[1]
@@ -1235,6 +1258,7 @@ def _run(cat: dict, module: dict | None = None) -> tuple[dict, dict, dict]:
     v0, v1 = P['new_tab6_V']
     ch = X['cable_hole'].bounds
     ndel = {pid: sum(1 for d in M['deleted'] if d['part'] == pid and d.get('src')) for pid in ('#24', '#26')}
+    guide = station_guide(M)
     notes += [
         f"S5／S10／S50 滑升式感測座（spec：laser_v2/design/crosstrack_final/spec.md）。光束高 h={P['h']}（params.BEAM_H），"
         f"翼方向 wing='{P['wing']}'；#24 保留條 {D['t_strip']:.1f}／肩部 {D['t_shoulder']:.1f}，上滑行程 {D['slide']:.1f}。",
@@ -1242,7 +1266,8 @@ def _run(cat: dict, module: dict | None = None) -> tuple[dict, dict, dict]:
         'PCB 長寬厚、本體位置與左右手性、排針位置方向、零件高、焊點高、固定耳），改 params.py 再重跑。',
         f"Go/No-Go：排針＋杜邦頭要在 PCB 沿光束方向離前緣 {(-6.0 - 0.5) - D['W_pcb'][0]:.1f} mm 以內（才在 #24 前面）；"
         'S50 的排針不可朝下；光耦本體不可有固定耳（有就要量並加寬窄段）。',
-        '老師組裝（spec a-3）：換 v2 的 #7／#6／#5 → 每站模組兩臂朝上、排針朝自己，對準窗下半部水平推入 → 往上推約 '
+        '老師組裝（spec a-3）：換 v2 的 #7／#6／#5 → 依排線標籤把模組裝到對應的站（排線上貼 S5／S10／S50 標籤；'
+        f'#24 正面不刻站名，使用者 2026-10-08 決定。{guide}）→ 每站模組兩臂朝上、排針朝自己，對準窗下半部水平推入 → 往上推約 '
         f"{D['slide']:.0f} mm，一手頂住 → 塞鎖塊：C1 拿在手上、P1 那面朝機身，先把 P1 背面貼住 #24 正面（窗的下方），"
         '沿 #24 正面往上推到 P1 頂住凸塊碰到 PCB 下面（S50 同時讓兩支插銷對準 #24 的方孔），再往後推 3 mm，讓 P1 進窗、'
         'C1 貼平 #24 → 放手，靠重力定位。不要從模組前方把鎖塊直接水平伸進去：P1 頂住凸塊在光耦正下方，水平推入時會撞到'
@@ -1255,7 +1280,13 @@ def _run(cat: dict, module: dict | None = None) -> tuple[dict, dict, dict]:
         '黏 P1 時凸塊要在 ▲ 那一端，翻面黏的話凸塊會跑到 PCB 翼和焊點底下。S50 的外框兩側不等長，不會黏反。'
         'P1 和 C1 齊平的邊（S5/S10 的上緣、S50 的上下緣）不刻線，只刻其餘邊（雕刻離切割邊 ≥0.3）。',
         '講師預組：C1-S50 的 2 支插銷黏在 C1 雕刻方塊上（先插進試切小樣的 #24 孔再壓 C1，最準）；'
-        '建議每套多切 1 組 P1／C1（另備）。',
+        '建議每套多切 1 組 P1／C1（另備）。講師接感測器線時，在每條排線靠模組端貼站名標籤（S5／S10／S50）；'
+        '盒端另貼插座標籤（例如 S5→G26，見電子盒 a-2 第 5 步）。',
+        f"極小零件：插銷 PIN（{P['pin']:g}×{P['pin']:g}）每套多切 {sum(1 for R in S.values() for q in R['pins'] if q)} 個備品，"
+        '排在同一份切割檔（parts.csv「備品」欄；使用者 2026-10-08 決定 3），掉進蜂巢台或弄丟時用。',
+        'C1 站名：' + '、'.join(f"{k} em {R['c1_text']['size']:g}" + ('（直排）' if R['c1_text']['angle'] else '')
+                               + f"、字墨離切割 {R['c1_text']['clear']:.2f}" for k, R in S.items() if R.get('c1_text'))
+        + f"（要求 ≥{TP.TEXT_CLEAR:g}；離 P1 框、▲、插銷方塊 ≥{TP.ENGRAVE_GAP:g}）。所有 v2 雕刻（框線、▲、字）都是紅色 0.2 mm 線。",
         '#24 雕刻「1」「5」被窗／蓋板蓋到，用 move_engrave 移開：'
         + '；'.join(f"{mv['name']} ΔU{mv['dU']:+g} ΔV{mv['dV']:+g}（新位置 U{mv['new'].bounds[0]:.2f}～{mv['new'].bounds[2]:.2f}"
                    f"×V{mv['new'].bounds[1]:.2f}～{mv['new'].bounds[3]:.2f}）" for mv in M['moves'].values() if mv['new'] is not None)
@@ -1301,7 +1332,8 @@ def _run(cat: dict, module: dict | None = None) -> tuple[dict, dict, dict]:
         '待決：裝／拆 S50 前先抽出 10、50 元抽屜（照預設：寫進老師組裝說明）',
         '待決：#5 合併後只剩 2 支榫（照預設：接受，試切 T5 確認不晃）',
     ]
-    res = dict(edits=edits, new_parts=new_parts, notes=notes, warnings=warnings, checks=checks, bom=_bom(P, S))
+    res = dict(edits=edits, new_parts=new_parts, notes=notes, warnings=warnings, checks=checks, bom=_bom(P, S),
+               station_guide=guide)
     return M, res, vals
 
 
@@ -1317,8 +1349,13 @@ def _bom(P, S) -> list[dict]:
              note='包 PCB 翼的零件面，讓落下的硬幣碰到平滑面；不可用 0.5 mm PET 片（會吃掉 0.3 的零件餘隙）', src='crosstrack a-2 第 4 步'),
         dict(cat='備品（不在切割檔）', item='光耦模組（備用）', qty=1, unit='個', who='講師',
              note='spec a-2 第 6 步「另備 1 組模組與鎖塊」', src='crosstrack a-2'),
-        dict(cat='備品（不在切割檔）', item=f'鎖塊組（P1＋C1：{ks} 各 1' + (f'，插銷 ×{npin}' if npin else '') + '）', qty=1, unit='組',
-             who='講師', note='spec (c)「另建議每套多附 1 組」；目前切割檔沒有排，要的話把同一份切割檔的新零件多切一份',
+        dict(cat='耗材', item=f'排線標籤貼紙 {ks}（模組端）', qty=n, unit='張', who='講師預組',
+             note=f'每條感測器排線靠模組端貼一張（寫 {"、".join(S)}）；老師依排線標籤把模組裝到對應的站'
+                  '（#24 正面不刻站名；認站方法見六、crosstrack「老師組裝」）。盒端標籤（例如 S5→G26）另列在電子盒',
+             src='使用者 2026-10-08 決定 4'),
+        dict(cat='備品（不在切割檔）', item=f'鎖塊組（P1＋C1：{ks} 各 1）', qty=1, unit='組',
+             who='講師', note='spec (c)「另建議每套多附 1 組」；目前切割檔沒有排，要的話把同一份切割檔的新零件多切一份'
+                              + (f'（插銷 PIN 的備品 ×{npin} 已排進切割檔，見「備品已排進切割檔」）' if npin else ''),
              src='crosstrack (c)'),
         dict(cat='備品（不在切割檔）', item='#24、#26（v2，開窗後較弱）', qty=None, per10='各 2 片', unit='片', who='講師',
              note='spec R4：每 10 套多切 2 片；發料時 #24 平放、拿取時避免扳', src='crosstrack R4'),
@@ -1344,8 +1381,32 @@ def _cmp(a, b) -> tuple[float, float]:
     return float(hd), float(a.symmetric_difference(b).area)
 
 
+SPEC_MODULE_KEYS = {'slot_w': 'slot_w', 'slot_d': 'slot_d', 'beam_sb': 'beam_sb', 'arm_t': 'arm_t', 'arm_w': 'arm_w',
+                    'arm_top': 'arm_top', 'pcb_L': 'pcb_L', 'pcb_W': 'pcb_W', 'pcb_t': 'pcb_t', 'pcb_e': 'body_e',
+                    'comp_h': 'comp_h', 'bump_h': 'back_h', 'hdr_len': 'hdr_len', 'hdr_up': 'hdr_up'}   # spec 名 → MODULE 鍵
+
+
+def spec_module(wing: str = 'up') -> tuple[dict, dict]:
+    """crosstrack_final 的名目模組尺寸（geometry_final.json 的 params）→ (MODULE 格式, 和 params.MODULE 不同的鍵)。
+
+    2026-10-08 使用者把 params.MODULE back_h 改成 2.0（S1 規格名目、較保守）；crosstrack 規格名目 bump_h 是 1.5，
+    所以和 json 比對時用規格名目，params 實值另外跑檢查（selftest_params）。"""
+    J = json.loads((DESIGN_DIR / JSON_BY_WING[wing]).read_text(encoding='utf-8'))['params']
+    mod = dict(PR.MODULE)
+    diff = {}
+    for sk, mk in SPEC_MODULE_KEYS.items():
+        if sk in J and mod.get(mk) != J[sk]:
+            diff[mk] = (mod.get(mk), J[sk])
+            mod[mk] = J[sk]
+    mod['wing'] = wing
+    for sk, cur in (('h', PR.BEAM_H), ('c', PR.C_SENSOR), ('t', PR.T_PLY)):
+        if sk in J and abs(J[sk] - cur) > 1e-9:
+            diff[sk] = (cur, J[sk])       # params 的共用值和規格不同（只列出，不覆寫）
+    return mod, diff
+
+
 def selftest(cat: dict | None = None, wings=('up', 'down', 'center'), log=print) -> dict:
-    """三種翼向：build() 的幾何 vs geometry_final*.json（Hausdorff ≤0.01 mm），檢查值 vs checks.json。"""
+    """三種翼向：規格名目模組尺寸下 build() 的幾何 vs geometry_final*.json（Hausdorff ≤0.01 mm），檢查值 vs checks.json。"""
     if cat is None:
         from .catalog import load_catalog
         cat = load_catalog()
@@ -1353,8 +1414,10 @@ def selftest(cat: dict | None = None, wings=('up', 'down', 'center'), log=print)
     summary = {}
     for wing in wings:
         J = json.loads((DESIGN_DIR / JSON_BY_WING[wing]).read_text(encoding='utf-8'))
-        mod = dict(PR.MODULE)
-        mod['wing'] = wing
+        mod, mdiff = spec_module(wing)
+        if wing == wings[0]:
+            log('規格名目 vs params.MODULE 不同的鍵（比對時用規格名目）：'
+                + ('、'.join(f'{k}＝{a}（規格 {b}）' for k, (a, b) in mdiff.items()) or '沒有'))
         M, res, vals = _run(cat, mod)
         rows = []   # (項目, hausdorff, 對稱差面積)
         bad = []
@@ -1515,6 +1578,50 @@ def selftest(cat: dict | None = None, wings=('up', 'down', 'center'), log=print)
     return summary
 
 
+def selftest_params(cat: dict | None = None, log=print) -> dict:
+    """params.py 實值（目前 MODULE，含 back_h）：checks 要全過；列出和規格名目（同翼向）相比幾何變了什麼。"""
+    if cat is None:
+        from .catalog import load_catalog
+        cat = load_catalog()
+    wing = PR.MODULE['wing']
+    mod_ref, mdiff = spec_module(wing)
+    M1, r1, v1 = _run(cat)
+    M0, r0, v0 = _run(cat, mod_ref)
+    log(f"\n== params 實值（wing='{wing}'；和規格名目不同：" + ('、'.join(f'{k} {b}→{a}' for k, (a, b) in mdiff.items()) or '沒有')
+        + '）==')
+    bad = [c for c in r1['checks'] if not c['ok']]
+    log(f"checks {len(r1['checks'])} 項，未過 {len(bad)}" + (('：' + '；'.join(c['name'] for c in bad)) if bad else '（全過）'))
+    for k in ('n_bump', 'n_win_bot', 'slide', 't_strip', 't_shoulder'):
+        a, b = M1['D'][k], M0['D'][k]
+        if abs(a - b) > 1e-9:
+            log(f'  推導量 {k}：{b:.3f} → {a:.3f}（{a - b:+.3f}）')
+    diffs = []
+    for e1, e0 in zip(r1['edits'], r0['edits']):
+        if e1['op'] in ('subtract', 'union') and 'geom' in e1:
+            hd = float(shapely.hausdorff_distance(e1['geom'], e0['geom'], densify=0.1))
+            if hd > 1e-6:
+                da = e1['geom'].area - e0['geom'].area
+                diffs.append(f"{e1['part']} {e1['tag']}：最大差 {hd:.2f}、面積 {da:+.1f} mm²")
+        elif e1['op'] == 'move_engrave' and (abs(e1['dx'] - e0['dx']) > 1e-9 or abs(e1['dy'] - e0['dy']) > 1e-9):
+            diffs.append(f"{e1['part']} {e1['tag']}（規格名目 {e0['tag']}）")
+    for p1, p0 in zip(r1['new_parts'], r0['new_parts']):
+        b1, b0 = p1['geom'].bounds, p0['geom'].bounds
+        if max(abs(x - y) for x, y in zip(b1, b0)) > 1e-6 or abs(p1['geom'].area - p0['geom'].area) > 1e-6:
+            diffs.append(f"新零件 {p1['id']}：{b0[2] - b0[0]:.2f}×{b0[3] - b0[1]:.2f} → {b1[2] - b1[0]:.2f}×{b1[3] - b1[1]:.2f}、"
+                         f"面積 {p1['geom'].area - p0['geom'].area:+.1f} mm²")
+    for d in diffs:
+        log('  ' + d)
+    for k in ('S5', 'S10', 'S50'):
+        for key in ('win_to_24_bottom', 'exit_plane_clear_low', 'exit_plane_clear_final', 'lock_insert_path'):
+            a, b = v1.get((k, key)), v0.get((k, key))
+            if a is not None and a != b:
+                log(f'  {k} {key}：{b} → {a}')
+    texts = {p['id']: p['texts'] for p in r1['new_parts'] if p['texts']}
+    log('  新零件的字：' + '；'.join(f"{pid} 「{t['text']}」em {t['size']:g}" + (f" {t['angle']:g}°" if t['angle'] else '')
+                                     for pid, ts in texts.items() for t in ts))
+    return dict(ok=not bad, failed=[c['name'] for c in bad], diffs=diffs, module_diff=mdiff)
+
+
 def _touched_summary(res: dict) -> dict:
     out = {}
     for e in res['edits']:
@@ -1535,6 +1642,7 @@ if __name__ == '__main__':
     log = lambda s: (print(s), lines.append(s))
     log('== mods_crosstrack 自我測試（三種翼向 vs design/crosstrack_final/geometry_final*.json）==')
     summ = selftest(cat, log=log)
+    sp = selftest_params(cat, log=log)
     res = build(cat)
     log(f"\n== 目前 params（wing='{PR.MODULE['wing']}'）==")
     log(f"edits {len(res['edits'])}、new_parts {len(res['new_parts'])}、checks {len(res['checks'])}"
@@ -1563,4 +1671,7 @@ if __name__ == '__main__':
     detail += ['  ' + n for n in res['notes']]
     (WORK_DIR / 'selftest.txt').write_text('\n'.join(lines + [''] + detail) + '\n', encoding='utf-8')
     print(f"\n細節寫到 {WORK_DIR / 'selftest.txt'}")
-    sys.exit(0 if all(s['ok'] for s in summ.values()) else 1)
+    ok_all = all(s['ok'] for s in summ.values()) and sp['ok']
+    print(f"\nmods_crosstrack 自我測試：{'全部通過' if ok_all else '未通過'}（規格名目三翼向 vs json："
+          f"{'OK' if all(s['ok'] for s in summ.values()) else '不符'}；params 實值 checks：{'全過' if sp['ok'] else '有未過'}）")
+    sys.exit(0 if ok_all else 1)

@@ -36,6 +36,9 @@ build(cat) 做什麼（回傳格式見 INTERFACE.md）
 (x, y) 在基線上，anchor 決定左右），所以本模組把中心沿字的「下」方向移 TEXT_MID_EM×字高。
 angle＝基線方向（頁座標，y 向下，度）。文字方向由 frames 算：#13R、#21 基線沿 +W'（由 #26 往 #37），
 #37 沿 +U（從機身背面看由左往右），字的上方都是 −V；selftest() 會驗證不鏡像。
+新零件的代號字（S1-B、S1-C、S1-F、S1-P）用 textpath.fit_text 排（使用者 2026-10-08）：字墨離切割線 ≥1.0、
+離黏貼框／別的字 ≥0.4；代號先試 em 3.0～2.5，放不下才只刻單字母（B、P…）。所有雕刻都是紅色 0.2 mm 線
+（compose.STYLE_ENGRAVE）。極小零件 S1-H、S1-P 帶 spare（每套多切一整份備品）。
 
 參數
 ----
@@ -67,6 +70,7 @@ from svgpathtools import parse_path
 
 from . import frames as F
 from . import params as P
+from . import textpath as TP
 
 HERE = Path(__file__).resolve().parent
 REF_DIR = HERE / 'design' / 's1wall_final'
@@ -137,7 +141,7 @@ COIN_D, COIN_T = 20.0, 1.85   # 1 元：直徑、厚度（保守）
 SHEET_AREA = P.SHEET[0] * P.SHEET[1]
 S1_SOLIDS = ('pcb', 'comp', 'body', 'front_arm', 'solder')   # 會進到滑道附近的模組實體
 TEXT_MID_EM = 0.39     # 微軟正黑體：字的墨色垂直中心在基線上 0.39 em（-0.05～0.83 em 的中點）
-TEXT_INK_EM = (-0.06, 0.83)   # 字墨垂直範圍（em，基線往上為正），檢查用
+CODE_SIZES = (3.0, 2.9, 2.8, 2.7, 2.6, 2.5)   # 新零件代號字 em（使用者 2026-10-08：太小的字放大到 2.5～3）
 
 
 # ---------------------------------------------------------------------------
@@ -480,6 +484,17 @@ def _mirror_WV(g, W1, V0):
     return affinity.affine_transform(g, [-1, 0, 0, 1, W1, -V0])
 
 
+def _code_text(geom, code: str, short: str, prefer, avoid=None) -> list[dict]:
+    """新零件代號字（使用者 2026-10-08）：字墨離切割線 ≥1.0（textpath.TEXT_CLEAR）、離其他雕刻 ≥0.4。
+    先試完整代號 em 3.0～2.5；放不下就只刻單字母 short（em 3.0～2.5）；再放不下才縮小單字母。
+    prefer＝偏好的字中心（放得下就用，否則取最近的可用位置）。回傳 texts list（放不下回傳空 list）。"""
+    for txt, sizes in ((code, CODE_SIZES), (short, CODE_SIZES), (short, (2.4, 2.2, 2.0, 1.8))):
+        f = TP.fit_text(geom, txt, sizes, avoid=avoid, prefer=prefer)
+        if f:
+            return [TP.text_spec(f)]
+    return []
+
+
 def new_parts_geometry(g: dict) -> dict:
     """各新零件的局部外形、雕刻與文字（與 geometry_s1_final.json 的 new_parts[*].local 同一座標）。"""
     D, Dd, G = g['D'], g['Dd'], g['G']
@@ -488,7 +503,7 @@ def new_parts_geometry(g: dict) -> dict:
     locB, (wB, vB) = _local(g['S1B_WV'])
     tx0, tx1 = G['W37'] - wB, G['W37o'] + T - wB          # 後榫範圍（局部 x）
     out['S1-B'] = dict(geom=locB, origin=(wB, vB), engrave=[],
-                       texts=[_text('S1-B', (tx0 + tx1) / 2, (g['tabB_v'][0] + g['tabB_v'][1]) / 2 - vB, 2.0)])
+                       texts=_code_text(locB, 'S1-B', 'B', ((tx0 + tx1) / 2, (g['tabB_v'][0] + g['tabB_v'][1]) / 2 - vB)))
     # S1-C（鏡像）
     sC = g['S1C_WV']
     W1c, V0c = sC.bounds[2], sC.bounds[1]
@@ -507,10 +522,12 @@ def new_parts_geometry(g: dict) -> dict:
                 keep.append(LineString([a, b]))
     eng = linemerge(keep)
     xa, xb = W1c - D['pcb_w'][0], W1c - Dd['s1c_w0']                # S1-B 框前緣、S1-C 前緣（局部 x）
-    ink = _ink_em('S1-C 前→')
-    hC = min(2.5, math.floor(max(xb - xa - 0.7, 0.5) / (ink[1] - ink[0]) * 10) / 10)   # 名目 2.5；空間不夠時縮小
+    # 「S1-C 前→」：規格字高 2.5、在 S1-B 框和 S1-C 前緣之間；字墨離前緣（切割）≥1.0、離框線 ≥0.4，
+    # 空間不夠就縮小（→ 要指向前，所以只橫排）
+    fC = TP.fit_text(locC, 'S1-C 前→', (2.5, 2.4, 2.3, 2.2, 2.1, 2.0, 1.8), avoid=eng,
+                     prefer=((xa + xb) / 2, Dd['s1c_text_V'] - V0c))
     out['S1-C'] = dict(geom=locC, origin=(W1c, V0c), engrave=[_line_d(eng)], engrave_geom=eng, frame_full=frameB,
-                       texts=[_text('S1-C 前→', (xa + xb) / 2, Dd['s1c_text_V'] - V0c, hC)])
+                       texts=[TP.text_spec(fC)] if fC else [])
     # S1-H
     if g['cap_layers']:
         locH, (wH, vH) = _local(g['S1H_WV'])
@@ -521,21 +538,24 @@ def new_parts_geometry(g: dict) -> dict:
     right0 = D['U_comp'] + Dd['c_opt']               # 背蓋右塊左緣（元件帶缺口邊）
     rb = g['S1F_rect'].bounds
     hy = [v - vF for _, v in g['screws_UV']]
-    out['S1-F'] = dict(geom=locF, origin=(uF, vF), engrave=[],
-                       texts=[_text('S1 ↑', (right0 + rb[2]) / 2 - uF, Dd['cover_text_dV'], 4.0),
-                              _text('S1-F', g['screws_UV'][0][0] - uF, (hy[0] + hy[1]) / 2, 2.5)])
+    tF = [_text('S1 ↑', (right0 + rb[2]) / 2 - uF, Dd['cover_text_dV'], 4.0)]
+    tF += _code_text(locF, 'S1-F', 'F', (g['screws_UV'][0][0] - uF, (hy[0] + hy[1]) / 2),
+                     avoid=TP.ink_box(**tF[0]))         # 代號 em 3（使用者 2026-10-08），在兩個螺絲孔之間
+    out['S1-F'] = dict(geom=locF, origin=(uF, vF), engrave=[], texts=tF)
     # S1-P
     if g['S1P_UV'] is not None:
         locP, (uP, vP) = _local(g['S1P_UV'])
         bb = locP.bounds
         out['S1-P'] = dict(geom=locP, origin=(uP, vP), engrave=[],
-                           texts=[_text('S1-P', bb[2] / 2, bb[3] / 2, 2.0)])
+                           texts=_code_text(locP, 'S1-P', 'P', (bb[2] / 2, bb[3] / 2)))
     # S1-K（條件式）
     if g['S1K_UV'] is not None:
         locK, (uK, vK) = _local(g['S1K_UV'])
         out['S1-K'] = dict(geom=locK, origin=(uK, vK), engrave=[], texts=[])
     return out
 
+
+SPARE_PARTS = ('S1-H', 'S1-P')    # 外包兩邊都 <10 mm 的極小零件：每套多切一整份備品（數量＝每套數量）
 
 NEW_PART_INFO = {
     'S1-B': ('S1 座塊（嵌 #13R 牆槽；雕刻面朝 S1-C，和 #13R 同板）', 1),
@@ -632,6 +652,8 @@ def build(cat, module: dict | None = None, des: dict | None = None) -> dict:
             name = f'S1 導流帽（三角片 ×{qty}，疊黏在前臂頂面；不雕刻）'
         npd = dict(id=pid, name=name, material='合板', qty=qty, geom=d['geom'],
                    engrave=list(d['engrave']), texts=list(d['texts']))
+        if pid in SPARE_PARTS:          # 極小零件（外包兩邊都 <10 mm）：每套多切一整份備品（使用者 2026-10-08 決定 3）
+            npd['spare'] = qty
         if pid == 'S1-B':
             npd['group'] = 'S1-wall'
         new_parts.append(npd)
@@ -640,7 +662,7 @@ def build(cat, module: dict | None = None, des: dict | None = None) -> dict:
     E = _env(cat)
     checks, warns = run_checks(cat, g, E, edits, NP)
     keep = keepout(g)
-    notes = _notes(g, E, keep)
+    notes = _notes(g, E, keep, NP)
     return dict(edits=edits, new_parts=new_parts, notes=notes, warnings=warns,
                 renames={'#13': '#13R'}, groups={'#13R': 'S1-wall'}, checks=checks, keepout=keep,
                 pending=_pending(g), bom=_bom(g))
@@ -669,9 +691,14 @@ def _bom(g) -> list[dict]:
     out += [
         dict(cat='耗材', item='瞬間膠', qty=None, unit='少量', who='講師預組',
              note=f'{nl} 片 S1-H 導流帽疊齊後黏到前臂頂面（spec R1：用瞬間膠，掉了會卡幣）', src='s1 a-2、R1'),
+        dict(cat='耗材', item='S1 排線標籤（模組端）', qty=1, unit='張', who='講師預組',
+             note='貼在 S1 模組排線靠模組端（寫 S1）；老師依排線標籤裝卡匣、接線不會和 S5～S50 弄混。'
+                  '盒端標籤（S1→G27）另列在電子盒',
+             src='使用者 2026-10-08 決定 4'),
         dict(cat='備品（不在切割檔）', item=f'S1 卡匣（S1-B、S1-C、S1-F、S1-P、S1-H×{nl}）＋模組', qty=None,
              per10='2 個（建議）', unit='個', who='講師',
-             note='待決（s1 spec (i) 8）：每場幾個備品卡匣，建議 10 套配 2 個；目前切割檔沒有排', src='s1 a-2、(i) 8'),
+             note='待決（s1 spec (i) 8）：每場幾個備品卡匣，建議 10 套配 2 個；整個卡匣目前切割檔沒有排'
+                  f'（極小零件 S1-H×{nl}、S1-P×1 的備品已排進切割檔，見「備品已排進切割檔」）', src='s1 a-2、(i) 8'),
     ]
     return out
 
@@ -686,7 +713,6 @@ def _pending(g) -> list[str]:
         '待決：左側 #21 的 37-cutout-corners 要不要一起修（照預設：不修，#21 只加雕刻）',
         '待決：備品卡匣數（照預設：每套 1 個，不含備品；建議每 10 套另做 2 個）',
         f"待決：comp_band_free（照預設 {Dd.get('comp_band_free', False)}：背蓋切元件帶，不切 S1-K）",
-        f"待決：背面焊點 back_h（params.MODULE＝{M['back_h']:g}，s1wall_final 名目 2.0；實量前 2.0 較保守，窗和背蓋的焊點讓位多 0.5）",
         '待實量：槽型光耦模組全部尺寸、本體與排針位置、元件高、背面焊點高 back_h、擋住時輸出準位',
     ]
 
@@ -701,7 +727,7 @@ def keepout(g: dict) -> dict:
                 W=(_r(G['W37o'], 1), _r(max(hdr[5], D['back_arm'][1], D['pcb_w'][1]) + 15, 1)))
 
 
-def _notes(g, E, keep) -> list[str]:
+def _notes(g, E, keep, NP=None) -> list[str]:
     D, M, Dd = g['D'], g['M'], g['Dd']
     nl = g['cap_layers']
     return [
@@ -716,10 +742,17 @@ def _notes(g, E, keep) -> list[str]:
         'S1-B 滑道側貼 1.0 mm 雙面泡棉膠、把模組由下往上套進去（PCB 上緣齊 S1-B 上緣、前緣齊 S1-B 前緣），'
         '驗位：後臂內面到背蓋前面 2.7±0.2 → #37 空腔側兩個 Ø3.4 孔預黏 M3 螺帽。',
         '老師組裝：#13R 照原 #13 位置裝（另 2 支前榫插 #26 新槽、後榫 B1 插 #37 新槽）→ 蓋 #37 → '
-        'S5～S50 照 crosstrack 從前面裝 → 最後從背面把卡匣水平推進牆槽、背蓋貼平 #37，鎖 2 支 M3×10 尼龍螺絲（手擰）。',
+        'S5～S50 照 crosstrack 從前面裝（依排線標籤把模組裝到對應的站：沿滑道從轉盤那端往下游，第 1 個感測窗 S5、'
+        '第 2 個 S10、最下游開底缺口 S50；見 crosstrack「老師組裝」）→ 最後從背面把卡匣（排線貼「S1」標籤）'
+        '水平推進牆槽、背蓋貼平 #37，鎖 2 支 M3×10 尼龍螺絲（手擰）。',
         '沒插卡匣時不可送幣：牆槽和 #37 窗是開的，硬幣會掉進空腔或從背面掉出去。換模組：卸 2 支螺絲、卡匣往後拉出，約 1 分鐘。',
         '每套另購：1.0 mm 雙面泡棉膠約 3 cm²、M3×10 尼龍螺絲 2 支、M3 螺帽 2 顆。',
-        '雕刻面：S1-B 朝 S1-C（−U）、S1-C 朝牆（+U，紅框＝S1-B 黏貼位置）、S1-F 朝外（「S1 ↑」朝上）、S1-P 朝背蓋；S1-H 不雕刻。',
+        '雕刻面：S1-B 朝 S1-C（−U）、S1-C 朝牆（+U，紅框＝S1-B 黏貼位置）、S1-F 朝外（「S1 ↑」朝上）、S1-P 朝背蓋；S1-H 不雕刻。'
+        '所有雕刻（框線、字）都是紅色 0.2 mm 線；代號字 em 2.5～3、字墨離切割線 ≥1.0（使用者 2026-10-08）：'
+        + '、'.join(f"{pid}「{t['text']}」em {t['size']:g}" for pid in ('S1-B', 'S1-C', 'S1-F', 'S1-P')
+                   for t in ((NP or {}).get(pid, {}).get('texts') or [])[-1:]) + '。',
+        f"極小零件 S1-H（{nl} 片）、S1-P 每套多切一整份備品（S1-H×{nl}、S1-P×1），排在同一份切割檔"
+        '（parts.csv「備品」欄；使用者 2026-10-08 決定 3），掉進蜂巢台或弄丟時用。',
         f"電子盒 S1 禁區：U{keep['U'][0]}～{keep['U'][1]} × V{keep['V'][0]}～{keep['V'][1]} × W'{keep['W'][0]}～{keep['W'][1]}。",
         f"#37 感測器線孔（U{SENSOR_HOLE_37[0]:g}～{SENSOR_HOLE_37[1]:g} × V{SENSOR_HOLE_37[2]:g}～{SENSOR_HOLE_37[3]:g}）"
         '不和 S1 背蓋、B1 槽、M3 孔重疊（見 checks）。',
@@ -765,41 +798,9 @@ def text_width_em(text: str) -> float:
     return sum(hmtx[cmap[ord(c)]][0] if ord(c) in cmap else upm for c in text) / upm
 
 
-@functools.lru_cache(maxsize=64)
-def _ink_em(text: str):
-    """字墨範圍（em，x 從第一個字的原點起算、y 基線往上為正）：(x0, x1, y0, y1)。"""
-    f = _font()
-    if f is None:
-        return (0.0, text_width_em(text)) + TEXT_INK_EM
-    from fontTools.pens.boundsPen import BoundsPen
-    cmap, hmtx, upm, gs = f
-    x = 0.0
-    xs, ys = [], []
-    for c in text:
-        gname = cmap.get(ord(c))
-        if gname is None:
-            x += upm
-            continue
-        bp = BoundsPen(gs)
-        gs[gname].draw(bp)
-        if bp.bounds:
-            xs += [x + bp.bounds[0], x + bp.bounds[2]]
-            ys += [bp.bounds[1], bp.bounds[3]]
-        x += hmtx[gname][0]
-    if not xs:
-        return (0.0, 0.0, 0.0, 0.0)
-    return (min(xs) / upm, max(xs) / upm, min(ys) / upm, max(ys) / upm)
-
-
 def text_box(t: dict) -> Polygon:
-    """文字（基線錨點 dict）的字墨外框（旋轉矩形，頁座標或零件局部座標）。"""
-    s = t['size']
-    w = text_width_em(t['text']) * s
-    ox = {'start': 0.0, 'middle': -w / 2, 'end': -w}[t.get('anchor', 'start')]
-    x0, x1, y0, y1 = _ink_em(t['text'])
-    r = box(ox + x0 * s, -y1 * s, ox + x1 * s, -y0 * s)     # 頁座標 y 向下：字在基線上方
-    r = affinity.rotate(r, t['angle'], origin=(0, 0))
-    return affinity.translate(r, t['x'], t['y'])
+    """文字（基線錨點 dict）的字墨外框（textpath.ink_box：精確字墨外包，再繞錨點旋轉；頁座標或零件局部座標）。"""
+    return TP.ink_box(t['text'], t['x'], t['y'], t['size'], t.get('angle', 0.0), t.get('anchor', 'start'))
 
 
 def gonogo(M: dict, Dd: dict, E: dict, G: dict | None = None) -> list[tuple[str, bool, str]]:
@@ -1037,7 +1038,7 @@ def run_checks(cat, g: dict, E: dict, edits: list, NP: dict):
 
 
 def _text_checks(cat, g, E, edits, NP, chk):
-    """雕刻文字墨色外框離切割線 ≥0.3、不壓黏貼框、不壓其他子系統已知的孔。"""
+    """雕刻文字墨色外框離切割線 ≥ TEXT_CLEAR（1.0）、離黏貼框 ≥ ENGRAVE_GAP（0.4）、不壓其他子系統已知的孔。"""
     pages = {pid: apply_edits(cat[pid].geom, edits, pid) for pid in ('#13', '#21', '#37')}
     A37, _ = _affine('#37', ('U', 'V'), g['G']['W37'] + T / 2)
     sensor_pg = affinity.affine_transform(_rect(*SENSOR_HOLE_37), A37)
@@ -1048,25 +1049,33 @@ def _text_checks(cat, g, E, edits, NP, chk):
         gp = pages[e['part']]
         d_edge = gp.boundary.distance(r) if gp.contains(r) else -1.0   # boundary 含孔
         extra = ''
-        ok = d_edge >= 0.3
+        ok = d_edge >= TP.TEXT_CLEAR - 1e-6
         if e['part'] == '#37':
             ds = sensor_pg.distance(r)
             extra = f'；離感測器線孔 {ds:.2f}'
-            ok = ok and ds >= 1.0
-        chk(f'text_{e["part"]}_{e["text"]}', f'{e["part"]} 雕刻「{e["text"]}」離切割線', d_edge, '≥0.3', ok,
-            f'字寬 {text_width_em(e["text"]) * e["size"]:.1f} mm' + extra)
+            ok = ok and ds >= TP.TEXT_CLEAR - 1e-6
+        chk(f'text_{e["part"]}_{e["text"]}', f'{e["part"]} 雕刻「{e["text"]}」離切割線', round(d_edge, 3),
+            f'≥{TP.TEXT_CLEAR:g}', ok, f'em {e["size"]:g}、字寬 {text_width_em(e["text"]) * e["size"]:.1f} mm' + extra)
     for pid, d in NP.items():
         for t in d['texts']:
             r = text_box(t)
             gp = d['geom']
             dd = gp.boundary.distance(r) if gp.contains(r) else -1.0
-            note = f'字寬 {text_width_em(t["text"]) * t["size"]:.1f} mm'
-            ok = dd >= 0.3
+            note = f'em {t["size"]:g}、字寬 {text_width_em(t["text"]) * t["size"]:.1f} mm'
+            ok = dd >= TP.TEXT_CLEAR - 1e-6
+            others = [text_box(t2) for t2 in d['texts'] if t2 is not t]
+            if others:
+                dt = min(o.distance(r) for o in others)
+                note += f'；離別的字 {dt:.2f}'
+                ok = ok and dt >= TP.ENGRAVE_GAP - 1e-6
             if pid == 'S1-C':
                 df = d['engrave_geom'].distance(r)
                 note += f'；離 S1-B 黏貼框 {df:.2f}'
-                ok = ok and df >= 0.1
-            chk(f'text_{pid}_{t["text"]}', f'{pid} 雕刻「{t["text"]}」離切割線', dd, '≥0.3', ok, note)
+                ok = ok and df >= TP.ENGRAVE_GAP - 1e-6
+            chk(f'text_{pid}_{t["text"]}', f'{pid} 雕刻「{t["text"]}」離切割線', round(dd, 3), f'≥{TP.TEXT_CLEAR:g}', ok, note)
+        if pid in ('S1-B', 'S1-C', 'S1-F', 'S1-P'):
+            chk(f'text_{pid}_code', f'{pid} 有雕代號', [t['text'] for t in d['texts']], '有', bool(d['texts']),
+                '代號字 em 2.5～3；放不下完整代號時只刻單字母')
 
 
 def _flip_first_contact(g, E):
@@ -1104,7 +1113,15 @@ def _flip_first_contact(g, E):
 # ---------------------------------------------------------------------------
 # 自我測試：與 geometry_s1_final.json 比對、牆頂 V38
 # ---------------------------------------------------------------------------
-REF_MODULE = dict(back_h=2.0)   # s1wall_final 名目和 params.MODULE 唯一不同處（params 是 1.5，與 crosstrack bump_h 同）
+def ref_module() -> dict:
+    """s1wall_final 名目模組尺寸（geometry_s1_final.json 的 params.MOD）和 module_params() 不同的鍵 → 覆寫用 dict。
+
+    使用者 2026-10-08 把 params.MODULE back_h 定為 2.0（＝S1 規格名目），所以目前是空 dict：
+    params 實值就是規格名目，自我測試直接用 params 比對 json。實量後改了 params，這裡會列出不同的鍵，
+    名目比對改用規格值覆寫，params 實值另外比（第 2 節）。"""
+    mod = json.loads(REF_JSON.read_text(encoding='utf-8'))['params']['MOD']
+    cur = module_params()
+    return {k: v for k, v in mod.items() if k in cur and cur[k] != v}
 
 
 def _hd(a, b) -> float:
@@ -1135,10 +1152,15 @@ def selftest(cat=None, verbose=True) -> dict:
         log(f"  {'OK' if d <= tol else '!!'} {name}: {d:.4f}")
         return d
 
-    res = build(cat, module=REF_MODULE)
-    g = geometry(cat, module_params(REF_MODULE), design_params())
+    ref_mod = ref_module()
+    res = build(cat, module=ref_mod or None)
+    g = geometry(cat, module_params(ref_mod), design_params())
     E = _env(cat)
-    log('== 1. 名目參數（s1wall_final MOD/DES：back_h 2.0）vs geometry_s1_final.json ==')
+    log('== 1. 名目參數（s1wall_final MOD/DES）vs geometry_s1_final.json ==')
+    log('  params.MODULE 和 s1wall_final MOD ' + ('完全相同（back_h＝2.0，使用者 2026-10-08 決定），直接用 params 比對'
+                                                  if not ref_mod else
+                                                  '不同：' + '、'.join(f'{k}＝{module_params()[k]}（規格 {v}）' for k, v in ref_mod.items())
+                                                  + '；本節用規格值覆寫'))
     # 推導量
     dmax = 0.0
     for k, v in ref['derived'].items():
@@ -1247,7 +1269,7 @@ def selftest(cat=None, verbose=True) -> dict:
     log(f"  名目檢查 {len(ck_nom) - len(bad)}/{len(ck_nom)} OK" + (f"；不合格：{[c['key'] for c in bad]}" if bad else ''))
     _cmp_checks(ck_nom, log)
 
-    log('\n== 2. params.py 實值（MODULE back_h=%s）與名目的差異 ==' % P.MODULE['back_h'])
+    log('\n== 2. params.py 實值與名目的差異（MODULE back_h=%s）==' % P.MODULE['back_h'])
     res2 = build(cat)
     diffs = []
     for e1, e2 in zip(res['edits'], res2['edits']):
@@ -1288,7 +1310,7 @@ def selftest(cat=None, verbose=True) -> dict:
         log(f'  警告：{w}')
     return dict(worst=worst, rows=rows, nominal_bad=[c['key'] for c in bad], params_diffs=diffs,
                 params_bad=[c['key'] for c in bad2], v38_bad=[c['key'] for c in bad3], lines=lines,
-                v38_single=g13b.geom_type == 'Polygon')
+                v38_single=g13b.geom_type == 'Polygon', ref_module=ref_mod)
 
 
 def _cmp_checks(ck, log):
@@ -1341,7 +1363,10 @@ if __name__ == '__main__':
     _cat = load_catalog()
     if '--selftest' in sys.argv:
         r = selftest(_cat)
-        ok = r['worst'] <= 0.011 and not r['nominal_bad'] and r['v38_single']
-        print(f"\n自我測試：{'通過' if ok else '未通過'}（名目最大差 {r['worst']:.4f} mm）")
+        ok = r['worst'] <= 0.011 and not r['nominal_bad'] and r['v38_single'] and not r['params_bad']
+        print(f"\n自我測試：{'通過' if ok else '未通過'}（名目最大差 {r['worst']:.4f} mm；params 實值"
+              + ('＝規格名目' if not r['ref_module'] else f"和名目差 {len(r['params_diffs'])} 項")
+              + f"、檢查{'全過' if not r['params_bad'] else '有不合格：' + str(r['params_bad'])}）")
+        sys.exit(0 if ok else 1)
     else:
         print(summary(build(_cat)))

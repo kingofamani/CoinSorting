@@ -14,21 +14,26 @@
   第 1 頁的大小就是 <svg> 的 width/height/viewBox，其他頁在同一個使用者座標裡往右排。
   單位 mm，座標已經套好（零件路徑上沒有 transform）。
 * 圖層（inkscape:groupmode="layer"）：「原始零件」「v2 修改」「v2 新增」「註記（不切割）」，
-  註記層 style="display:none"。每個零件一個 <g>：inkscape:label＝代號，另有
-  data-part（代號）、data-copy（第幾份，0 起算）、data-layer、data-sheet。
+  註記層 style="display:none"。每個零件一個 <g>：inkscape:label＝代號（備品寫「代號（備品…）」），另有
+  data-part（代號）、data-copy（第幾份，0 起算；≥ qty 的是備品）、data-spare（1＝備品）、data-layer、data-sheet。
   切割路徑一個子路徑一個 <path>，data-kind＝outer（外框）／hole（孔）／line（開放線，如彎曲條鋸縫），
   data-src＝原始元素 id（新零件沒有）。
-* 顏色：切割 params.STROKE_CUT（黑 0.2 mm）；雕刻紅 #ff0000（保留原始雕刻元素的樣式，只套座標轉換）；
-  註記綠 #008000（只在隱藏的註記層：每個零件的代號與 tags、每張板的標題與利用率）。
+* 零件群組內的寫入順序（cut_order）：雕刻 → 孔與開放線（cut_d 原順序）→ 外框最後。幾何不變；
+  雷切軟體照檔案順序切時，零件到最後才和板分開。path id 仍用 cut_d／engrave 的原 index（-c<i>／-e<i>）。
+* 顏色：切割 params.STROKE_CUT（黑 0.2 mm）；雕刻紅 #ff0000 0.2 mm 線（保留雕刻元素的樣式，只套座標轉換；
+  原始檔和 v2 新增的雕刻都是 compose.STYLE_ENGRAVE＝fill:none;stroke:#ff0000;stroke-width:0.2，qa 會檢查）；
+  註記綠 #008000（只在草稿的隱藏註記層：每個零件的代號與 tags、每張板的標題與利用率）。
   文字一律用 textpath.text_to_d 轉成路徑，整份檔沒有文字元素；textpath 不能用時註記層只放
   小十字記號，並在報告裡警告。
 * <out_dir>（預設 <out_root>/laser_v2/out/）：
-  - sheet_合板_1.svg …：每張板一個單頁 SVG（同樣 4 個圖層）；
+  - sheet_合板_1.svg …：每張板一個單頁 SVG，**上雷切機用**：只有「原始零件」「v2 修改」「v2 新增」3 個圖層，
+    不含註記層（render_sheet(notes=False)；qa.check(mode='sheet') 檢查）；
   - sheet_合板_1.png …：預覽圖（matplotlib；切割黑線、雕刻紅線、零件代號藍色小字，字型 params.FONT_PATH）；
-  - parts.csv：代號、名稱、材質、每套數量、尺寸、所在板、layer、tags（UTF-8 含 BOM，Excel 直接開）；
-  - report.md：張數與利用率、材料與採購（每套／10 套：板材＋各子系統 build() 的 bom＋極小零件切割注意）、
-    實量後改哪裡（params 鍵、重跑指令、重切哪塊小樣）、各子系統 notes／warnings／checks、
-    跨子系統檢查（integrate.py）、待決事項、qa 結果。
+  - parts.csv：代號、名稱、材質、每套數量、備品、尺寸、所在板、備品所在板、layer、tags（UTF-8 含 BOM，Excel 直接開）；
+  - report.md：上雷切機用哪個檔與雷切軟體設定、組裝提醒、張數與利用率、材料與採購（每套／10 套：板材＋
+    各子系統 build() 的 bom＋備品已排進切割檔＋極小零件切割注意）、實量後改哪裡（params 鍵、重跑指令、
+    重切哪塊小樣）與本次使用的 params、各子系統 notes／warnings／checks、跨子系統檢查（integrate.py）、
+    待決事項、qa 結果。
 """
 from __future__ import annotations
 
@@ -151,21 +156,32 @@ def _cut_style() -> str:
 # ---------------------------------------------------------------------------
 # 零件 → SVG 片段
 # ---------------------------------------------------------------------------
+def cut_order(part) -> list[int]:
+    """零件內切割子路徑的寫入順序（cut_d 的 index）：孔與開放線（彎曲條鋸縫等）照 cut_d 原順序在前，外框最後。
+    雷切軟體照檔案順序切時，零件的外框最後才切斷，內部的孔切的時候零件還固定在板上。"""
+    kinds = cut_kinds(part)
+    return [i for i, k in enumerate(kinds) if k != 'outer'] + [i for i, k in enumerate(kinds) if k == 'outer']
+
+
 def _part_group(pl, sheet, dx: float, gid: str) -> str:
-    """一個 Placement 的 <g>（座標已套 M 與頁偏移 dx）。"""
+    """一個 Placement 的 <g>（座標已套 M 與頁偏移 dx）。
+    寫入順序：雕刻 → 孔與開放線 → 外框（最後）；幾何和 cut_d 完全相同，只換順序。
+    path id 用 cut_d／engrave 原本的 index（c<i>、e<i>），不隨順序改變。"""
     p = pl.part
     M = _translate(dx) @ pl.M
     layer = getattr(p, 'layer', 'original')
+    spare = bool(getattr(pl, 'spare', False))
     lines = [f'<g id="{gid}" inkscape:label="{_attr(pl.label)}" data-part="{_attr(p.id)}" '
-             f'data-copy="{pl.copy}" data-layer="{_attr(layer)}" data-sheet="{_attr(_sheet_key(sheet))}">']
-    kinds = cut_kinds(p)
-    srcs = list(getattr(p, 'cut_src', []) or [])
-    for i, d in enumerate(p.cut_d):
-        src = f' data-src="{_attr(srcs[i])}"' if i < len(srcs) and srcs[i] else ''
-        lines.append(f'  <path id="{gid}-c{i}" d="{transform_d(d, M)}" style="{_cut_style()}" '
-                     f'data-kind="{kinds[i]}"{src}/>')
+             f'data-copy="{pl.copy}" data-spare="{int(spare)}" data-layer="{_attr(layer)}" '
+             f'data-sheet="{_attr(_sheet_key(sheet))}">']
     for i, e in enumerate(p.engrave):
         lines.append('  ' + _engrave_elem(e, M, f'{gid}-e{i}'))
+    kinds = cut_kinds(p)
+    srcs = list(getattr(p, 'cut_src', []) or [])
+    for i in cut_order(p):
+        src = f' data-src="{_attr(srcs[i])}"' if i < len(srcs) and srcs[i] else ''
+        lines.append(f'  <path id="{gid}-c{i}" d="{transform_d(p.cut_d[i], M)}" style="{_cut_style()}" '
+                     f'data-kind="{kinds[i]}"{src}/>')
     lines.append('</g>')
     return '\n'.join(lines)
 
@@ -216,7 +232,8 @@ def _note_group(pl, sheet, dx: float, gid: str, warn: list) -> str:
     x += dx
     size = max(ID_SIZE[0], min(ID_SIZE[1], 0.9 * r))
     out = [f'<g id="{gid}" inkscape:label="註記 {_attr(pl.label)}" data-part="{_attr(p.id)}" '
-           f'data-copy="{pl.copy}" data-sheet="{_attr(_sheet_key(sheet))}">']
+           f'data-copy="{pl.copy}" data-spare="{int(bool(getattr(pl, "spare", False)))}" '
+           f'data-sheet="{_attr(_sheet_key(sheet))}">']
     texts = [(pl.label, size)]
     name = getattr(p, 'name', '') or ''
     if name and name != p.id:
@@ -255,8 +272,8 @@ def _title_group(sheet, n_same: int, dx: float) -> str:
     return f'<g id="{gid}" inkscape:label="註記 {_attr(sheet.title)}" data-sheet="{_attr(_sheet_key(sheet))}">{body}\n</g>'
 
 
-def _svg_doc(pages, bodies: dict, notes: list[str], comment: str) -> str:
-    """pages：[(label, x)]；bodies：layer code → [片段]；notes：註記層片段。"""
+def _svg_doc(pages, bodies: dict, notes: list[str] | None, comment: str) -> str:
+    """pages：[(label, x)]；bodies：layer code → [片段]；notes：註記層片段（None＝整個註記層都不寫，上雷切機用）。"""
     W, H = params.SHEET
     page_xml = '\n'.join(
         f'    <inkscape:page x="{_f(x)}" y="0" width="{_f(W)}" height="{_f(H)}" id="page{k + 1}" '
@@ -280,33 +297,38 @@ def _svg_doc(pages, bodies: dict, notes: list[str], comment: str) -> str:
         out.append(f'  <g inkscape:groupmode="layer" id="{lid}" inkscape:label="{label}">')
         out.extend('    ' + ln for frag in bodies.get(code, []) for ln in frag.split('\n'))
         out.append('  </g>')
-    lid, label = NOTE_LAYER
-    out.append(f'  <g inkscape:groupmode="layer" id="{lid}" inkscape:label="{label}" style="display:none">')
-    out.extend('    ' + ln for frag in notes for ln in frag.split('\n'))
-    out.append('  </g>')
+    if notes is not None:
+        lid, label = NOTE_LAYER
+        out.append(f'  <g inkscape:groupmode="layer" id="{lid}" inkscape:label="{label}" style="display:none">')
+        out.extend('    ' + ln for frag in notes for ln in frag.split('\n'))
+        out.append('  </g>')
     out.append('</svg>')
     return '\n'.join(out) + '\n'
 
 
-def _render(sheets, page_x: list[float], comment: str, warn: list, count: dict | None = None) -> str:
+def _render(sheets, page_x: list[float], comment: str, warn: list, count: dict | None = None,
+            notes: bool = True) -> str:
+    """notes=False：不寫註記層（上雷切機用的分頁檔）。"""
     bodies: dict[str, list[str]] = {}
-    notes: list[str] = []
+    note_frags: list[str] | None = [] if notes else None
     if count is None:
         count = {}
         for s in sheets:
             count[s.material] = count.get(s.material, 0) + 1
     for s, dx in zip(sheets, page_x):
         sk = _sheet_sid(s)
-        notes.append(_title_group(s, count[s.material], dx))
+        if notes:
+            note_frags.append(_title_group(s, count[s.material], dx))
         for pl in s.items:
             gid = f'{sk}-{_sid(pl.part.id)}-{pl.copy}'
             layer = getattr(pl.part, 'layer', 'original')
             if layer not in LAYER_ZH:
                 raise ValueError(f'{pl.part.id} 的 layer={layer!r} 不是 original/modified/new')
             bodies.setdefault(layer, []).append(_part_group(pl, s, dx, gid))
-            notes.append(_note_group(pl, s, dx, f'note-{gid}', warn))
+            if notes:
+                note_frags.append(_note_group(pl, s, dx, f'note-{gid}', warn))
     pages = [(s.title, dx) for s, dx in zip(sheets, page_x)]
-    return _svg_doc(pages, bodies, notes, comment)
+    return _svg_doc(pages, bodies, note_frags, comment)
 
 
 def page_offsets(sheets) -> list[float]:
@@ -314,24 +336,148 @@ def page_offsets(sheets) -> list[float]:
     return [k * (W + PAGE_GAP) for k in range(len(sheets))]
 
 
-COMMENT = ('分幣機 v2 雷切檔（laser_v2.build_v2 產生；改 laser_v2/params.py 後重跑，請勿手改）。'
-           '黑 0.2 mm＝切割、紅＝雕刻、綠＝註記（隱藏圖層，不切割）')
+COMMENT = ('分幣機 v2 雷切草稿（laser_v2.build_v2 產生；改 laser_v2/params.py 後重跑，請勿手改）。'
+           '黑 0.2 mm＝切割、紅 0.2 mm 線＝雕刻（雷切軟體設線／向量雕刻，不要填色／掃描）、'
+           '綠＝註記（隱藏圖層，不切割）。上雷切機請用 laser_v2/out/sheet_*.svg（不含註記）')
+# 雷切軟體多半照圖層（顏色）順序跑、不照檔案順序：紅（雕刻）要排在黑（切割）前面，不然整張先切穿、小零件來不及雕刻
+LAYER_ORDER_TIP = ('雷切軟體多半照圖層（顏色）順序跑、不照檔案順序：圖層清單裡把紅色（雕刻）排在黑色（切割）前面，'
+                   '黑色圖層再開「先切內部（inner first）」；不然整張先切穿，小零件來不及雕刻就掉了或移位')
+# 小字用 0.2 mm 線雕刻：筆畫間隙、字腔比線寬還窄的地方會燒成一團（verify2 量過「感測器線」「左牆」最明顯）
+SMALL_TEXT_TIP = ('小字（em 2～3 的代號字、#37「感測器線」、EB-WL「左牆」等）用 0.2 mm 線雕刻，筆畫間隙比線寬還窄的地方會燒糊：'
+                  '先切試切小樣，調紅色圖層的功率／速度，確認 C1-S10 的「S10」（em 2.1）和 TB-#37 的「感測器線」刻得清楚再切整台')
+GENERATOR_MARKS = ('laser_v2.build_v2 產生', 'laser_v2.trial 產生')   # 分頁 SVG 檔頭註解；清舊檔時用來認產生器寫的檔
+COMMENT_SHEET = ('分幣機 v2 雷切檔，上雷切機用（laser_v2.build_v2 產生；改 laser_v2/params.py 後重跑，請勿手改）。'
+                 '黑 0.2 mm＝切割；紅 0.2 mm 線＝雕刻，紅色圖層設「線／向量雕刻（低功率切割）」，不要用填色／掃描。'
+                 '不含註記。每個零件先雕刻、切孔與內部線，外框最後切。' + LAYER_ORDER_TIP)
+NOTE_LAYER_RULE = '草稿含隱藏註記層；分頁 SVG（上雷切機用）不含註記層'
 
 
 def render_draft(sheets, warn: list | None = None) -> str:
-    """多頁草稿 SVG 字串。"""
+    """多頁草稿 SVG 字串（含隱藏的註記層）。"""
     return _render(sheets, page_offsets(sheets), COMMENT, warn if warn is not None else [])
 
 
-def render_sheet(sheet, n_same: int | None = None, warn: list | None = None) -> str:
-    """單張板的 SVG 字串（座標 0～255、0～355）。n_same：同材質共幾張（標題用）。"""
-    return _render([sheet], [0.0], COMMENT + f'　{sheet.title}', warn if warn is not None else [],
-                   {sheet.material: n_same or sheet.no})
+def render_sheet(sheet, n_same: int | None = None, warn: list | None = None, notes: bool = False,
+                 comment: str = COMMENT_SHEET) -> str:
+    """單張板的 SVG 字串（座標 0～255、0～355）。n_same：同材質共幾張（標題用）。
+    預設 notes=False：上雷切機用，不寫註記層（qa.check(..., mode='sheet') 檢查）。"""
+    return _render([sheet], [0.0], comment + f'　{sheet.title}', warn if warn is not None else [],
+                   {sheet.material: n_same or sheet.no}, notes=notes)
 
 
 # ---------------------------------------------------------------------------
 # 預覽 PNG
 # ---------------------------------------------------------------------------
+LABEL_GAP = 0.35           # 預覽代號字框離雕刻、切割線、其他代號的距離（mm）
+LABEL_MIN = 1.6            # 零件裡放代號的最小字高（再小就改放在零件外、拉引線；和舊做法的下限相同）
+LABEL_OUT_MIN = 1.3        # 零件外（引線）放不下時再試的字高
+
+
+def _label_wh(text: str, sz: float) -> tuple[float, float]:
+    """預覽代號字框的大約寬高（mm；微軟正黑體：全形字約 1 em、半形約 0.58 em）。"""
+    w = sum(1.0 if ord(ch) > 0x2000 else 0.58 for ch in text) * sz
+    return w + 0.3, 1.2 * sz
+
+
+def _place_labels(sheet, eng_segs, cut_segs) -> list[tuple]:
+    """預覽 PNG 的代號位置：回傳和 sheet.items 同順序的 (x, y, 字高, 引線 ((x0, y0), (x1, y1)) 或 None)。
+    先放大零件。零件裡找不壓雕刻（紅字）、切割線、其他代號的位置（字可以縮到 LABEL_MIN）；放不下的（極小零件、
+    備品）改放在旁邊沒有零件的空白處，拉一條引線。都找不到才退回舊做法（外形內離邊最遠的點）。只影響預覽圖。"""
+    import shapely
+    from shapely.geometry import LineString as _LS, box as _box
+    from shapely.strtree import STRtree
+    W, H = sheet.w, sheet.h
+    ink = [_LS(s) for s in eng_segs if len(s) >= 2]
+    cut = [_LS(s) for s in cut_segs if len(s) >= 2]
+    ink_tree = STRtree(ink) if ink else None
+    cut_tree = STRtree(cut) if cut else None
+    def filled(g):      # 外形補滿孔：零件外的代號不放進別的零件的孔裡（看起來會像在標那個孔）
+        polys = g.geoms if isinstance(g, MultiPolygon) else [g]
+        return shapely.union_all([Polygon(p.exterior) for p in polys])
+    part_tree = STRtree([filled(pl.geom) for pl in sheet.items])
+    placed: list = []
+    out: list = [None] * len(sheet.items)
+
+    def free(boxes, inside=None):
+        """boxes（shapely 陣列）裡可以用的：在板內、不壓雕刻／切割線／已放的代號；inside＝要整個在這個外形內，
+        None＝要在所有零件外面。"""
+        ok = shapely.contains(_box(0.5, 0.5, W - 0.5, H - 0.5), boxes)
+        if inside is not None:
+            shapely.prepare(inside)
+            ok &= shapely.contains(inside, boxes)
+        grown = shapely.buffer(boxes, LABEL_GAP, join_style='mitre')
+        trees = [t for t in (ink_tree, cut_tree) if t is not None]
+        if inside is None:
+            trees.append(part_tree)
+        for t in trees:
+            hit = t.query(grown, predicate='intersects')
+            if hit.size:
+                ok[np.unique(hit[0])] = False
+        for b in placed:
+            ok &= ~shapely.intersects(grown, b)
+        return ok
+
+    order = sorted(range(len(sheet.items)), key=lambda i: -sheet.items[i].geom.area)
+    for i in order:
+        pl = sheet.items[i]
+        g = pl.geom
+        x0, y0, r = _label_point(g)
+        sz0 = max(1.6, min(3.2, 0.8 * r))
+        gx0, gy0, gx1, gy1 = g.bounds
+        res = None
+        inner = g.buffer(-0.3)
+        if not inner.is_empty:                      # 1) 零件裡面（字由大到小）
+            step = max(0.8, min(gx1 - gx0, gy1 - gy0) / 12, (g.area / 400) ** 0.5)
+            xs, ys = np.meshgrid(np.arange(gx0, gx1 + step, step), np.arange(gy0, gy1 + step, step))
+            cx, cy = np.append(x0, xs.ravel()), np.append(y0, ys.ravel())
+            pref = np.hypot(cx - x0, cy - y0)       # 越靠近原本的點（離邊最遠）越好
+            sz = sz0
+            while res is None and sz >= LABEL_MIN - 1e-9:
+                w, h = _label_wh(pl.label, sz)
+                boxes = shapely.box(cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2)
+                ok = free(boxes, inner)
+                if ok.any():
+                    k = int(np.argmin(np.where(ok, pref, np.inf)))
+                    res = (float(cx[k]), float(cy[k]), sz, None)
+                sz = round(sz * 0.8, 3)
+        for sz in (max(LABEL_MIN, min(sz0, 2.2)), LABEL_OUT_MIN):   # 2) 零件外面的空白處，拉引線
+            if res is not None:
+                break
+            w, h = _label_wh(pl.label, sz)
+            cands = []
+            for d in (0.8, 2.0, 3.5, 5.5, 8.0, 12.0, 18.0, 26.0, 36.0):
+                for fx in np.linspace(-1.0, 1.0, 9):
+                    cx = (gx0 + gx1) / 2 + fx * (w + gx1 - gx0) / 2
+                    cands += [(cx, gy0 - d - h / 2), (cx, gy1 + d + h / 2)]
+                for fy in np.linspace(-1.0, 1.0, 5):
+                    cy = (gy0 + gy1) / 2 + fy * (h + gy1 - gy0) / 2
+                    cands += [(gx0 - d - w / 2, cy), (gx1 + d + w / 2, cy)]
+            c = np.array(cands)
+            boxes = shapely.box(c[:, 0] - w / 2, c[:, 1] - h / 2, c[:, 0] + w / 2, c[:, 1] + h / 2)
+            ok = free(boxes)
+            if ok.any():
+                idx = np.flatnonzero(ok)
+                leads = shapely.shortest_line(boxes[idx], g)
+                cost = shapely.length(leads)
+                hit = part_tree.query(leads, predicate='intersects')    # 引線穿過別的零件要扣分
+                for a_, b_ in zip(*hit):
+                    if b_ != i:
+                        cost[a_] += 50.0
+                for b in placed:                                         # 引線壓到別的代號也扣分
+                    cost += 20.0 * shapely.intersects(leads, b)
+                k = int(np.argmin(cost))
+                (ax, ay), (bx, by) = shapely.get_coordinates(leads[k])
+                res = (float(c[idx[k], 0]), float(c[idx[k], 1]), sz, ((ax, ay), (bx, by)))
+        if res is None:                             # 3) 退回舊做法
+            half = 0.32 * sz0 * len(pl.label)
+            res = (min(max(x0, half + 1), W - half - 1), y0, sz0, None)
+        x, y, sz, _ = res
+        w, h = _label_wh(pl.label, sz)
+        placed.append(_box(x - w / 2, y - h / 2, x + w / 2, y + h / 2))
+        out[i] = res
+    return out
+
+
 def preview_png(sheet, path: Path, n_same: int):
     import matplotlib
     matplotlib.use('Agg')
@@ -365,13 +511,11 @@ def preview_png(sheet, path: Path, n_same: int):
                 eng_segs.append(pts @ A[:2, :2].T + A[:2, 2])
     ax.add_collection(LineCollection(eng_segs, colors='#ff0000', linewidths=0.35))
     ax.add_collection(LineCollection(cut_segs, colors='#000000', linewidths=0.45))
-    for pl in sheet.items:
-        x, y, r = _label_point(pl.geom)
-        sz = max(1.6, min(3.2, 0.8 * r))
-        half = 0.32 * sz * len(pl.label)          # 大約半個字串寬（mm），讓字不要超出板邊
-        x = min(max(x, half + 1), W - half - 1)
+    for pl, (x, y, sz, lead) in zip(sheet.items, _place_labels(sheet, eng_segs, cut_segs)):
+        if lead is not None:                      # 零件裡放不下：字放在旁邊空白處，拉一條細線到零件
+            ax.plot([lead[0][0], lead[1][0]], [lead[0][1], lead[1][1]], color=LABEL_COLOR, lw=0.3, zorder=5)
         ax.text(x, y, pl.label, fontproperties=fp, fontsize=sz * pt_per_mm, color=LABEL_COLOR,
-                ha='center', va='center', zorder=5)
+                ha='center', va='center', zorder=6)
     fig.text(0.01, 1 - 6 / (H + 12), _sheet_title(sheet, n_same), fontproperties=fp,
              fontsize=4.2 * pt_per_mm, va='center')
     fig.savefig(path, dpi=PNG_DPI, facecolor='white')
@@ -390,21 +534,37 @@ def _part_order(p):
     return (layer_rank, _natkey(p.id))
 
 
-def write_csv(sheets, parts, path: Path):
-    where: dict[str, dict[str, int]] = {}
+CSV_HEADER = ['代號', '名稱', '材質', '每套數量', '備品', '尺寸(mm)', '所在板', '備品所在板', 'layer', 'tags']
+
+
+def _where(sheets) -> dict[tuple[str, bool], dict[str, int]]:
+    """(代號, 是否備品) → {板: 份數}。"""
+    where: dict[tuple[str, bool], dict[str, int]] = {}
     for s in sheets:
         for pl in s.items:
-            w = where.setdefault(pl.part.id, {})
+            w = where.setdefault((pl.part.id, bool(getattr(pl, 'spare', False))), {})
             w[_sheet_key(s)] = w.get(_sheet_key(s), 0) + 1
+    return where
+
+
+def _loc(w: dict) -> str:
+    return '、'.join(f'{k}' + (f'×{n}' if n > 1 else '') for k, n in w.items())
+
+
+def write_csv(sheets, parts, path: Path):
+    """parts.csv：每種零件一列。「每套數量」是正式件；「備品」是每套多排進切割檔的份數（實際排到的），
+    「備品所在板」另列。"""
+    where = _where(sheets)
     with open(path, 'w', encoding='utf-8-sig', newline='') as f:
         wr = csv.writer(f)
-        wr.writerow(['代號', '名稱', '材質', '每套數量', '尺寸(mm)', '所在板', 'layer', 'tags'])
+        wr.writerow(CSV_HEADER)
         for p in sorted(parts, key=_part_order):
             x0, y0, x1, y1 = p.geom.bounds
-            w = where.get(p.id, {})
-            loc = '、'.join(f'{k}' + (f'×{n}' if n > 1 else '') for k, n in w.items())
+            w = where.get((p.id, False), {})
+            ws = where.get((p.id, True), {})
             wr.writerow([p.id, getattr(p, 'name', '') or p.id, p.material, int(getattr(p, 'qty', 1) or 1),
-                         f'{x1 - x0:.1f}×{y1 - y0:.1f}', loc, getattr(p, 'layer', 'original'),
+                         sum(ws.values()), f'{x1 - x0:.1f}×{y1 - y0:.1f}', _loc(w), _loc(ws),
+                         getattr(p, 'layer', 'original'),
                          '；'.join(str(t) for t in (getattr(p, 'tags', []) or []))])
 
 
@@ -452,6 +612,15 @@ def _qty_txt(q, unit, per=1):
     v = q * per
     v = int(v) if abs(v - round(v)) < 1e-9 else round(v, 1)
     return f'{v} {unit}'
+
+
+def _sensor_pins() -> dict | None:
+    """感測器線盒端插哪一欄（ebox.SENSOR_PINS）；讀不到時回傳 None（報告只寫「要插的欄位」）。"""
+    try:
+        from .ebox import SENSOR_PINS
+        return dict(SENSOR_PINS)
+    except Exception:                                  # noqa: BLE001
+        return None
 
 
 def _material_section(sheets, parts, results) -> list[str]:
@@ -504,9 +673,11 @@ def _material_section(sheets, parts, results) -> list[str]:
         if nmod:
             L.append(f'\n槽型光耦模組合計每套 {nmod:g} 個、{SETS} 套 {nmod * SETS:g} 個（另見下表備用）。')
         L.append('')
+    L.extend(_spare_section(sheets, parts))
+    if rows:
         sp = [r for r in rows if r['cat'] == BOM_SPARE]
         if sp:
-            L.append('**備品（spec 建議；目前都不在切割檔，要不要排進切割檔請使用者決定）**\n')
+            L.append('**其他備品（spec 建議；不在切割檔，要不要另外準備請使用者決定）**\n')
             L.append(f'| 品項 | 每套 | {SETS} 套 | 說明 | 出處 |')
             L.append('|---|---|---|---|---|')
             for r in sp:
@@ -530,17 +701,52 @@ def _material_section(sheets, parts, results) -> list[str]:
             ref = (f'原始檔最小的切割件是 {"、".join(p.id for a, p, w, h in orig_small if abs(a - a0) < 1)} '
                    f'{w0:.0f}×{h0:.0f}（{a0:.0f} mm²），以前也沒加連接橋；')
         L.append(f'- v2 新零件裡外包兩邊都小於 {SMALL_PART:g} mm 的：' + '、'.join(
-            f'{p.id} {w:.1f}×{h:.1f}（{a:.0f} mm²，×{int(getattr(p, "qty", 1) or 1)}）' for a, p, w, h in small)
+            f'{p.id} {w:.1f}×{h:.1f}（{a:.0f} mm²，×{int(getattr(p, "qty", 1) or 1)}'
+            + (f'＋備品 {int(getattr(p, "spare", 0) or 0)}' if int(getattr(p, 'spare', 0) or 0) else '') + '）'
+            for a, p, w, h in small)
                  + f'。{ref}一般雷切蜂巢台格子 6～10 mm。')
         tiny = [p.id for a, p, w, h in small if a < TINY_AREA]
         if tiny:
             L.append(f'- {"、".join(tiny)} 小於 {TINY_AREA:g} mm²，切完幾乎一定會掉進蜂巢或集塵盤（3 mm 厚的零件卡在自己的切口裡'
                      '最多只翹約 3°，不會撞噴嘴，主要是會掉、會丟）。')
-        L.append('- 切這一張前在板底貼一層紙膠帶，或墊一張犧牲板；切完先清點這幾種的數量，再檢查蜂巢底下與集塵盤。')
+        sm_ids = {p.id for _, p, _, _ in small}
+        sm_sheets = [s for s in sheets if any(pl.part.id in sm_ids for pl in s.items)]
+        which = '、'.join(f'{s.material}第 {s.no} 張' for s in sm_sheets) or '有極小零件的板'
+        L.append(f'- 切{which}（' + ('極小零件和備品都在這張' if len(sm_sheets) == 1 else '極小零件和備品在這幾張')
+                 + '）前，在板底貼一層紙膠帶，或墊一張犧牲板；切完先清點這幾種的數量（正式件＋備品），再檢查蜂巢底下與集塵盤。')
+        has_sp = {p.id for s in sheets for pl in s.items if getattr(pl, 'spare', False) for p in [pl.part]}
+        sp_txt = ('每套已經多排一整份備品進切割檔（見上面「備品已排進切割檔」），掉了一片直接用備品；'
+                  if has_sp & {p.id for _, p, _, _ in small} else '目前沒有排備品；')
         L.append('- 這些都是講師預組時才用（插銷黏 C1、導流帽黏前臂、填塊黏背蓋、防拔鍵選用），掉了可以撿回或重切，'
-                 '不影響老師現場組裝；備品見上表。不建議自己加微連接：插銷是 3.0 方塊要壓進 2.9 孔，連接點留下的凸點會影響配合。'
-                 '要不要多切備品、要不要做小件框或微連接，請依雷切機台面（蜂巢台或刀條台、格子大小）決定。')
-        L.append('- 試切小樣也有同樣的小件（PIN、S1-H、S1-P、TA-PIN、EB-K），處理方式相同。\n')
+                 f'不影響老師現場組裝。{sp_txt}不建議自己加微連接：插銷是 3.0 方塊要壓進 2.9 孔，連接點留下的凸點會影響配合。'
+                 '要不要做小件框或微連接，請依雷切機台面（蜂巢台或刀條台、格子大小）決定。')
+        L.append('- 試切小樣也有同樣的小件（PIN、S1-H、S1-P、EB-K，也一樣多排一份備品），處理方式相同。\n')
+    return L
+
+
+def _spare_section(sheets, parts) -> list[str]:
+    """report.md 第三節「備品已排進切割檔」：每套多切的份數與所在板；放不下的另列（layout 不為備品加張數）。"""
+    from .layout import unplaced_spares
+    where = _where(sheets)
+    want = [p for p in sorted(parts, key=_part_order) if int(getattr(p, 'spare', 0) or 0) > 0]
+    un = unplaced_spares(sheets)
+    if not want and not un:
+        return []
+    L = ['**備品已排進切割檔（使用者 2026-10-08：外包兩邊都 <10 mm 的極小零件，每套多切一整份；不增加張數）**\n',
+         '| 代號 | 名稱 | 每套正式 | 每套備品（排進切割檔） | 備品所在板 |',
+         '|---|---|---:|---:|---|']
+    for p in want:
+        ws = where.get((p.id, True), {})
+        n = sum(ws.values())
+        need = int(getattr(p, 'spare', 0) or 0)
+        L.append(f'| {_md(p.id)} | {_md(getattr(p, "name", "") or p.id)} | {int(getattr(p, "qty", 1) or 1)} | '
+                 f'{n}' + ('' if n == need else f'（應 {need}）') + f' | {_md(_loc(ws)) or "—"} |')
+    L.append('')
+    L.append('備品和正式件形狀完全相同，在 SVG 裡的群組標 `data-spare="1"`、代號標籤寫「（備品）」；'
+             '切完和正式件分開收，講師預組時掉了或壞了直接換。')
+    if un:
+        L.append(f'\n**放不下的備品（沒有排；不為備品加張數，請使用者決定）**：{len(un)} 件：' + '、'.join(_md(u) for u in un))
+    L.append('')
     return L
 
 
@@ -564,10 +770,37 @@ def _measure_section() -> list[str]:
          'USB／DC 在 +U 端（右牆那側）是寫死的，實品相反要先問 | EB-B 孔、EB-WR 服務窗、盒底 | 電子盒 EB-* |',
          f'| 9V 電池 | `BATTERY_9V`：{keys(params.BATTERY_9V)} | mm；口袋取 max(實測, 標準 48.5×26.5×17.5)，實品較小不縮 | '
          '電子盒電池帶 | 電子盒 EB-* |',
+         f'| S1 模組前臂（靠 #26 那臂）PCB 背面焊腳的**位置**與高度（S1 卡匣用的那個模組；組裝座標 V、W\'） | '
+         f'高度：`MODULE[\'back_h\']`（目前 {params.MODULE.get("back_h")}）；**位置不是 params**，量完先回報 | '
+         'mm；PCB 用 1 mm 泡棉膠墊高，所以凸出 >1.0 mm 的焊點只能落在 S1-B 讓位孔內（V≤74.7）或 W\'>29，'
+         '否則會頂到 S1-B 下料條或 #13R 牆、把 PCB 頂高（光束跟著偏），要改 S1-B 讓位孔／牆槽（mods_s1，改前先問）；'
+         '見 laser_v2/_work/verify-spec-s1/notes.md 觀察 1、verify-assembly/notes.txt | S1-B 讓位孔、S1-F、#37 卡匣窗焊點段 | '
+         'TB-#37、S1-*（TB 全部） |',
          '',
          '重跑（在 repo 根目錄）：`.venv/Scripts/python.exe -B -m laser_v2.build_v2`（約 95 秒；草稿、分頁 SVG、本報告、'
          '試切小樣一起更新；只要草稿加 `--no-trial`）。改完先看「六、各子系統」的警告與「七、跨子系統檢查」，'
          '全部通過再切；先切試切小樣照 trial_report.md 驗收，再切整台。\n']
+    L.extend(params_used_section())
+    return L
+
+
+PARAMS_SHOWN = ('MODULE', 'TM1637', 'ESP32_BOARD', 'BATTERY_9V', 'BEAM_H', 'LOGO_PLAN', 'S1_WALL_TOP_V', 'T_PLY',
+                'C_TAB', 'C_SENSOR', 'C_HOOK')
+
+
+def params_used_section(title: str = '**本次使用的參數（laser_v2/params.py，產生這份檔案時的值）**') -> list[str]:
+    """report.md／trial_report.md：這次產生用的 params（實量後對照用）。"""
+    L = [f'{title}\n', '| 鍵 | 值 |', '|---|---|']
+    for k in PARAMS_SHOWN:
+        if not hasattr(params, k):
+            continue
+        v = getattr(params, k)
+        if isinstance(v, dict):
+            txt = '、'.join(f'{kk}={_fmt(vv) if not isinstance(vv, str) else repr(vv)}' for kk, vv in v.items())
+        else:
+            txt = repr(v) if isinstance(v, str) else _fmt(v)
+        L.append(f'| `{k}` | {_md(txt)} |')
+    L.append('')
     return L
 
 
@@ -623,29 +856,63 @@ def write_report(path: Path, sheets, parts, results, qa_rows, qa_sheet_rows, fil
     by = {}
     for s in sheets:
         by[s.material] = by.get(s.material, 0) + 1
+    sheet_names = '、'.join(f'`sheet_{s.material}_{s.no}.svg`' for s in sheets)
     L.append('# 分幣機 v2 雷切草稿：產生報告\n')
     L.append(f'由 `python -m laser_v2.build_v2{" --only-original" if mode == "only-original" else ""}` 產生'
              f'（{"只排原始零件，測試用" if mode == "only-original" else "完整流程"}）。'
              '模組實量後改 `laser_v2/params.py` 重跑即可更新'
              + ('（量什麼、改哪個鍵、重跑指令見第四節；採購與備品見第三節）。\n' if mode != 'only-original' else '。\n'))
+    L.append(f'> **上雷切機用 `{files["out_rel"]}/sheet_*.svg`**（每張板一個檔：{sheet_names}；不含註記）。'
+             f'黑＝切割、紅＝雕刻（全部是 {qa.CUT_WIDTH:g} mm 線，和原始檔一樣）：紅色圖層在雷切軟體設'
+             '「線／向量雕刻（低功率切割）」，**不要用填色／掃描**。多頁草稿 SVG 含隱藏的註記層，是給人看的，不要直接上機。\n')
 
-    L.append('## 一、輸出檔\n')
-    L.append(f'- 草稿（多頁，Inkscape 1.x 開）：`{files["draft_rel"]}`，{len(sheets)} 頁橫向排列、頁距 {PAGE_GAP:g} mm。')
-    L.append(f'- 分頁 SVG／預覽 PNG：`{files["out_rel"]}/sheet_<材質>_<n>.svg／.png`；零件清單 `parts.csv`。')
-    L.append('- 圖層：「原始零件」「v2 修改」「v2 新增」「註記（不切割）」（註記層預設隱藏）。')
-    L.append(f'- 顏色：黑 {qa.CUT_COLOR} {qa.CUT_WIDTH:g} mm＝切割；紅 {qa.ENGRAVE_COLOR}＝雕刻；'
-             f'綠 {qa.NOTE_COLOR}＝註記（隱藏，不切割）。全部文字都已轉成路徑。\n')
+    L.append('## 一、輸出檔與上雷切機設定\n')
+    L.append(f'- **上雷切機**：`{files["out_rel"]}/sheet_<材質>_<n>.svg`，每檔一張 {W:g}×{H:g} 板（{sheet_names}）。'
+             '只有 3 個圖層「原始零件」「v2 修改」「v2 新增」，沒有註記層。')
+    L.append(f'- 草稿（多頁，Inkscape 1.x 開，給人看）：`{files["draft_rel"]}`，{len(sheets)} 頁橫向排列、頁距 {PAGE_GAP:g} mm；'
+             '圖層多一個「註記（不切割）」（預設隱藏：零件代號、修改說明、每張板標題），不要直接上機。')
+    L.append(f'- 預覽 PNG：`{files["out_rel"]}/sheet_<材質>_<n>.png`；零件清單 `parts.csv`（含「備品」「備品所在板」欄）。')
+    L.append('')
+    L.append('| 顏色 | 是什麼 | 雷切軟體設定 |')
+    L.append('|---|---|---|')
+    L.append(f'| 黑 {qa.CUT_COLOR}，{qa.CUT_WIDTH:g} mm 線 | 切割（外框、孔、彎曲條鋸縫） | 切割（cut） |')
+    L.append(f'| 紅 {qa.ENGRAVE_COLOR}，{qa.CUT_WIDTH:g} mm 線 | 雕刻：原始檔的字與圖案、v2 新增的代號字（外框線字）、'
+             '定位框線、▲ 記號 | **線／向量雕刻（低功率切割，line）**；不要用填色／掃描（fill／scan）：'
+             '開放的定位框線、▲ 是線，用填色會漏掉或亂填 |')
+    L.append(f'| 綠 {qa.NOTE_COLOR} | 註記（只在草稿的隱藏圖層） | 分頁檔沒有；草稿不要上機 |')
+    L.append('')
+    L.append('- 零件內的順序：每個零件先寫雕刻，再寫孔與內部線（含彎曲條鋸縫），外框寫在最後。雷切軟體照檔案順序切時，'
+             '零件要到最後才和板分開，不會切到一半掉下去；軟體會自己排序的話，開「先切內部（inner first）」。')
+    L.append(f'- {LAYER_ORDER_TIP}。')
+    L.append('- 全部文字都已轉成路徑（外框線字），檔案裡沒有文字元素。')
+    if mode != 'only-original':
+        L.append(f'- {SMALL_TEXT_TIP}。')
+    L.append(f'- 重跑時，`{files["out_rel"]}` 裡**產生器命名**的分頁檔（`sheet_<材質>_<n>.svg`／`.png`）會被覆寫，'
+             '這次沒有的那幾張會被移除（SVG 還要檔頭有產生器註解才刪）；自己手改的檔請改名（例如加「_手改」）或存到別處。')
+    if mode != 'only-original':
+        L.append('')
+        L.append('**組裝提醒**\n')
+        pins = _sensor_pins()
+        L.append('- 每條感測器排線兩端貼標籤：模組端寫站名（S5／S10／S50／S1），盒端寫要插的欄位'
+                 + (f'（{"、".join(f"{k}→{v}" for k, v in pins.items())}）' if pins else '')
+                 + '；老師依標籤裝站、插線（#24 正面不刻站名）。採購數量見第三節。')
+        guide = (results.get('crosstrack') or {}).get('station_guide')
+        if guide:
+            L.append(f'- {_md(guide)}。')
+        L.append('- 極小零件每套多排一份備品（見第三節「備品已排進切割檔」），切完和正式件分開收。')
+    L.append('')
 
     L.append('## 二、張數與利用率\n')
     L.append(f'板 {W:g}×{H:g} mm，零件離板邊 ≥ {params.SHEET_MARGIN:g} mm、零件之間 ≥ {params.PART_GAP:g} mm'
-             '（真實外形距離）。利用率＝零件淨面積（外框減孔）÷ 板面積。\n')
-    L.append('| 板 | 件數 | 利用率 | 外框面積比 | 排到（x, y） | 排法／備註 |')
-    L.append('|---|---:|---:|---:|---|---|')
+             '（真實外形距離）。利用率＝零件淨面積（外框減孔）÷ 板面積（含備品）。\n')
+    L.append('| 板 | 件數 | 其中備品 | 利用率 | 外框面積比 | 排到（x, y） | 排法／備註 |')
+    L.append('|---|---:|---:|---:|---:|---|---|')
     for s in sheets:
         ex, ey = s.extent
-        L.append(f'| {s.title} | {len(s.items)} | {s.util * 100:.1f}% | {s.outer_area / s.area * 100:.1f}% | '
-                 f'{ex:.0f}, {ey:.0f} | {_md("；".join(s.notes))} |')
-    L.append('\n合計：' + '、'.join(f'{m} {n} 張' for m, n in by.items()) + '（交接估計合板 3～4 張）。')
+        L.append(f'| {s.title} | {len(s.items)} | {getattr(s, "n_spare", 0)} | {s.util * 100:.1f}% | '
+                 f'{s.outer_area / s.area * 100:.1f}% | {ex:.0f}, {ey:.0f} | {_md("；".join(s.notes))} |')
+    L.append('\n合計：' + '、'.join(f'{m} {n} 張' for m, n in by.items())
+             + '（目標合板 3 張、壓克力 1 張；備品只塞進已經開的板，不另開板）。')
     L.append('彎曲條（開放鋸縫很多的零件，例如 #27）只轉 0／180 度，保持原始檔的木紋方向。\n')
 
     if mode != 'only-original':
@@ -660,16 +927,19 @@ def write_report(path: Path, sheets, parts, results, qa_rows, qa_sheet_rows, fil
         q = int(getattr(p, 'qty', 1) or 1)
         cnt[lay] = cnt.get(lay, 0) + q
         n_items += q
-    L.append(f'共 {len(parts)} 種、{n_items} 件：' + '、'.join(f'{LAYER_ZH.get(k, k)} {v} 件' for k, v in cnt.items()) + '。\n')
+    n_sp = sum(int(getattr(p, 'spare', 0) or 0) for p in parts)
+    L.append(f'共 {len(parts)} 種、{n_items} 件：' + '、'.join(f'{LAYER_ZH.get(k, k)} {v} 件' for k, v in cnt.items())
+             + (f'；另備品 {n_sp} 件（第三節）' if n_sp else '') + '。\n')
     touched = [p for p in sorted(parts, key=_part_order) if getattr(p, 'layer', 'original') != 'original'
                or (getattr(p, 'tags', None))]
     if touched:
-        L.append('| 代號 | 名稱 | 圖層 | 數量 | 尺寸 | tags |')
+        L.append('| 代號 | 名稱 | 圖層 | 數量（＋備品） | 尺寸 | tags |')
         L.append('|---|---|---|---:|---|---|')
         for p in touched:
             x0, y0, x1, y1 = p.geom.bounds
             L.append(f'| {_md(p.id)} | {_md(getattr(p, "name", "") or p.id)} | {LAYER_ZH.get(p.layer, p.layer)} | '
-                     f'{int(getattr(p, "qty", 1) or 1)} | {x1 - x0:.1f}×{y1 - y0:.1f} | '
+                     f'{int(getattr(p, "qty", 1) or 1)}' + (f'＋{int(p.spare)}' if int(getattr(p, 'spare', 0) or 0) else '')
+                     + f' | {x1 - x0:.1f}×{y1 - y0:.1f} | '
                      f'{_md("；".join(str(t) for t in (getattr(p, "tags", []) or [])))} |')
         L.append('')
 
@@ -735,7 +1005,7 @@ def write_report(path: Path, sheets, parts, results, qa_rows, qa_sheet_rows, fil
         L.append(f'| {_md(q["name"])} | {flag} | {_md(q["detail"])} |')
     L.append('')
     if qa_sheet_rows:
-        L.append('分頁 SVG：')
+        L.append('分頁 SVG（上雷切機用；用分頁檔規則檢查：只有 3 個圖層、沒有註記層、沒有綠色）：')
         for name, rows in qa_sheet_rows.items():
             b = qa.failures(rows)
             L.append(f'- `{name}`：{len(rows) - len(b)}/{len(rows)} 項通過' +
@@ -759,17 +1029,59 @@ def write_report(path: Path, sheets, parts, results, qa_rows, qa_sheet_rows, fil
 
 
 # ---------------------------------------------------------------------------
+# 清上一次的舊分頁檔（只刪產生器自己的命名）
+# ---------------------------------------------------------------------------
+MATERIALS = tuple(MAT_CODE)          # 產生器會用到的材質名（檔名裡的 <材質>）
+
+
+def generated_name(name: str, prefix: str, materials=()) -> bool:
+    """name 是不是產生器自己的分頁檔命名：<prefix>_<材質>_<n>.svg／.png（材質＝MATERIALS＋materials）。
+    「sheet_合板_1 - 複製.svg」「sheet_合板_1_手改.svg」「sheet_backup.png」這類都不算。"""
+    mats = sorted({*MATERIALS, *materials}, key=len, reverse=True)
+    pat = rf'{re.escape(prefix)}_(?:{"|".join(re.escape(m) for m in mats)})_[1-9]\d*\.(?:svg|png)'
+    return re.fullmatch(pat, name) is not None
+
+
+def has_generator_mark(path: Path) -> bool:
+    """SVG 檔頭（前 2 KB）有產生器註解（GENERATOR_MARKS）。"""
+    try:
+        with open(path, 'rb') as f:
+            head = f.read(2048).decode('utf-8', errors='ignore')
+    except OSError:
+        return False
+    return any(m in head for m in GENERATOR_MARKS)
+
+
+def remove_stale_outputs(out_dir: Path, prefix: str, keep, materials=()) -> tuple[list[Path], list[Path]]:
+    """移除 out_dir 裡上一次留下、這次沒有重寫的 <prefix>_<材質>_<n>.svg／.png。
+    只刪產生器命名的檔；SVG 另外要檔頭有產生器註解（手改另存、被 Inkscape 改寫過的不刪）。
+    回傳 (刪掉的, 檔名符合但沒有產生器註解而保留的)。使用者自己取名的複本（「- 複製」「_手改」…）完全不碰。"""
+    keep = {Path(f).resolve() for f in keep}
+    removed, kept = [], []
+    for f in sorted(Path(out_dir).glob(f'{prefix}_*')):
+        if not f.is_file() or f.resolve() in keep or not generated_name(f.name, prefix, materials):
+            continue
+        if f.suffix.lower() == '.svg' and not has_generator_mark(f):
+            kept.append(f)
+            continue
+        f.unlink()
+        removed.append(f)
+    return removed, kept
+
+
+# ---------------------------------------------------------------------------
 # 主程式
 # ---------------------------------------------------------------------------
 def export(sheets, parts, results, out_root=REPO, out_dir=None, png: bool = True, run_qa: bool = True,
-           cross: dict | None = None) -> dict:
+           cross: dict | None = None, notices: list[str] | None = None) -> dict:
     """寫出草稿 SVG、分頁 SVG、預覽 PNG、parts.csv、report.md，並跑 qa.check。回傳各檔路徑與 qa 結果。
-    cross：integrate.check() 的結果（另加 'ebox' 重查資訊），寫進 report.md 第七節。"""
+    cross：integrate.check() 的結果（另加 'ebox' 重查資訊），寫進 report.md 第七節。
+    notices：呼叫端要寫進 report.md「輸出警告」的提醒（例如 --no-trial 時舊試切檔還在）。"""
     out_root = Path(out_root)
     out_dir = Path(out_dir) if out_dir else out_root / 'laser_v2' / 'out'
     out_root.mkdir(parents=True, exist_ok=True)
     out_dir.mkdir(parents=True, exist_ok=True)
-    warn: list[str] = []
+    warn: list[str] = list(notices or [])
     if _TEXTPATH_ERR:
         warn.append(f'textpath.py 不能用（{_TEXTPATH_ERR}）：註記層只放十字記號，沒有代號文字')
 
@@ -788,14 +1100,19 @@ def export(sheets, parts, results, out_root=REPO, out_dir=None, png: bool = True
             g = out_dir / f'sheet_{s.material}_{s.no}.png'
             preview_png(s, g, count[s.material])
             pngs.append(g)
+    # 上一次多出來的板（張數變少或 --no-png）：留著會被誤拿去切。只刪產生器自己的命名（使用者的複本、手改檔不動）
+    removed, kept = remove_stale_outputs(out_dir, 'sheet', sheet_svgs + pngs, {s.material for s in sheets})
+    warn += [f'移除上一次留下、這次沒有的分頁檔：{f.name}' for f in removed]
+    warn += [f'{f.name} 的檔名像上一次的分頁檔，但檔頭沒有產生器註解（可能是手改過的），沒有刪；這次沒有這張板，'
+             '不要拿它去切' for f in kept]
     csv_path = out_dir / 'parts.csv'
     write_csv(sheets, parts, csv_path)
 
     qa_rows, qa_sheet = [], {}
     if run_qa:
-        qa_rows = qa.check(draft, parts=parts)
+        qa_rows = qa.check(draft, parts=parts, mode='draft')
         for f in sheet_svgs:
-            qa_sheet[f.name] = qa.check(f)
+            qa_sheet[f.name] = qa.check(f, mode='sheet')
     warn = list(dict.fromkeys(warn))
 
     def rel(p: Path) -> str:
