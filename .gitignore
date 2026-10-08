@@ -1,2 +1,4 @@
 __pycache__/
 *.pyc
+.venv/
+laser_v2/_work/
