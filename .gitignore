@@ -2,3 +2,4 @@ __pycache__/
 *.pyc
 .venv/
 laser_v2/_work/
+光耦測試原型/_work/
