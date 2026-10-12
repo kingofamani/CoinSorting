@@ -1,0 +1,183 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1660" height="1080" viewBox="0 0 1660 1080" font-family="'Microsoft JhengHei','Noto Sans CJK TC','PingFang TC',sans-serif">
+<rect x="0" y="0" width="1660" height="1080" rx="0" fill="#ffffff" stroke="none" stroke-width="0"/>
+<text x="830.0" y="42" font-size="30" text-anchor="middle" font-weight="bold" fill="#222">光耦簡易測試原型　接線圖（ESP32＋1 個槽型光耦）</text>
+<text x="830.0" y="70" font-size="15" text-anchor="middle" font-weight="normal" fill="#555">ESP32（WROOM-32）＋ 38P 擴展板 ＋ 槽型光耦模組 ×1（LM393，槽寬 10 mm）＋（選用）4 位數七段顯示器 TM1637｜電源：電腦 USB（不用 9V）</text>
+<rect x="520" y="380" width="770" height="430" rx="10" fill="#7a1f86" stroke="#333" stroke-width="2"/>
+<text x="1276" y="794" font-size="18" text-anchor="end" font-weight="bold" fill="#fff">ESP32 38P 擴展板</text>
+<text x="540" y="402" font-size="12" text-anchor="start" font-weight="bold" fill="#f3d9f7">上方排針</text>
+<text x="536" y="426" font-size="15" text-anchor="middle" font-weight="bold" fill="#fff">S</text>
+<text x="536" y="451" font-size="15" text-anchor="middle" font-weight="bold" fill="#fff">V</text>
+<text x="536" y="476" font-size="15" text-anchor="middle" font-weight="bold" fill="#fff">G</text>
+<rect x="594" y="414" width="12" height="12" rx="0" fill="#3d7be0" stroke="#000" stroke-width="1"/>
+<rect x="594" y="439" width="12" height="12" rx="0" fill="#e03c3c" stroke="#000" stroke-width="1"/>
+<rect x="594" y="464" width="12" height="12" rx="0" fill="#111" stroke="#000" stroke-width="1"/>
+<text x="600" y="500" font-size="13" text-anchor="middle" font-weight="normal" fill="#fff">SD3</text>
+<rect x="649" y="414" width="12" height="12" rx="0" fill="#3d7be0" stroke="#000" stroke-width="1"/>
+<rect x="649" y="439" width="12" height="12" rx="0" fill="#e03c3c" stroke="#000" stroke-width="1"/>
+<rect x="649" y="464" width="12" height="12" rx="0" fill="#111" stroke="#000" stroke-width="1"/>
+<text x="655" y="500" font-size="13" text-anchor="middle" font-weight="normal" fill="#fff">SD2</text>
+<rect x="704" y="414" width="12" height="12" rx="0" fill="#3d7be0" stroke="#000" stroke-width="1"/>
+<rect x="704" y="439" width="12" height="12" rx="0" fill="#e03c3c" stroke="#000" stroke-width="1"/>
+<rect x="704" y="464" width="12" height="12" rx="0" fill="#111" stroke="#000" stroke-width="1"/>
+<text x="710" y="500" font-size="13" text-anchor="middle" font-weight="normal" fill="#fff">G13</text>
+<rect x="759" y="414" width="12" height="12" rx="0" fill="#3d7be0" stroke="#000" stroke-width="1"/>
+<rect x="759" y="439" width="12" height="12" rx="0" fill="#e03c3c" stroke="#000" stroke-width="1"/>
+<rect x="759" y="464" width="12" height="12" rx="0" fill="#111" stroke="#000" stroke-width="1"/>
+<text x="765" y="500" font-size="13" text-anchor="middle" font-weight="normal" fill="#fff">G12</text>
+<rect x="814" y="414" width="12" height="12" rx="0" fill="#3d7be0" stroke="#000" stroke-width="1"/>
+<rect x="814" y="439" width="12" height="12" rx="0" fill="#e03c3c" stroke="#000" stroke-width="1"/>
+<rect x="814" y="464" width="12" height="12" rx="0" fill="#111" stroke="#000" stroke-width="1"/>
+<text x="820" y="500" font-size="13" text-anchor="middle" font-weight="normal" fill="#fff">G14</text>
+<rect x="869" y="414" width="12" height="12" rx="0" fill="#3d7be0" stroke="#000" stroke-width="1"/>
+<rect x="869" y="439" width="12" height="12" rx="0" fill="#e03c3c" stroke="#000" stroke-width="1"/>
+<rect x="869" y="464" width="12" height="12" rx="0" fill="#111" stroke="#000" stroke-width="1"/>
+<text x="875" y="500" font-size="13" text-anchor="middle" font-weight="normal" fill="#fff">G27</text>
+<rect x="924" y="414" width="12" height="12" rx="0" fill="#3d7be0" stroke="#000" stroke-width="1"/>
+<rect x="924" y="439" width="12" height="12" rx="0" fill="#e03c3c" stroke="#000" stroke-width="1"/>
+<rect x="924" y="464" width="12" height="12" rx="0" fill="#111" stroke="#000" stroke-width="1"/>
+<text x="930" y="500" font-size="13" text-anchor="middle" font-weight="normal" fill="#fff">G26</text>
+<rect x="979" y="414" width="12" height="12" rx="0" fill="#3d7be0" stroke="#000" stroke-width="1"/>
+<rect x="979" y="439" width="12" height="12" rx="0" fill="#e03c3c" stroke="#000" stroke-width="1"/>
+<rect x="979" y="464" width="12" height="12" rx="0" fill="#111" stroke="#000" stroke-width="1"/>
+<text x="985" y="500" font-size="13" text-anchor="middle" font-weight="normal" fill="#fff">G25</text>
+<rect x="1034" y="414" width="12" height="12" rx="0" fill="#3d7be0" stroke="#000" stroke-width="1"/>
+<rect x="1034" y="439" width="12" height="12" rx="0" fill="#e03c3c" stroke="#000" stroke-width="1"/>
+<rect x="1034" y="464" width="12" height="12" rx="0" fill="#111" stroke="#000" stroke-width="1"/>
+<text x="1040" y="500" font-size="13" text-anchor="middle" font-weight="normal" fill="#fff">G33</text>
+<rect x="1089" y="414" width="12" height="12" rx="0" fill="#3d7be0" stroke="#000" stroke-width="1"/>
+<rect x="1089" y="439" width="12" height="12" rx="0" fill="#e03c3c" stroke="#000" stroke-width="1"/>
+<rect x="1089" y="464" width="12" height="12" rx="0" fill="#111" stroke="#000" stroke-width="1"/>
+<text x="1095" y="500" font-size="13" text-anchor="middle" font-weight="normal" fill="#fff">G32</text>
+<rect x="1144" y="414" width="12" height="12" rx="0" fill="#3d7be0" stroke="#000" stroke-width="1"/>
+<rect x="1144" y="439" width="12" height="12" rx="0" fill="#e03c3c" stroke="#000" stroke-width="1"/>
+<rect x="1144" y="464" width="12" height="12" rx="0" fill="#111" stroke="#000" stroke-width="1"/>
+<text x="1150" y="500" font-size="13" text-anchor="middle" font-weight="normal" fill="#fff">G35</text>
+<rect x="1199" y="414" width="12" height="12" rx="0" fill="#3d7be0" stroke="#000" stroke-width="1"/>
+<rect x="1199" y="439" width="12" height="12" rx="0" fill="#e03c3c" stroke="#000" stroke-width="1"/>
+<rect x="1199" y="464" width="12" height="12" rx="0" fill="#111" stroke="#000" stroke-width="1"/>
+<text x="1205" y="500" font-size="13" text-anchor="middle" font-weight="normal" fill="#fff">G34</text>
+<text x="905" y="540" font-size="13" text-anchor="middle" font-weight="normal" fill="#f3d9f7">由上而下：藍 S（訊號）／紅 V（電源）／黑 G（地）；腳位名稱與順序以板上印字為準</text>
+<text x="905" y="560" font-size="13" text-anchor="middle" font-weight="normal" fill="#f3d9f7">同一種 V（或 G）全部相通；這台只用 G27 那一欄（顯示器另用 G14、G13）</text>
+<rect x="548" y="580" width="150" height="58" rx="6" fill="#fff3b0" stroke="#b8860b" stroke-width="2"/>
+<text x="623" y="603" font-size="15" text-anchor="middle" font-weight="bold" fill="#7a4d00">黃色跳帽 → 3.3V</text>
+<text x="623" y="625" font-size="13" text-anchor="middle" font-weight="bold" fill="#b00">（不可設 5V！）</text>
+<rect x="740" y="590" width="440" height="140" rx="6" fill="#111" stroke="#333" stroke-width="2"/>
+<rect x="708" y="638" width="38" height="36" rx="4" fill="#bbb" stroke="#333" stroke-width="2"/>
+<text x="727" y="694" font-size="11" text-anchor="middle" font-weight="bold" fill="#fff">Micro</text>
+<text x="727" y="708" font-size="11" text-anchor="middle" font-weight="bold" fill="#fff">USB</text>
+<rect x="1070" y="606" width="96" height="108" rx="3" fill="#c9c9c9" stroke="#888" stroke-width="2"/>
+<text x="1118" y="664" font-size="12" text-anchor="middle" font-weight="bold" fill="#333">WROOM-32</text>
+<text x="900" y="632" font-size="18" text-anchor="middle" font-weight="bold" fill="#fff">ESP32 開發板（插在擴展板上）</text>
+<text x="900" y="656" font-size="14" text-anchor="middle" font-weight="bold" fill="#ffd27a">上傳卡在 Connecting… → 按住 BOOT 鍵</text>
+<text x="900" y="678" font-size="13" text-anchor="middle" font-weight="normal" fill="#9ff0a0">EN（RST）鍵＝重開機、自動判定擋住電位</text>
+<text x="900" y="698" font-size="13" text-anchor="middle" font-weight="normal" fill="#9ff0a0">（開機約 1 秒，槽裡不能有東西）</text>
+<rect x="760" y="752" width="420" height="22" rx="4" fill="none" stroke="#d9a7e0" stroke-width="2" stroke-dasharray="5,4"/>
+<text x="970" y="768" font-size="12" text-anchor="middle" font-weight="normal" fill="#f3d9f7">下方排針：不使用</text>
+<rect x="488" y="745" width="40" height="46" rx="4" fill="#111" stroke="#333" stroke-width="2"/>
+<circle cx="500" cy="768" r="7" fill="#777" stroke="none" stroke-width="0"/>
+<text x="540" y="800" font-size="13" text-anchor="start" font-weight="bold" fill="#fff">DC 座：這台不用</text>
+<rect x="56" y="118" width="358" height="248" rx="10" fill="none" stroke="#999" stroke-width="1.5" stroke-dasharray="7,5"/>
+<text x="70" y="112" font-size="13" text-anchor="start" font-weight="bold" fill="#777">選用：可不接（接了會顯示目前枚數）</text>
+<rect x="70" y="130" width="330" height="150" rx="8" fill="#1b3d8f" stroke="#333" stroke-width="2"/>
+<rect x="92" y="150" width="240" height="80" rx="4" fill="#000" stroke="#555" stroke-width="2"/>
+<text x="212" y="210" font-size="56" text-anchor="middle" font-weight="bold" fill="#ff3b3b">88:88</text>
+<text x="212" y="262" font-size="14" text-anchor="middle" font-weight="normal" fill="#ddd">4 位數七段顯示器（TM1637）</text>
+<rect x="394" y="154" width="12" height="12" rx="0" fill="#ddd" stroke="#000" stroke-width="1"/>
+<text x="388" y="165" font-size="12" text-anchor="end" font-weight="bold" fill="#fff">CLK</text>
+<rect x="394" y="184" width="12" height="12" rx="0" fill="#ddd" stroke="#000" stroke-width="1"/>
+<text x="388" y="195" font-size="12" text-anchor="end" font-weight="bold" fill="#fff">DIO</text>
+<rect x="394" y="214" width="12" height="12" rx="0" fill="#ddd" stroke="#000" stroke-width="1"/>
+<text x="388" y="225" font-size="12" text-anchor="end" font-weight="bold" fill="#fff">VCC</text>
+<rect x="394" y="244" width="12" height="12" rx="0" fill="#ddd" stroke="#000" stroke-width="1"/>
+<text x="388" y="255" font-size="12" text-anchor="end" font-weight="bold" fill="#fff">GND</text>
+<polyline points="400,160 820,160 820,420" fill="none" stroke="#8a6a00" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="400,160 820,160 820,420" fill="none" stroke="#E0A800" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="400" cy="160" r="4.5" fill="#E0A800" stroke="#000" stroke-width="1"/>
+<circle cx="820" cy="420" r="4.5" fill="#E0A800" stroke="#000" stroke-width="1"/>
+<polyline points="400,190 710,190 710,420" fill="none" stroke="#8a6a00" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="400,190 710,190 710,420" fill="none" stroke="#E0A800" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="400" cy="190" r="4.5" fill="#E0A800" stroke="#000" stroke-width="1"/>
+<circle cx="710" cy="420" r="4.5" fill="#E0A800" stroke="#000" stroke-width="1"/>
+<polyline points="400,220 630,220 630,445 655,445" fill="none" stroke="#D7263D" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="400" cy="220" r="4.5" fill="#D7263D" stroke="#000" stroke-width="1"/>
+<circle cx="655" cy="445" r="4.5" fill="#D7263D" stroke="#000" stroke-width="1"/>
+<polyline points="400,250 575,250 575,470 600,470" fill="none" stroke="#222222" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="400" cy="250" r="4.5" fill="#222222" stroke="#000" stroke-width="1"/>
+<circle cx="600" cy="470" r="4.5" fill="#222222" stroke="#000" stroke-width="1"/>
+<text x="70" y="312" font-size="15" text-anchor="start" font-weight="bold" fill="#6b5200">CLK→G14 的 S、DIO→G13 的 S</text>
+<text x="70" y="334" font-size="15" text-anchor="start" font-weight="bold" fill="#6b5200">VCC→任一 V、GND→任一 G</text>
+<text x="70" y="354" font-size="13" text-anchor="start" font-weight="normal" fill="#555">母母杜邦線 4 條</text>
+<text x="1180" y="96" font-size="17" text-anchor="middle" font-weight="bold" fill="#222">槽型光耦模組（LM393，槽寬 10 mm）</text>
+<text x="1180" y="116" font-size="13" text-anchor="middle" font-weight="normal" fill="#555">裝在背牆 B 的窗上；排針朝背後</text>
+<rect x="1142.0" y="126" width="20" height="34" rx="2" fill="#222" stroke="#333" stroke-width="1"/>
+<rect x="1198.0" y="126" width="20" height="34" rx="2" fill="#222" stroke="#333" stroke-width="1"/>
+<rect x="1142.0" y="152" width="76" height="8" rx="0" fill="#222" stroke="#333" stroke-width="1"/>
+<line x1="1162.0" y1="137" x2="1198.0" y2="137" stroke="#ff4040" stroke-width="2" stroke-dasharray="4,3"/>
+<rect x="1110" y="160" width="140" height="52" rx="4" fill="#1f5f8b" stroke="#333" stroke-width="2"/>
+<text x="1180" y="180" font-size="11" text-anchor="middle" font-weight="normal" fill="#dbeafe">槽型光耦 LM393</text>
+<text x="1141" y="204" font-size="10" text-anchor="middle" font-weight="bold" fill="#fff">VCC</text>
+<rect x="1137" y="212" width="8" height="10" rx="0" fill="#ccc" stroke="#333" stroke-width="1"/>
+<text x="1167" y="204" font-size="10" text-anchor="middle" font-weight="bold" fill="#fff">GND</text>
+<rect x="1163" y="212" width="8" height="10" rx="0" fill="#ccc" stroke="#333" stroke-width="1"/>
+<text x="1193" y="204" font-size="10" text-anchor="middle" font-weight="bold" fill="#fff">OUT</text>
+<rect x="1189" y="212" width="8" height="10" rx="0" fill="#ccc" stroke="#333" stroke-width="1"/>
+<text x="1219" y="204" font-size="10" text-anchor="middle" font-weight="bold" fill="#fff">AO</text>
+<rect x="1215" y="212" width="8" height="10" rx="0" fill="#ccc" stroke="#333" stroke-width="1"/>
+<text x="1219" y="246" font-size="12" text-anchor="middle" font-weight="bold" fill="#b00">✕ 不接</text>
+<text x="1244" y="154" font-size="11" text-anchor="start" font-weight="normal" fill="#555">（有的寫 DO；3 腳模組沒有 AO）</text>
+<polyline points="1141,222 1141,300 875,300 875,404" fill="none" stroke="#D7263D" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1167,222 1167,318 881,318 881,404" fill="none" stroke="#222222" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1193,222 1193,282 869,282 869,404" fill="none" stroke="#8a6a00" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1193,222 1193,282 869,282 869,404" fill="none" stroke="#E0A800" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="864" y="404" width="22" height="78" rx="2" fill="#333" stroke="#000" stroke-width="1.5"/>
+<text x="875" y="424" font-size="10" text-anchor="middle" font-weight="bold" fill="#fff">S</text>
+<text x="875" y="449" font-size="10" text-anchor="middle" font-weight="bold" fill="#fff">V</text>
+<text x="875" y="474" font-size="10" text-anchor="middle" font-weight="bold" fill="#fff">G</text>
+<text x="1645" y="270" font-size="16" text-anchor="end" font-weight="bold" fill="#6b5200">OUT（DO）→G27 的 S</text>
+<text x="1645" y="292" font-size="15" text-anchor="end" font-weight="bold" fill="#6b5200">VCC→同一欄的 V、GND→同一欄的 G</text>
+<text x="1645" y="312" font-size="13" text-anchor="end" font-weight="normal" fill="#555">母母杜邦線 3 條（模組腳位順序以實品印字為準）</text>
+<rect x="1310" y="390" width="330" height="230" rx="8" fill="#f7f7f7" stroke="#999" stroke-width="2" stroke-dasharray="6,4"/>
+<text x="1325" y="416" font-size="15" text-anchor="start" font-weight="bold" fill="#222">裝在原型上時</text>
+<text x="1325" y="444" font-size="13" text-anchor="start" font-weight="normal" fill="#222">① 杜邦線先插在模組排針上，再裝模組</text>
+<text x="1325" y="466" font-size="13" text-anchor="start" font-weight="normal" fill="#222">　（裝好後排針在背牆後下方，事後難插）</text>
+<text x="1325" y="488" font-size="13" text-anchor="start" font-weight="normal" fill="#222">② 線往下走，用紙膠帶固定在底板 A，</text>
+<text x="1325" y="510" font-size="13" text-anchor="start" font-weight="normal" fill="#222">　留一點鬆度</text>
+<text x="1325" y="532" font-size="13" text-anchor="start" font-weight="normal" fill="#222">③ 不要往背後拉緊：會把模組拉歪，</text>
+<text x="1325" y="554" font-size="13" text-anchor="start" font-weight="normal" fill="#222">　光束就對不到光孔</text>
+<text x="1325" y="576" font-size="13" text-anchor="start" font-weight="normal" fill="#222">④ 底板要固定在桌上（壓重物或貼膠帶），</text>
+<text x="1325" y="598" font-size="13" text-anchor="start" font-weight="normal" fill="#222">　線拉一下整台就可能往後翻</text>
+<rect x="110" y="600" width="220" height="140" rx="8" fill="#2f3640" stroke="#333" stroke-width="2"/>
+<rect x="124" y="614" width="192" height="112" rx="3" fill="#cfe3f7" stroke="none" stroke-width="0"/>
+<text x="220" y="655" font-size="16" text-anchor="middle" font-weight="bold" fill="#1f3b5c">Arduino IDE</text>
+<text x="220" y="680" font-size="14" text-anchor="middle" font-weight="normal" fill="#1f3b5c">序列埠 115200</text>
+<text x="220" y="702" font-size="13" text-anchor="middle" font-weight="normal" fill="#1f3b5c">c20 / e / v / ?</text>
+<path d="M 90 740 L 350 740 L 370 762 L 70 762 Z" fill="#596275" stroke="#333" stroke-width="2"/>
+<text x="220" y="784" font-size="15" text-anchor="middle" font-weight="bold" fill="#222">電腦</text>
+<polyline points="350,690 470,690 470,656 708,656" fill="none" stroke="#6b6b6b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="360" y="680" font-size="14" text-anchor="start" font-weight="bold" fill="#222">USB 線</text>
+<text x="220" y="804" font-size="12" text-anchor="middle" font-weight="normal" fill="#555">USB 線要能傳資料（不是只能充電的那種）</text>
+<text x="220" y="822" font-size="12" text-anchor="middle" font-weight="normal" fill="#555">供電、上傳程式、看序列埠都靠這條</text>
+<line x1="40" y1="836" x2="1620" y2="836" stroke="#ccc" stroke-width="1"/>
+<text x="60" y="868" font-size="18" text-anchor="start" font-weight="bold" fill="#222">線色</text>
+<polyline points="70,900 120,900" fill="none" stroke="#D7263D" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="70" cy="900" r="4.5" fill="#D7263D" stroke="#000" stroke-width="1"/>
+<circle cx="120" cy="900" r="4.5" fill="#D7263D" stroke="#000" stroke-width="1"/>
+<text x="135" y="905" font-size="15" text-anchor="start" font-weight="normal" fill="#222">紅＝V / VCC（3.3V）</text>
+<polyline points="70,930 120,930" fill="none" stroke="#222222" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="70" cy="930" r="4.5" fill="#222222" stroke="#000" stroke-width="1"/>
+<circle cx="120" cy="930" r="4.5" fill="#222222" stroke="#000" stroke-width="1"/>
+<text x="135" y="935" font-size="15" text-anchor="start" font-weight="normal" fill="#222">黑＝G / GND（地）</text>
+<polyline points="70,960 120,960" fill="none" stroke="#8a6a00" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="70,960 120,960" fill="none" stroke="#E0A800" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="70" cy="960" r="4.5" fill="#E0A800" stroke="#000" stroke-width="1"/>
+<circle cx="120" cy="960" r="4.5" fill="#E0A800" stroke="#000" stroke-width="1"/>
+<text x="135" y="965" font-size="15" text-anchor="start" font-weight="normal" fill="#222">黃＝S / 訊號（OUT、CLK、DIO）</text>
+<text x="135" y="990" font-size="12" text-anchor="start" font-weight="normal" fill="#777">（杜邦線顏色不限，照腳位插就好）</text>
+<text x="560" y="868" font-size="18" text-anchor="start" font-weight="bold" fill="#222">使用順序</text>
+<text x="560" y="900" font-size="15" text-anchor="start" font-weight="normal" fill="#222">① 跳帽設 3.3V → 杜邦線先插在模組排針上：OUT→G27 的 S、VCC→V、GND→G（AO 不接）</text>
+<text x="560" y="926" font-size="15" text-anchor="start" font-weight="normal" fill="#222">② USB 接電腦 → Arduino IDE 開 opto_test_esp32.ino、開發板選 ESP32 Dev Module → 上傳（Connecting… 時按住 BOOT）</text>
+<text x="560" y="952" font-size="15" text-anchor="start" font-weight="normal" fill="#222">③ 序列埠 115200 → 按 EN 重開：開機約 1 秒自動判定擋住電位，槽裡不能有東西</text>
+<text x="560" y="978" font-size="15" text-anchor="start" font-weight="normal" fill="#222">④ 紙片擋住光束約 1 秒再拿開，確認判定沒反 → 輸入 v 看「■ 擋住／· 沒擋」→ 照《組裝與測試說明》第 7 節做 T1～T7</text>
+<text x="560" y="1010" font-size="14" text-anchor="start" font-weight="bold" fill="#b00">注意：光耦 VCC 接 V（3.3V），不接 5V｜AO 不接｜這台不用 9V 和 DC 座｜不接 G0、G2、G5、G12、G15（板上 BOOT 鍵可以按）</text>
+<text x="560" y="1038" font-size="12" text-anchor="start" font-weight="normal" fill="#777">程式：04_光耦測試原型/opto_test_esp32（c20＝丟 20 枚、e＝報告、v＝即時電位、p＝看抖動、?＝說明）</text>
+</svg>

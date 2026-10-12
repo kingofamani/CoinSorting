@@ -1,0 +1,857 @@
+<title>光耦測試原型組裝手冊</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* 版面沿用 03_v2_光耦版/組裝教學：單欄手冊，左側細軌標步驟序號，圖放在白色圖版裡 */
+:root {
+  --bg: #f4f6f5;
+  --surface: #ffffff;
+  --ink: #1c292b;
+  --muted: #5a6a6c;
+  --line: #d6dedd;
+  --accent: #0f7c8a;
+  --accent-soft: #dcf0f2;
+  --wood: #ecdcc2;
+  --wood-ink: #5f4c2d;
+  --warn: #9a5800;
+  --warn-soft: #fff0d9;
+  --todo: #7b3fa3;
+  --todo-soft: #f3e8fa;
+  --plate: #ffffff;
+  --font-body: 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111a1b; --surface: #182426; --ink: #e5eded; --muted: #9db0b2; --line: #2b3b3d;
+    --accent: #4cc2ce; --accent-soft: #15353a; --wood: #3b3326; --wood-ink: #ecdcc2;
+    --warn: #f2b45c; --warn-soft: #36280f; --todo: #cfa2ef; --todo-soft: #2c1e37;
+    --plate: #f6f6f4; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111a1b; --surface: #182426; --ink: #e5eded; --muted: #9db0b2; --line: #2b3b3d;
+  --accent: #4cc2ce; --accent-soft: #15353a; --wood: #3b3326; --wood-ink: #ecdcc2;
+  --warn: #f2b45c; --warn-soft: #36280f; --todo: #cfa2ef; --todo-soft: #2c1e37;
+  --plate: #f6f6f4; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.75; }
+.wrap { max-width: 960px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 64px; }
+h1, h2, h3 { line-height: 1.3; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(28px, 5vw, 40px); font-weight: 900; letter-spacing: 0.02em; }
+h2 { font-size: 24px; font-weight: 900; }
+h3 { font-size: 19px; font-weight: 700; }
+p { margin: 0; }
+a { color: var(--accent); }
+code, kbd { font-family: var(--font-mono); font-size: 0.92em; overflow-wrap: anywhere; }
+kbd { background: var(--accent-soft); color: var(--accent); border-radius: 4px; padding: 0 5px; font-weight: 600; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+[id] { scroll-margin-top: 104px; }
+
+.masthead { display: grid; gap: 12px; padding-block: 8px 20px; border-bottom: 2px solid var(--ink); }
+.eyebrow { font-size: 13px; letter-spacing: 0.12em; color: var(--muted); font-weight: 700; }
+.lede { color: var(--muted); max-width: 65ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 14px; color: var(--muted); }
+.meta b { color: var(--ink); font-weight: 700; }
+
+.toc { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg);
+  border-bottom: 1px solid var(--line); padding-block: 10px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.toc a { text-decoration: none; font-weight: 700; font-size: 14px; }
+.progress { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted);
+  font-variant-numeric: tabular-nums; min-width: 0; }
+.bar { width: 120px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .bar > i { transition: none; } }
+
+section.part { padding-block: 36px 8px; display: grid; gap: 20px; }
+.part-head { display: grid; gap: 6px; }
+.part-head p { color: var(--muted); max-width: 65ch; }
+
+.step { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 0 16px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 18px 18px 0; }
+.step-no { text-align: center; font-family: var(--font-mono); font-weight: 600; font-size: 22px; color: var(--accent);
+  border-right: 2px solid var(--accent-soft); padding-top: 2px; }
+.step-body { display: grid; gap: 12px; min-width: 0; }
+.step-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.step-head .time { font-size: 13px; color: var(--muted); }
+.step ol, .step ul { margin: 0; padding-left: 1.4em; display: grid; gap: 4px; }
+.step li::marker { color: var(--accent); font-weight: 700; }
+.step-body p, .step-body li { max-width: 74ch; }
+.step.done { opacity: 0.62; }
+.step.done .step-no { color: var(--muted); }
+.sub { font-weight: 700; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--font-mono); font-size: 13px; font-weight: 600; background: var(--wood); color: var(--wood-ink);
+  border-radius: 6px; padding: 1px 8px; white-space: nowrap; }
+.chip.e { background: var(--accent-soft); color: var(--accent); }
+
+figure { margin: 0; background: var(--plate); border: 1px solid var(--line); border-radius: 8px; padding: 10px; display: grid; gap: 6px; }
+figure img { display: block; width: 100%; height: auto; border-radius: 4px; }
+figcaption { font-size: 13px; color: #4f5c5e; }
+.figs { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+
+.note { border-radius: 8px; padding: 10px 14px; font-size: 15px; display: grid; gap: 4px; }
+.note b.tag { font-size: 13px; letter-spacing: 0.06em; }
+.note ul { margin: 0; padding-left: 1.2em; display: grid; gap: 2px; }
+.note.warn { background: var(--warn-soft); color: var(--ink); border-left: 4px solid var(--warn); }
+.note.warn b.tag { color: var(--warn); }
+.note.todo { background: var(--todo-soft); color: var(--ink); border-left: 4px solid var(--todo); }
+.note.todo b.tag { color: var(--todo); }
+.note.info { background: var(--accent-soft); color: var(--ink); border-left: 4px solid var(--accent); }
+.note.info b.tag { color: var(--accent); }
+.star { color: var(--todo); font-weight: 900; }
+
+.done-row { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
+.done-row input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 13px; color: var(--muted); font-weight: 700; background: var(--bg); }
+td.num { font-variant-numeric: tabular-nums; }
+tr:last-child td { border-bottom: none; }
+table.record td { height: 30px; min-width: 64px; }
+
+.kit { columns: 2 240px; column-gap: 28px; margin: 0; padding-left: 1.2em; }
+.kit li { break-inside: avoid; }
+#appendix > h3 { margin-top: 12px; }
+button.reset { font: inherit; font-size: 14px; color: var(--ink); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 8px; padding: 6px 14px; cursor: pointer; }
+button.reset:hover { border-color: var(--accent); }
+
+@media (max-width: 560px) {
+  .step { grid-template-columns: 1fr; padding: 14px; }
+  .step-no { text-align: left; border-right: none; border-bottom: 2px solid var(--accent-soft); padding-bottom: 4px; }
+  .progress { margin-left: 0; }
+}
+@media print {
+  .toc, .done-row, button.reset { display: none; }
+  .step { break-inside: avoid; }
+}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">智能自動分幣機　光耦簡易測試原型　講師用</div>
+  <h1>光耦測試原型組裝手冊</h1>
+  <p class="lede">一段直滑坡加一個槽型光耦模組，用來驗證「槽型光耦跨裝在滑坡上」行不行得通。從雷切下來的 15 片零件開始：組好滑坡、接線跑程式、裝上模組選墊片，最後做 T1～T7 測試，把數字回填 v2。</p>
+  <div class="meta">
+    <span><b>板材</b> 3 mm 合板一張（A4 就夠）</span>
+    <span><b>零件</b> 15 片，只用白膠</span>
+    <span><b>電子</b> ESP32＋擴展板＋光耦模組 1 個</span>
+  </div>
+  <div class="note todo">
+    <b class="tag">★ 暫定值</b>
+    <p>切割檔是用<b>暫定的模組尺寸</b>算的；模組買到、實量後會重跑，窗、光孔、墊片都會改，這份網頁也會跟著更新。測試程式還沒實際編譯過。數字都出自 <code>make_proto.py</code>，完整文字版在 <code>組裝與測試說明.md</code>。</p>
+  </div>
+</header>
+
+<nav class="toc" aria-label="目錄">
+  <a href="#start">開始前</a>
+  <a href="#build">A 組滑坡</a>
+  <a href="#wire">B 接線與程式</a>
+  <a href="#mount">C 裝模組</a>
+  <a href="#test">D 測試</a>
+  <a href="#report">E 回報</a>
+  <span class="progress"><span id="prog-text">0 / 0 步</span><span class="bar"><i id="prog-bar"></i></span></span>
+</nav>
+
+<!-- ===================== 開始前 ===================== -->
+<section class="part" id="start">
+  <div class="part-head">
+    <h2>開始前</h2>
+    <p>先弄清楚要驗證什麼，模組買到先量，量完再切。</p>
+  </div>
+
+  <article class="step" id="s-1">
+    <div class="step-no">S1</div>
+    <div class="step-body">
+      <div class="step-head"><h3>這個原型要驗證什麼</h3></div>
+      <div class="note info"><b class="tag">方向的說法</b><p>站在滑坡正面（有放幣線的那一面）看，硬幣從左上往右下滾。<b>右＝下游（出口）</b>、<b>前＝靠你這邊</b>、<b>後＝背牆後面</b>。</p></div>
+      <p class="sub">要驗證的</p>
+      <ul>
+        <li>槽型光耦能不能跨在「擋幣板 D＋背牆 B」兩片 3 mm 板上（疊起來 6 mm），裝得上、拆得下；光束從軌道上方約 2.5 mm 穿過。</li>
+        <li>滑坡的傾斜和正式機相同：後仰 30°，軌道在背牆上斜 20°。從 S5、S10、S50 三條放幣線放手，硬幣經過感測處的速度就和正式機三站相同。</li>
+        <li>在這個速度下：每一枚都數到、不多不漏（S5 是 5、10、50 元；S10 是 10、50 元；S50 是 50 元）；兩枚貼著滾分得出是兩枚；最薄的 5 元慢慢推過也會觸發。</li>
+        <li>硬幣不卡、不跳出軌道，也不擦到模組的前臂；窗上方只有 2.3 mm 的軌道條夠不夠強。</li>
+        <li>量出實品數字回填 v2：模組尺寸、最佳光束高度（用哪片墊片）、遮光時間、計數程式的建議值。</li>
+      </ul>
+      <p class="sub">不在這裡驗證</p>
+      <p>分幣開口、硬幣會不會打到 PCB、正式的滑升式感測座和鎖塊、轉盤送幣與整機振動。這些在 v2 試切小樣測（<code>03_v2_光耦版/laser_v2/out/trial_合板_1.svg</code>）。</p>
+      <figure>
+        <img src="img/schematic.png" alt="原型示意圖三格：滑坡正視、感測處沿光束的剖面、從右邊看的側視" loading="lazy">
+        <figcaption>整體示意圖：① 滑坡正視、② 感測處剖面、③ 側視（尺寸是暫定值）。</figcaption>
+      </figure>
+      <label class="done-row"><input type="checkbox" data-step="s-1"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="s-2">
+    <div class="step-no">S2</div>
+    <div class="step-body">
+      <div class="step-head"><h3>買模組；收到先量，再切</h3></div>
+      <ul>
+        <li>買「<b>槽寬 10 mm</b>」的槽型（對射式）光耦模組：LM393 比較器、有 DO 數位輸出、標示 3.3～5 V 可用。建議買 2～3 個。</li>
+        <li><b>不要買槽寬 5 mm 的</b>（常見的「測速模組」多半是 5 mm），兩臂跨不過 6 mm 的兩片板。</li>
+        <li>商品頁有尺寸圖的話，挑光窗離槽底 5 mm 以上的。</li>
+      </ul>
+      <p>用游標卡尺量。先把模組擺成<b>安裝方向</b>：槽口朝上、左右走向；排針那端朝後（遠離你）；靠你的是前臂、遠的是後臂；PCB 的右邊是下游。</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>#</th><th>量什麼</th><th>預設</th><th>這個範圍可直接切</th></tr></thead>
+        <tbody>
+          <tr><td class="num">1</td><td>槽寬（兩臂內面之間）</td><td>10.0</td><td>≥ 6.5（小於 6.5 不能用）</td></tr>
+          <tr><td class="num">2</td><td>槽深（臂頂到槽底）</td><td>9.0</td><td>6.0～10.7</td></tr>
+          <tr><td class="num">3</td><td>光束離槽底（臂內面小方窗中心）</td><td>5.0</td><td>4.8～8.3</td></tr>
+          <tr><td class="num">4</td><td>臂頂離 PCB 上表面</td><td>12.0</td><td>10.3～14.9</td></tr>
+          <tr><td class="num">5</td><td>背面焊點高</td><td>2.0</td><td>0.3～4.9</td></tr>
+          <tr><td class="num">6</td><td>PCB 厚</td><td>1.6</td><td>0.8～2.0</td></tr>
+          <tr><td class="num">7</td><td>PCB 寬（左右，沿軌道）</td><td>20.0</td><td>≤ 24.0</td></tr>
+          <tr><td class="num">8</td><td>PCB 長（前後，沿光束）</td><td>27.6</td><td>不限，記下來</td></tr>
+          <tr><td class="num">9</td><td>排針：在哪一端、朝哪裡、插上杜邦頭多高</td><td>後端、直立、14</td><td>在後端，朝上或水平都可以</td></tr>
+          <tr><td class="num">10</td><td>本體中心離 PCB 右邊（o）</td><td>3.7</td><td>3.3～4.1</td></tr>
+          <tr><td class="num">11</td><td>槽口下方有沒有更高的零件</td><td>沒有</td><td>鋼尺碰得到槽底就可以</td></tr>
+          <tr><td class="num">12</td><td>合板厚</td><td>3.0</td><td>2.8～3.1</td></tr>
+        </tbody>
+      </table></div>
+      <ul>
+        <li><b>第 3 項怎麼量</b>：深度桿從臂頂量到光窗上緣和下緣，取平均 d；光束離槽底＝槽深 − d。更準的方法：先照 B 段接好線，名片從槽口慢慢往下插，指示燈一變就停，對著臂頂在名片上畫一條線，量這條線到名片下緣的距離 d。兩隻臂都要看，高度不一樣就兩個都記。</li>
+        <li><b>第 10 項</b>：背牆開了 3 個光孔，中心離窗右邊 3.7、10.0、16.3 mm。放幣線是照 3.7 那個孔算的；o 不在 3.3～4.1，先把 o 給 Claude 重新產生再切。</li>
+        <li>有<b>兩項以上</b>偏離預設：看 <code>組裝與測試說明.md</code> 2-3 的四個條件；最穩的做法是把整張表的數字給 Claude 重新產生。</li>
+        <li>順便記下來：臂厚、本體寬、光窗大小、PCB 上最高的零件、型號或商品連結、旁邊放尺的正面／側面／背面照片。</li>
+      </ul>
+      <div class="note warn"><b class="tag">不能直接切的情況</b>
+        <ul>
+          <li>槽寬小於 6.5：這個模組不能用，改參數也救不了，請重買 10 mm 的。</li>
+          <li>排針朝下穿到 PCB 背面，或排針在左右兩側：先把照片給 Claude 看。</li>
+          <li>光束離槽底量到 4.3～4.8：原型能切，但 v2 也要改，先告訴 Claude；低於 4.3：一定要先重新產生。</li>
+        </ul>
+      </div>
+      <label class="done-row"><input type="checkbox" data-step="s-2"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="s-3">
+    <div class="step-no">S3</div>
+    <div class="step-body">
+      <div class="step-head"><h3>雷切、切完檢查</h3></div>
+      <ul>
+        <li>上機檔：<code>04_光耦測試原型/光耦測試原型_雷切.svg</code>。單頁 190.1×278.1 mm，15 片，3 mm 合板；板子至少 191×279 mm。</li>
+        <li>匯入雷切軟體後確認尺寸還是 190.1×278.1 mm，<b>不要縮放</b>（有些軟體會用錯 dpi）。</li>
+        <li>黑色 0.2 線＝切割（切穿）；紅色 0.2 線＝雕刻，紅色圖層設「線／向量雕刻」，淺淺刻一條，不要用填色或掃描。</li>
+        <li>先雕刻再切割；切割時先切孔，最後切外框。軟體會自己重排的話，打開「先切內部（inner first）」。</li>
+      </ul>
+      <p class="sub">切完檢查</p>
+      <ul>
+        <li>15 片都在：A 底板、B 背牆、C 支撐 ×2、D 擋幣板、E1～E9 墊片、F 對位塞。</li>
+        <li>墊片上雕「代號＋高度」，例如「E7　12.5」＝E7、撐高 12.5 mm；E1～E9 依序是 9.5～13.5。</li>
+        <li>B 和 D 窗挖下來的兩塊也留著，可以代替 F（一樣要先包保鮮膜）。</li>
+        <li>B 上 3 個小光孔（1.8 mm 寬）都切穿了：對著燈看得到光。</li>
+        <li>B、D 窗頂那條 2.3 mm 的軌道條沒有燒斷、沒有翹。</li>
+        <li>用濕布擦掉切邊的黑灰，特別是 D 的上緣（那裡就是軌道）。</li>
+      </ul>
+      <figure>
+        <img src="img/parts.png" alt="雷切排版預覽：B 背牆、A 底板、D 擋幣板、兩片 C 支撐、F 對位塞、九片墊片 E1 到 E9，藍字是零件代號" loading="lazy">
+        <figcaption>排版預覽（紅＝雕刻；藍色代號只畫在預覽圖上，切割檔裡沒有）。</figcaption>
+      </figure>
+      <label class="done-row"><input type="checkbox" data-step="s-3"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="s-4">
+    <div class="step-no">S4</div>
+    <div class="step-body">
+      <div class="step-head"><h3>準備清單</h3></div>
+      <ul class="kit">
+        <li>白膠、牙籤、濕布、砂紙（磨榫頭）</li>
+        <li>幾本書（壓平用）、保鮮膜</li>
+        <li>游標卡尺（沒有就用鋼尺）、直尺、筆</li>
+        <li>名片 10 張左右（墊紙、量光束高、補墊片高度）</li>
+        <li>厚紙板一小塊、紙膠帶</li>
+        <li>100 g 以上的重物（固定底板，防止往後翻）</li>
+        <li>接硬幣的淺盤或碗（口要低於約 5 cm）</li>
+        <li>槽型光耦模組（建議 2～3 個）</li>
+        <li>ESP32 開發板＋38P 擴展板（黃色跳帽可設 3.3V）</li>
+        <li>母母杜邦線 3 條（接顯示器再 4 條）</li>
+        <li>能傳資料的 USB 線</li>
+        <li>電腦：Arduino IDE＋ESP32 開發板支援（core 2.0.x 或 3.x）</li>
+        <li>TM1637 顯示器（可不接）</li>
+        <li>硬幣：5、10、50 元各至少 2 枚（相貼測試要 2 枚）；1 元幾枚</li>
+      </ul>
+      <p>T3 每一輪放 20 枚：可以準備 20 枚，也可以只用幾枚，每放一枚就從盤子撿回來重放。</p>
+      <label class="done-row"><input type="checkbox" data-step="s-4"> 這一步完成</label>
+    </div>
+  </article>
+</section>
+
+<!-- ===================== A 組滑坡 ===================== -->
+<section class="part" id="build">
+  <div class="part-head">
+    <h2>A　組滑坡（只用白膠）</h2>
+    <p>先把擋幣板 D 對準黏到背牆 B，再裝支撐、插進底板，靜置一晚後試滾。這一段還不裝模組。</p>
+  </div>
+
+  <article class="step" id="a-1">
+    <div class="step-no">A1</div>
+    <div class="step-body">
+      <div class="step-head"><h3>先不上膠，全部試插一次</h3></div>
+      <ul>
+        <li>榫太緊就用砂紙磨榫頭，不要硬敲。</li>
+        <li>B、D：雕「（正面）」的那一面朝前。</li>
+        <li>A：雕字的那一面朝上，「↓ 前側」箭頭朝向滑坡正面。</li>
+        <li>C：兩面都可以。</li>
+      </ul>
+      <label class="done-row"><input type="checkbox" data-step="a-1"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="a-2">
+    <div class="step-no">A2</div>
+    <div class="step-body">
+      <div class="step-head"><h3>把擋幣板 D 黏到背牆 B（用 F 對位）</h3><span class="time">白膠約 30 分鐘</span></div>
+      <div class="chips"><span class="chip">B 背牆</span><span class="chip">D 擋幣板</span><span class="chip">F 對位塞</span></div>
+      <ol>
+        <li>做一疊墊紙：5 張名片（或 1～2 層厚紙板），疊起來約 1.5 mm，剪成約 22×16 mm，要比窗小。<b>不要用硬幣墊</b>：四種硬幣都比窗的短邊大，會把 B 墊高。</li>
+        <li>F 的四邊包一層保鮮膜，免得被白膠黏住。</li>
+        <li>B 正面朝上平放在桌上。墊紙放進 B 的窗裡（直接放在桌面上），F 放進窗、坐在墊紙上。F 上半會凸出 B 正面約 1.5 mm。</li>
+        <li>D 的背面薄薄塗一層白膠：窗邊和上緣（軌道）各留約 2 mm 不塗；窗頂那條軌道條只用牙籤點一點點。</li>
+        <li>D 正面朝上，窗套進凸出來的 F。D 的下緣對齊 B 上雕的「↑ 擋幣板 D 下緣對齊這條線」，兩端對齊雕刻的短線（F 不見了也可以只照這兩條線對）。</li>
+        <li>上面壓幾本書。擠出來的膠<b>馬上</b>用濕布擦掉，特別是 D 上緣和 B 正面的夾角（硬幣在這裡滾）和窗口。</li>
+        <li>約 30 分鐘後拿起來，拿掉墊紙，從背面把 F 頂出來。頂不動時不要硬敲（軌道條只有 2.3 mm），先用牙籤沿窗邊清膠再推。窗挖下來的那塊也可以代替 F，一樣先包保鮮膜。</li>
+      </ol>
+      <figure>
+        <img src="img/align.png" alt="對位剖面圖兩格：左邊 B 平放、墊紙和 F 在窗裡、F 凸出 B 約 1.5 mm；右邊 D 套上 F 疊在 B 上，白膠窗邊留 2 mm" loading="lazy">
+        <figcaption>F 卡在兩片的窗裡，兩個窗就會對齊（厚度方向放大 4 倍）。</figcaption>
+      </figure>
+      <figure>
+        <img src="img/view-front.png" alt="滑坡正視圖：背牆 B 上斜放的擋幣板 D、窗、三個光孔、S5 S10 S50 三條放幣線和出口" loading="lazy">
+        <figcaption>黏好後從正面看：D 的上緣就是軌道；窗上方有 3 個光孔、左邊是 S5／S10／S50 放幣線。</figcaption>
+      </figure>
+      <label class="done-row"><input type="checkbox" data-step="a-2"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="a-3">
+    <div class="step-no">A3</div>
+    <div class="step-body">
+      <div class="step-head"><h3>裝支撐 C</h3></div>
+      <p>兩片 C 斜邊上的 2 個榫，插進 B 背面兩端的支撐槽，上膠。C 下緣的 2 個榫朝下。</p>
+      <label class="done-row"><input type="checkbox" data-step="a-3"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="a-4">
+    <div class="step-no">A4</div>
+    <div class="step-body">
+      <div class="step-head"><h3>插進底板 A，靜置</h3><span class="time">最好放一晚</span></div>
+      <ol>
+        <li>B 和 C 連在一起，<b>垂直往下</b>插進 A，上膠：B 下緣的 2 個榫插進 A 前面的 2 個斜插槽（比較寬的那兩個）；C 下緣的榫插進 A 後面的 4 個槽。</li>
+        <li>放在平桌上，確認整台不晃，然後靜置。裝模組、丟硬幣之前最好放一晚。</li>
+      </ol>
+      <div class="note info"><b class="tag">正常現象</b><p>B 斜 30°，所以 B 下緣是<b>背面那一角</b>碰到 A；正面那一角離 A 約 1.5 mm 是正常的，不是沒插到底，不要硬壓。</p></div>
+      <figure>
+        <img src="img/view-side.png" alt="側視圖：底板 A 上，背牆 B 往後仰 30 度，支撐 C 在背後撐住，出口離桌面約 60 mm" loading="lazy">
+        <figcaption>從右邊看：B 後仰 30°、C 在背後撐住；出口離桌面約 60 mm。</figcaption>
+      </figure>
+      <label class="done-row"><input type="checkbox" data-step="a-4"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="a-5">
+    <div class="step-no">A5</div>
+    <div class="step-body">
+      <div class="step-head"><h3>固定底板、放接盤</h3></div>
+      <ul>
+        <li>背牆往後仰，軌道上段的硬幣、之後裝的模組和線都在支撐後方；手指從前面往後推一下就可能把整台推翻。</li>
+        <li>底板後半部（支撐後面那一段）用紙膠帶貼在桌上，或壓一個 100 g 以上的東西。<b>之後所有步驟都保持固定。</b></li>
+        <li>出口（右端）外側放淺盤或碗接硬幣。出口離桌面 60 mm，盤子或碗的口要低於約 5 cm。</li>
+        <li>想用一般紙杯：把整台墊高約 4 cm，墊的東西要比底板大，底板也要用膠帶固定在上面。</li>
+      </ul>
+      <label class="done-row"><input type="checkbox" data-step="a-5"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="a-6">
+    <div class="step-no">A6</div>
+    <div class="step-body">
+      <div class="step-head"><h3>試滾（先不裝模組）</h3></div>
+      <ol>
+        <li>直尺立在軌道上看窗那一段：拿一張影印紙（約 0.1 mm）試著塞進直尺下面，窗那一段要塞不進去（軌道沒有往下凹），也不能有膠瘤。</li>
+        <li>四種硬幣各從 S5 線、S50 線放 5 次。</li>
+        <li><b>放法</b>：硬幣立在軌道上、靠著背牆，中心對準雕刻線，指尖輕輕扶著硬幣頂端再放手，不要推。</li>
+        <li>每次都要滾到出口掉下去：中途不停、不從前面掉下來、經過窗那一段沒有明顯跳動。</li>
+      </ol>
+      <p>有問題先處理（多半是膠瘤或切邊毛邊），處理好再裝模組。</p>
+      <label class="done-row"><input type="checkbox" data-step="a-6"> 這一步完成</label>
+    </div>
+  </article>
+</section>
+
+<!-- ===================== B 接線與程式 ===================== -->
+<section class="part" id="wire">
+  <div class="part-head">
+    <h2>B　接線與程式（裝模組之前先做）</h2>
+    <p>C 段裝模組、量光束高時要看指示燈和 <kbd>v</kbd>，所以先把線接好、程式跑起來。電源用電腦 USB，不用 9V。</p>
+  </div>
+
+  <article class="step" id="b-1">
+    <div class="step-no">B1</div>
+    <div class="step-body">
+      <div class="step-head"><h3>接線</h3></div>
+      <ul>
+        <li>光耦 OUT（有的寫 DO）→ 擴展板 <b>G27</b> 那一排的 S；VCC → 同一排的 V；GND → 同一排的 G。AO 不接。</li>
+        <li><b>黃色跳帽一定要設在 3.3V，不可以接 5V。</b></li>
+        <li>顯示器 TM1637 可以不接；要接的話 CLK→G14、DIO→G13、VCC→V、GND→G。</li>
+        <li><b>杜邦線先插在模組的排針上，再裝模組。</b>裝好以後排針在背牆後面、下方，事後才插容易把模組推歪。</li>
+      </ul>
+      <figure>
+        <img src="img/wiring.png" alt="接線圖：光耦模組 OUT、VCC、GND 接擴展板 G27 那一欄的 S、V、G；TM1637 選用接 G14、G13；ESP32 用電腦 USB 供電" loading="lazy">
+        <figcaption>接線圖（原檔：<code>04_光耦測試原型/接線圖/</code>）。</figcaption>
+      </figure>
+      <label class="done-row"><input type="checkbox" data-step="b-1"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-2">
+    <div class="step-no">B2</div>
+    <div class="step-body">
+      <div class="step-head"><h3>上傳程式</h3></div>
+      <ol>
+        <li>Arduino IDE 開 <code>04_光耦測試原型/opto_test_esp32/opto_test_esp32.ino</code>（資料夾名稱要和 .ino 同名）。不用另裝函式庫。</li>
+        <li>開發板選「ESP32 Dev Module」，按上傳。下方出現 <code>Connecting……</code> 時<b>按住 BOOT 鍵</b>，開始寫入（出現百分比）後再放開。</li>
+        <li>出現 <code>Failed to connect</code> 或 <code>Timed out</code>：再上傳一次，這次按住 BOOT。</li>
+        <li>編譯出現 <code>section of 'onEdge' conflicts with previous declaration</code>：把 <code>onEdge</code> 前面的 <code>IRAM_ATTR</code> 刪掉再編譯。</li>
+      </ol>
+      <label class="done-row"><input type="checkbox" data-step="b-2"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-3">
+    <div class="step-no">B3</div>
+    <div class="step-body">
+      <div class="step-head"><h3>確認擋住電位沒有判反</h3></div>
+      <ol>
+        <li>序列埠設 115200。開好視窗後按 <b>EN</b> 重開。開機約 1 秒會自動判定擋住時的電位，<b>這段時間槽裡不能有東西</b>（模組還沒裝，讓它懸空就好）。</li>
+        <li>用紙片在槽裡擋住光束約 1 秒再拿開。
+          <ul>
+            <li>正確：擋住的當下印「▼ 擋住（#1 開始）」，拿開後才印「#1 遮光 約 1000 ms」。</li>
+            <li>反了：拿開時才印「▼ 擋住」，或擋住的當下就印「#1 遮光…」→ 輸入 <kbd>h</kbd> 或 <kbd>l</kbd> 改過來，或清空槽後輸入 <kbd>a</kbd> 重新判定。</li>
+          </ul>
+        </li>
+        <li>輸入 <kbd>v</kbd>，用手指在槽裡擋 10 次：擋住顯示「■ 擋住」、拿開顯示「· 沒擋」，模組上的指示燈也跟著變。再輸入 <kbd>v</kbd> 關掉。</li>
+      </ol>
+      <label class="done-row"><input type="checkbox" data-step="b-3"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-4">
+    <div class="step-no">B4</div>
+    <div class="step-body">
+      <div class="step-head"><h3>常用指令（打完按 Enter）</h3></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>指令</th><th>作用</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>v</kbd></td><td>開／關即時電位顯示</td></tr>
+          <tr><td><kbd>k5</kbd> <kbd>k10</kbd> <kbd>k50</kbd></td><td>設定幣別，用來估算速度（<kbd>k1</kbd> 選做時用）</td></tr>
+          <tr><td><kbd>b2.7</kbd></td><td>設定光束高，填 C7 量到的值</td></tr>
+          <tr><td><kbd>c20</kbd> → <kbd>e</kbd></td><td>開始丟 20 枚；丟完輸入 <kbd>e</kbd> 印出報告</td></tr>
+          <tr><td><kbd>p</kbd></td><td>逐筆印出脈衝，看有沒有抖動</td></tr>
+          <tr><td><kbd>g3</kbd> <kbd>d0</kbd></td><td>即時計數的設定：光束連續亮 3 ms 以上才算下一枚；前緣 DEBOUNCE 不用。<b>每一輪 <kbd>c</kbd> 之前都先輸入這兩個</b>（<kbd>e</kbd> 印完報告會自動改成建議值）</td></tr>
+          <tr><td><kbd>h</kbd> <kbd>l</kbd> <kbd>a</kbd></td><td>擋住電位判反時用</td></tr>
+          <tr><td><kbd>r</kbd> <kbd>?</kbd></td><td>歸零；說明</td></tr>
+        </tbody>
+      </table></div>
+      <p>出現「⚠ 光束已經連續擋住 3 秒」：槽裡卡東西，或判定反了（輸入 <kbd>v</kbd>，槽空著卻顯示「■ 擋住」就是反了）。用名片量光束高、手指擋超過 3 秒時也會出現，不用理它。</p>
+      <label class="done-row"><input type="checkbox" data-step="b-4"> 這一步完成</label>
+    </div>
+  </article>
+</section>
+
+<!-- ===================== C 裝模組 ===================== -->
+<section class="part" id="mount">
+  <div class="part-head">
+    <h2>C　裝模組、選墊片</h2>
+    <p>模組從背面穿過兩片板的窗，往上抬到槽底頂住軌道條，再從前面塞墊片撐住。下面說的「推入」是<b>垂直背牆</b>往前推，不是沿著桌面水平推。</p>
+  </div>
+  <figure>
+    <img src="img/install.png" alt="三格剖面圖：一，模組在窗的低位，從背後往前推；二，模組往上抬約 12.5 mm，軌道條進到兩臂中間；三，從前面塞進橘色 L 形墊片撐住模組" loading="lazy">
+    <figcaption>裝模組三步驟（沿光束切開的剖面；尺寸是暫定值）。</figcaption>
+  </figure>
+
+  <article class="step" id="c-1">
+    <div class="step-no">C1</div>
+    <div class="step-body">
+      <div class="step-head"><h3>開始前確認</h3></div>
+      <ul>
+        <li>B 段的線已經接好、程式在跑，杜邦線已經插在模組上。</li>
+        <li>底板已經固定在桌上（A5）：從前面塞墊片的力會把整台往後推。</li>
+        <li>模組方向：PCB 和背牆垂直、PCB 的邊和窗邊平行；排針那端留在背牆後面，兩臂朝窗頂（軌道條）。</li>
+      </ul>
+      <label class="done-row"><input type="checkbox" data-step="c-1"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="c-2">
+    <div class="step-no">C2</div>
+    <div class="step-body">
+      <div class="step-head"><h3>低位推入</h3></div>
+      <ol>
+        <li>從背面把模組放到窗的「低位」：PCB 背面（焊點那面）靠在窗底，兩臂朝上。</li>
+        <li>垂直背牆往前推，讓前臂整個穿過兩片板的窗，到擋幣板的前面。以暫定尺寸來說，這時臂頂在軌道條下方約 3.5 mm，不會碰到。</li>
+      </ol>
+      <div class="note warn"><b class="tag">注意</b><p>低位時重力有往背後的分量，模組會自己往後滑出來，手要一直扶著。</p></div>
+      <label class="done-row"><input type="checkbox" data-step="c-2"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="c-3">
+    <div class="step-no">C3</div>
+    <div class="step-body">
+      <div class="step-head"><h3>抬起來、往右靠</h3></div>
+      <ol>
+        <li>從背面捏住後臂（或排針根部）往上提，行程約 12.5 mm，讓軌道條（兩片疊起來 6 mm）進到兩臂中間，一直抬到槽底頂住軌道條。手指不要放在 PCB 下面，等一下墊片的後端會從那裡伸出來。</li>
+        <li>把模組往右（下游）推，讓 PCB 的右邊貼住窗的右邊。</li>
+      </ol>
+      <div class="note info"><b class="tag">為什麼有 3 個光孔</b><p>買到模組之前不知道光耦本體在 PCB 的哪一邊，所以開了 3 個孔，中心離窗右邊 3.7、10.0、16.3 mm（本體靠右、在中間、靠左）。放幣線是配合 3.7 那個孔的；光束在另外兩個孔時，放手點要往左（上游）移：中間孔移 6.3 mm、左孔移 12.6 mm。S50 往左量會超出軌道起點，就從軌道最左端放（硬幣中心離左端約 1 mm、站得穩），紀錄表要註明。</p></div>
+      <label class="done-row"><input type="checkbox" data-step="c-3"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="c-4">
+    <div class="step-no">C4</div>
+    <div class="step-body">
+      <div class="step-head"><h3>塞墊片：找出塞得進去的最高那片</h3></div>
+      <div class="chips"><span class="chip e">E1 9.5</span><span class="chip e">E2 10.0</span><span class="chip e">E3 10.5</span><span class="chip e">E4 11.0</span><span class="chip e">E5 11.5</span><span class="chip e">E6 12.0</span><span class="chip e">E7 12.5</span><span class="chip e">E8 13.0</span><span class="chip e">E9 13.5</span></div>
+      <ol>
+        <li>捏著後臂的手繼續把模組往上提住，另一手從前面塞墊片。</li>
+        <li>墊片方向：<b>雕字的那一面朝右</b>（出口那邊），字是正的、字下面有底線；這時擋耳在左下，也就是擋耳在前面、往下垂。</li>
+        <li>墊片的長條從擋幣板的窗塞進去，放在 PCB 下面、光耦本體正下方，一直推到擋耳靠住擋幣板正面。</li>
+        <li>從最高的 E9（13.5）開始試；塞不進去就換低 0.5 mm 的下一片，直到塞得進去。以暫定尺寸來說是 E7（12.5）。</li>
+      </ol>
+      <div class="note warn"><b class="tag">不要硬塞</b><p>塞不進去時不要硬敲，也不要用槽去撬軌道條：軌道條只有 2.3 mm，會被頂裂。E9 塞進去後模組還頂不到軌道條，表示模組比暫定矮：在 E9 上疊名片（一張約 0.3 mm）到剛好頂住，最好把實量值給 Claude 重新產生。</p></div>
+      <label class="done-row"><input type="checkbox" data-step="c-4"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="c-5">
+    <div class="step-no">C5</div>
+    <div class="step-body">
+      <div class="step-head"><h3>撐住 PCB 的另一端</h3></div>
+      <ul>
+        <li>墊片只有 3 mm 寬，只撐本體下方的話，模組重心多半在墊片外面（暫定尺寸的 PCB 從本體往左伸約 16 mm），左端會往下垂。歪 5° 光束就偏約 1 mm，而光孔半寬只有 0.9 mm。</li>
+        <li>在 PCB 另一端（暫定尺寸是左端，離 PCB 左邊約 2～3 mm）再塞一片：挑「塞進去不會把 PCB 頂起來」的最高那片，再塞名片補到剛好貼住 PCB 背面。<b>不要把這一端頂高。</b></li>
+        <li>本體在 PCB 中間的模組，左右兩端都要各撐一片。</li>
+      </ul>
+      <label class="done-row"><input type="checkbox" data-step="c-5"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="c-6">
+    <div class="step-no">C6</div>
+    <div class="step-body">
+      <div class="step-head"><h3>放手、量水平</h3></div>
+      <ol>
+        <li>慢慢放手：模組坐在墊片上，前臂內面靠著擋幣板正面（重力往後推，這是正常的）。</li>
+        <li>PCB 前端露在擋幣板前面。用深度桿或鋼尺從擋幣板窗的下緣量到 PCB 底面，左、右兩端各量一次，<b>相差要 ≤ 0.5 mm</b>。</li>
+        <li>差太多，就在<b>垂下去</b>的那一端多塞名片，再量一次。</li>
+      </ol>
+      <label class="done-row"><input type="checkbox" data-step="c-6"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="c-7">
+    <div class="step-no">C7</div>
+    <div class="step-body">
+      <div class="step-head"><h3>量光束高</h3><span class="time">每換一片墊片就量一次</span></div>
+      <p>用塞得進去的最高那片時，光束高大約是「光束離槽底 − 2.3」，每換低一片就低 0.5 mm。暫定尺寸：12.5→2.7、12.0→2.2、11.5→1.7、11.0→1.2。目標是最接近 2.5 的那片。</p>
+      <ol>
+        <li>拿一張名片貼著背牆正面，在光孔的位置從上往下插進硬幣通道（擋幣板上緣、背牆前面那 3 mm 寬的地方）。</li>
+        <li>指示燈（或 <kbd>v</kbd>）一變就停住，沿著背牆上緣在名片上畫一條線。</li>
+        <li>把名片插到底、碰到軌道，再沿背牆上緣畫一條線。</li>
+        <li>兩條線之間的距離就是光束高，輸入測試程式，例如 <kbd>b2.7</kbd>。</li>
+      </ol>
+      <label class="done-row"><input type="checkbox" data-step="c-7"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="c-8">
+    <div class="step-no">C8</div>
+    <div class="step-body">
+      <div class="step-head"><h3>裝好後檢查</h3></div>
+      <ul>
+        <li>從上往下看硬幣通道：前臂內面不可以伸進背牆正面前方那 3 mm 的範圍，應該貼齊擋幣板正面。</li>
+        <li>從背面看：後臂和背牆背面之間有空隙（約 4 mm），排針在背牆後面，都沒碰到板子。</li>
+        <li>模組沒有歪：C6 量的左右兩端相差 ≤ 0.5 mm。</li>
+        <li>光束有對到光孔：開 <kbd>v</kbd>，通道空著顯示「· 沒擋」；名片從上方插進光孔前面的通道，顯示「■ 擋住」。從正前方看不到後臂的光窗是正常的（前臂本體擋在光孔前面）。</li>
+        <li>四種硬幣都用手慢慢推過感測處，尤其是最厚的 50 元：不能擦到前臂，也不能被頂起來。</li>
+      </ul>
+      <label class="done-row"><input type="checkbox" data-step="c-8"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="c-9">
+    <div class="step-no">C9</div>
+    <div class="step-body">
+      <div class="step-head"><h3>常見狀況</h3></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>狀況</th><th>處理</th></tr></thead>
+        <tbody>
+          <tr><td>光束沒對到光孔（一直顯示「擋住」）</td><td>先查模組有沒有歪（C6）：歪了光束會往上游（左）偏，這時要先修水平，<b>不要把模組往左推</b>，只會更偏。沒歪的話多半是本體位置和暫定不同：在 PCB 右邊和窗右邊之間塞紙板，把模組往左推，紙板厚＝光孔數字（3.7、10.0 或 16.3）− o。怎麼塞都對不到，把 o 給 Claude 重新產生。光束太高或太低就換墊片。</td></tr>
+          <tr><td>50 元擦到前臂（間隙本來只有 0.6 mm）</td><td>在擋幣板正面、窗正上方的軌道條前面貼約 2 mm 厚的紙板，讓前臂改靠在紙板上。代價是抬模組時前後只剩約 2 mm 可以動。</td></tr>
+          <tr><td>模組被線拉歪</td><td>線不要往背後拉緊：讓線往下走，用膠帶固定在底板 A 上，留一點鬆度。</td></tr>
+          <tr><td>整台會晃或往後翻</td><td>底板沒有固定，見 A5。</td></tr>
+        </tbody>
+      </table></div>
+      <label class="done-row"><input type="checkbox" data-step="c-9"> 這一步完成</label>
+    </div>
+  </article>
+</section>
+
+<!-- ===================== D 測試 ===================== -->
+<section class="part" id="test">
+  <div class="part-head">
+    <h2>D　測試 T1～T7</h2>
+    <p>先用「光束最接近 2.5」的那片墊片做 T1～T6（暫定尺寸是 E7 12.5，光束 2.7），最後 T7 再比較不同墊片。底板要一直固定在桌上。</p>
+  </div>
+
+  <article class="step" id="d-0">
+    <div class="step-no">D0</div>
+    <div class="step-body">
+      <div class="step-head"><h3>每一輪怎麼做</h3></div>
+      <ul>
+        <li>順序：<kbd>g3</kbd> <kbd>d0</kbd>（固定即時計數的設定）→ <kbd>k幣別</kbd> → <kbd>c枚數</kbd> → 放幣 → <kbd>e</kbd>。</li>
+        <li>每一輪 <kbd>e</kbd> 印出的報告整段複製存成文字檔，例如 <code>測試紀錄/50元_S50_墊片12.5.txt</code>，最後一起給 Claude。</li>
+        <li><b>單枚</b>：照 A6 的放法，硬幣中心對準雕刻線；等前一枚掉進盤子再放下一枚。</li>
+        <li><b>兩枚相貼</b>：兩枚立在軌道上互相貼緊，讓<b>兩枚之間的接觸點</b>對準雕刻線，同時放手。S50 的 50 元放不下：上游那枚放在軌道最左端（中心離左端約 1 mm），下游那枚貼在它右邊，紀錄表備註「S50 相貼從左端放」。</li>
+        <li>光束不在 3.7 那個光孔時，放手點照 C3 的說明往左移。</li>
+        <li>「卡幣」＝硬幣停在軌道上沒滾到出口；「跳出」＝在出口之前離開軌道。</li>
+      </ul>
+      <label class="done-row"><input type="checkbox" data-step="d-0"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="d-1">
+    <div class="step-no">T1</div>
+    <div class="step-body">
+      <div class="step-head"><h3>閒置穩定</h3></div>
+      <p><b>怎麼做</b>：看開機判定；再開 <kbd>v</kbd> 看 1 分鐘，感測處保持空的（室內燈下）。</p>
+      <p><b>過關</b>：開機沒有「訊號不穩」警告；1 分鐘內 0／1 都沒變，計數 0。</p>
+      <label class="done-row"><input type="checkbox" data-step="d-1"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="d-2">
+    <div class="step-no">T2</div>
+    <div class="step-body">
+      <div class="step-head"><h3>擋住會變</h3></div>
+      <p><b>怎麼做</b>：開著 <kbd>v</kbd>，用名片從上方插進感測處的硬幣通道擋住光束再拿開，做 10 次。</p>
+      <p><b>過關</b>：每次擋住都顯示「■ 擋住」、拿開顯示「· 沒擋」；計數剛好 +10。</p>
+      <label class="done-row"><input type="checkbox" data-step="d-2"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="d-3">
+    <div class="step-no">T3</div>
+    <div class="step-body">
+      <div class="step-head"><h3>單枚計數</h3><span class="time">6 輪 × 20 枚</span></div>
+      <p><b>怎麼做</b>：只測正式機會經過的組合：S5 線放 5、10、50 元；S10 線放 10、50 元；S50 線放 50 元。每輪 <kbd>g3</kbd> <kbd>d0</kbd> → <kbd>k幣別</kbd> → <kbd>c20</kbd> → 一枚一枚放 20 枚 → <kbd>e</kbd>。</p>
+      <p><b>過關</b>：每輪報告「★ 結論」的即時計數都是 20 枚 ✔；卡幣 0、跳出 0；沒聽到硬幣擦到前臂。</p>
+      <label class="done-row"><input type="checkbox" data-step="d-3"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="d-4">
+    <div class="step-no">T4</div>
+    <div class="step-body">
+      <div class="step-head"><h3>兩枚相貼</h3><span class="time">3 輪 × 5 對</span></div>
+      <p><b>怎麼做</b>：每站測最難分的幣：5 元 S5、10 元 S10、50 元 S50。每輪 <kbd>g3</kbd> <kbd>d0</kbd> → <kbd>k幣別</kbd> → <kbd>c10</kbd> → 放 5 對 → <kbd>e</kbd>。</p>
+      <p><b>過關</b>：每輪計數都是 10（每對都算成 2 枚）；報告寫「分得出來」。</p>
+      <label class="done-row"><input type="checkbox" data-step="d-4"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="d-5">
+    <div class="step-no">T5</div>
+    <div class="step-body">
+      <div class="step-head"><h3>最薄的 5 元慢推</h3></div>
+      <p><b>怎麼做</b>：輸入 <kbd>k5</kbd>、打開 <kbd>p</kbd>，用指尖扶著 5 元沿軌道慢慢推過光束（大約 2 秒），做 10 次。</p>
+      <p><b>過關</b>：每次都觸發而且剛好 +1，共 10。<kbd>p</kbd> 顯示某一次有好幾個脈衝要記下來。</p>
+      <label class="done-row"><input type="checkbox" data-step="d-5"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="d-6">
+    <div class="step-no">T6</div>
+    <div class="step-body">
+      <div class="step-head"><h3>軌道條</h3></div>
+      <p><b>怎麼做</b>：全部測完後，從前面和後面看兩片軌道條；直尺立在軌道上，拿影印紙試著塞進窗那一段的直尺下面。</p>
+      <p><b>過關</b>：沒裂、沒翹、兩片沒分開；影印紙塞不進去。</p>
+      <label class="done-row"><input type="checkbox" data-step="d-6"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="d-7">
+    <div class="step-no">T7</div>
+    <div class="step-body">
+      <div class="step-head"><h3>換墊片比較</h3><span class="time">3～4 片</span></div>
+      <p><b>怎麼做</b>：從塞得進去的最高那片開始，每次換低一片。每片都做：50 元 S50 線 × 20 枚（<kbd>c20</kbd>）、50 元相貼 5 對（<kbd>c10</kbd>）、5 元慢推 5 次。每換一片都要重新撐好 PCB 另一端、量水平（C5、C6），重量光束高再用 <kbd>b</kbd> 改設定。時間夠可以加做 10 元 S10；1 元 S50 是選做的加嚴測試，過不了也不算失敗。</p>
+      <p><b>結果</b>：每片都記下來。「最佳光束高」＝全部過關、抖動最少，而且相貼那一輪報告裡「方法二 精確範圍」最寬的那片。精確範圍、亮區最短、建議值看相貼輪（<kbd>c10</kbd>）的報告；抖動枚數看單枚輪（<kbd>c20</kbd>）。</p>
+      <label class="done-row"><input type="checkbox" data-step="d-7"> 這一步完成</label>
+    </div>
+  </article>
+
+  <h3 id="record">紀錄表（可以列印出來填）</h3>
+  <div class="table-wrap"><table class="record">
+    <thead><tr><th>基本資料</th><th>填寫</th></tr></thead>
+    <tbody>
+      <tr><td>日期</td><td></td></tr>
+      <tr><td>模組型號／來源</td><td></td></tr>
+      <tr><td>合板實際厚度</td><td></td></tr>
+      <tr><td>擋住時輸出（開機判定 HIGH／LOW）</td><td></td></tr>
+      <tr><td>光束對準哪個光孔（離窗右邊 3.7／10.0／16.3）</td><td></td></tr>
+      <tr><td>T1～T6 用的墊片／量到的光束高</td><td></td></tr>
+      <tr><td>每輪 c 之前輸入的即時計數設定（例如 g3／d0）</td><td></td></tr>
+    </tbody>
+  </table></div>
+  <div class="table-wrap"><table class="record">
+    <thead><tr><th>項目</th><th>結果</th><th>過關？</th><th>備註</th></tr></thead>
+    <tbody>
+      <tr><td>T1 閒置穩定</td><td></td><td></td><td></td></tr>
+      <tr><td>T2 擋住會變（應 +10）</td><td></td><td></td><td></td></tr>
+      <tr><td>T5 5 元慢推（應 10 次各 +1）</td><td></td><td></td><td></td></tr>
+      <tr><td>T6 軌道條</td><td></td><td></td><td></td></tr>
+    </tbody>
+  </table></div>
+  <div class="table-wrap"><table class="record">
+    <thead><tr><th>T3 線</th><th>幣</th><th>計數 /20</th><th>卡幣</th><th>跳出</th><th>遮光 ms 最短／中位／最長</th><th>速度中位 m/s</th><th>抖動枚數</th><th>備註</th></tr></thead>
+    <tbody>
+      <tr><td>S5</td><td>5 元</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>S5</td><td>10 元</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>S5</td><td>50 元</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>S10</td><td>10 元</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>S10</td><td>50 元</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>S50</td><td>50 元</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    </tbody>
+  </table></div>
+  <div class="table-wrap"><table class="record">
+    <thead><tr><th>T4 站</th><th>幣</th><th>計數 /10</th><th>兩枚之間亮區最短 ms</th><th>開始到開始最短 ms</th><th>備註</th></tr></thead>
+    <tbody>
+      <tr><td>S5</td><td>5 元</td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>S10</td><td>10 元</td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>S50</td><td>50 元</td><td></td><td></td><td></td><td>S50 相貼從左端放</td></tr>
+    </tbody>
+  </table></div>
+  <div class="table-wrap"><table class="record">
+    <thead><tr><th>T7 墊片</th><th>光束高（量）</th><th>50 元 S50 /20</th><th>50 元相貼 /10</th><th>亮區最短 ms（相貼輪）</th><th>5 元慢推 /5</th><th>抖動枚數（單枚輪）</th><th>方法二 精確範圍 ms（相貼輪）</th><th>方法二 建議 ms（相貼輪）</th><th>方法一 建議 ms（相貼輪）</th></tr></thead>
+    <tbody>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ===================== E 回報 ===================== -->
+<section class="part" id="report">
+  <div class="part-head">
+    <h2>E　測完要回報給 Claude 的東西</h2>
+    <p>這些數字會回填 v2：模組尺寸填進 <code>laser_v2/params.py</code> 的 <code>MODULE</code>、光束高填進 <code>BEAM_H</code>，也用來設定正式程式的計數。改 v2 之前會先跟你確認。</p>
+  </div>
+
+  <article class="step" id="e-1">
+    <div class="step-no">E1</div>
+    <div class="step-body">
+      <div class="step-head"><h3>整理回報</h3></div>
+      <ul>
+        <li><b>模組實量值</b>：S2 表格的每一項、「順便記下來」的項目、型號或商品連結、照片。</li>
+        <li><b>合板的實際厚度。</b></li>
+        <li><b>光束對準哪個光孔</b>（3.7、10.0 或 16.3），有沒有塞紙板把模組往左推、塞多厚。</li>
+        <li><b>墊片</b>：塞得進去的最高那片、最後選用的那片、PCB 另一端用哪片加幾張名片，以及每一片量到的光束高。</li>
+        <li><b>測試報告</b>：每一輪的報告文字檔；至少也要給填好的紀錄表。</li>
+        <li><b>建議的計數設定</b>：報告「★ 結論」那幾行（方法二的重新上膛 ms、方法一的前緣 DEBOUNCE ms）。</li>
+        <li><b>遇到的問題</b>：卡幣、跳出（哪種幣、哪條線、在哪）；有沒有擦到前臂；軌道條有沒有裂或變形；裝模組卡在哪一步；附照片或短影片。</li>
+      </ul>
+      <label class="done-row"><input type="checkbox" data-step="e-1"> 這一步完成</label>
+    </div>
+  </article>
+</section>
+
+<!-- ===================== 附錄 ===================== -->
+<section class="part" id="appendix">
+  <div class="part-head"><h2>附錄</h2></div>
+  <h3>零件（15 片，3 mm 合板）</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>代號</th><th>名稱</th><th>數量</th><th>用在</th></tr></thead>
+    <tbody>
+      <tr><td>A</td><td>底板（雕字面朝上）</td><td>1</td><td><a href="#a-4">A4</a></td></tr>
+      <tr><td>B</td><td>背牆（窗、3 個光孔、放幣線）</td><td>1</td><td><a href="#a-2">A2</a></td></tr>
+      <tr><td>C</td><td>支撐</td><td>2</td><td><a href="#a-3">A3</a></td></tr>
+      <tr><td>D</td><td>擋幣板（上緣＝軌道）</td><td>1</td><td><a href="#a-2">A2</a></td></tr>
+      <tr><td>E1～E9</td><td>L 形墊片，撐高 9.5～13.5（每片差 0.5）</td><td>9</td><td><a href="#c-4">C4</a>、<a href="#c-5">C5</a></td></tr>
+      <tr><td>F</td><td>對位塞（用完可拿掉）</td><td>1</td><td><a href="#a-2">A2</a></td></tr>
+    </tbody>
+  </table></div>
+  <h3>檔案（都在 <code>04_光耦測試原型/</code>）</h3>
+  <ul>
+    <li><code>光耦測試原型_雷切.svg</code>：上機檔。<code>預覽.png</code>、<code>示意圖.png</code>、<code>零件表.csv</code>：排版、示意圖、零件清單。</li>
+    <li><code>make_proto.py</code>：產生器，模組實量後改開頭的 <code>MODULE</code> 重跑。</li>
+    <li><code>組裝與測試說明.md</code>：這份網頁的完整文字版（含 2-3 兩項以上偏離的判斷）。</li>
+    <li><code>opto_test_esp32/</code>：測試程式與 README（指令、報告的兩種方法、常見狀況）。</li>
+    <li><code>接線圖/</code>：接線圖 PNG／SVG（<code>make_wiring.py</code> 產生）。</li>
+    <li><code>組裝教學/</code>：這份網頁；圖由 <code>make_figures.py</code> 產生。</li>
+  </ul>
+  <p><button type="button" class="reset" id="reset">清除所有勾選</button></p>
+</section>
+
+</div>
+
+<script>
+(function () {
+  var KEY = 'opto-proto-assembly-done';
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('input[data-step]'));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { saved = {}; }
+  function store() {
+    try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) { /* 無痕視窗等：只是不記住 */ }
+  }
+  function paint() {
+    var n = 0;
+    boxes.forEach(function (b) {
+      var card = document.getElementById(b.getAttribute('data-step'));
+      if (card) card.classList.toggle('done', b.checked);
+      if (b.checked) n++;
+    });
+    document.getElementById('prog-text').textContent = n + ' / ' + boxes.length + ' 步';
+    document.getElementById('prog-bar').style.width = (boxes.length ? 100 * n / boxes.length : 0) + '%';
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.getAttribute('data-step')];
+    b.addEventListener('change', function () {
+      saved[b.getAttribute('data-step')] = b.checked;
+      store();
+      paint();
+    });
+  });
+  var reset = document.getElementById('reset'), armed = null;
+  reset.addEventListener('click', function () {
+    if (!armed) {                       // 按兩次才清除，避免誤按
+      reset.textContent = '再按一次確認清除';
+      armed = setTimeout(function () { armed = null; reset.textContent = '清除所有勾選'; }, 3000);
+      return;
+    }
+    clearTimeout(armed);
+    armed = null;
+    reset.textContent = '清除所有勾選';
+    saved = {};
+    boxes.forEach(function (b) { b.checked = false; });
+    store();
+    paint();
+  });
+  paint();
+})();
+</script>
