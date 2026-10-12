@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head><meta charset="utf-8"><title>接線圖渲染</title>
+<style>body{margin:0;background:#eee;font-family:sans-serif} img{width:100%;display:block;background:#fff} #msg{padding:6px 10px}</style>
+</head>
+<body>
+<div id="msg">載入中…</div>
+<img id="svg" alt="接線圖">
+<script>
+const NAME = '分幣機_v2光耦版_ESP32_接線圖';
+const SCALE = 2;
+const img = document.getElementById('svg');
+const msg = document.getElementById('msg');
+window.renderStatus = 'loading';
+img.onload = async () => {
+  try {
+    const c = document.createElement('canvas');
+    c.width = img.naturalWidth * SCALE;
+    c.height = img.naturalHeight * SCALE;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(img, 0, 0, c.width, c.height);
+    const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+    const res = await fetch('/save?name=' + encodeURIComponent(NAME + '.png'), {method: 'POST', body: blob});
+    const t = await res.text();
+    msg.textContent = '已存 PNG（' + c.width + '×' + c.height + '）：' + t;
+    window.renderStatus = 'done ' + c.width + 'x' + c.height + ' ' + t;
+  } catch (e) {
+    msg.textContent = '失敗：' + e;
+    window.renderStatus = 'error ' + e;
+  }
+};
+img.onerror = () => { msg.textContent = 'SVG 載入失敗'; window.renderStatus = 'svg error'; };
+img.src = '../' + encodeURIComponent(NAME + '.svg') + '?t=' + Date.now();
+</script>
+</body>
+</html>
