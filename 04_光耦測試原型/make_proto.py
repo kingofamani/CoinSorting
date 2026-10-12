@@ -8,7 +8,7 @@
 
 執行（在 repo 根目錄）
 --------------------
-    .venv/Scripts/python.exe -B 光耦測試原型/make_proto.py
+    .venv/Scripts/python.exe -B 04_光耦測試原型/make_proto.py
 
 輸出（都在本檔同一個資料夾）
     光耦測試原型_雷切.svg   單頁、單位 mm；圖層「切割」（黑 0.2）、「雕刻」（紅 0.2，線／向量雕刻）
@@ -688,7 +688,7 @@ def write_svg(path, W, H, placed):
         c.append('    </g>')
         cut += c
     lines = ['<?xml version="1.0" encoding="UTF-8" standalone="no"?>',
-             '<!-- 光耦簡易測試原型（光耦測試原型/make_proto.py 產生，請勿手改；改參數後重跑）。'
+             '<!-- 光耦簡易測試原型（04_光耦測試原型/make_proto.py 產生，請勿手改；改參數後重跑）。'
              '黑 0.2＝切割；紅 0.2＝雕刻（紅色圖層設「線／向量雕刻」）。單位 mm。 -->',
              f'<svg width="{_f(W)}mm" height="{_f(H)}mm" viewBox="0 0 {_f(W)} {_f(H)}" version="1.1" id="svg1"',
              '   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"',

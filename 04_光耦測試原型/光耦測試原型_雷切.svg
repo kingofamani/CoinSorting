@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- 光耦簡易測試原型（光耦測試原型/make_proto.py 產生，請勿手改；改參數後重跑）。黑 0.2＝切割；紅 0.2＝雕刻（紅色圖層設「線／向量雕刻」）。單位 mm。 -->
+<!-- 光耦簡易測試原型（04_光耦測試原型/make_proto.py 產生，請勿手改；改參數後重跑）。黑 0.2＝切割；紅 0.2＝雕刻（紅色圖層設「線／向量雕刻」）。單位 mm。 -->
 <svg width="190.1mm" height="278.1mm" viewBox="0 0 190.1 278.1" version="1.1" id="svg1"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"

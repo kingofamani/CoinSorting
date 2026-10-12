@@ -9,7 +9,7 @@
 
 輸出
 ----
-* 分幣機雷切_光耦版_v2_試切小樣.svg（repo 根目錄）：格式同 v2 草稿（export.py：Inkscape 多頁、255×355、
+* 分幣機雷切_光耦版_v2_試切小樣.svg（03_v2_光耦版 資料夾）：格式同 v2 草稿（export.py：Inkscape 多頁、255×355、
   4 個圖層「原始零件」「v2 修改」「v2 新增」「註記（不切割）」、文字全部轉成路徑），並跑 qa.check(mode='draft')。
   裁出來的局部放「v2 修改」層，v2 新零件與試切輔助件放「v2 新增」層。給人看的，含隱藏註記層。
 * laser_v2/out/trial_<材質>_<n>.svg：**上雷切機用**的分頁檔（同 sheet_*.svg：3 個圖層、不含註記層；
@@ -1033,7 +1033,7 @@ def write_report(path: Path, tparts, tinfo, sheets, rows, qa_rows, files: dict, 
     machine = files.get('sheet_svgs') or []
     Lr.append('> **上雷切機用 ' + ('、'.join(f'`{p}`' for p in machine) if machine else '`laser_v2/out/trial_*.svg`')
               + '**（不含註記）。黑＝切割、紅＝雕刻（全部是 0.2 mm 線，和原始檔一樣）：紅色圖層在雷切軟體設'
-              '「線／向量雕刻（低功率切割）」，**不要用填色／掃描**。repo 根目錄的試切 SVG 含隱藏註記層，是給人看的，不要直接上機。\n')
+              '「線／向量雕刻（低功率切割）」，**不要用填色／掃描**。03_v2_光耦版 資料夾的試切 SVG 含隱藏註記層，是給人看的，不要直接上機。\n')
     Lr.append('## 一、檔案與上雷切機設定\n')
     Lr.append('- **上雷切機**：' + ('、'.join(f'`{p}`' for p in machine) if machine else '（沒有）')
               + '：每張板一個檔，只有「原始零件」「v2 修改」「v2 新增」3 個圖層，沒有註記層。')
@@ -1317,7 +1317,7 @@ def final_parts():
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog='python -m laser_v2.trial', description='分幣機 v2 試切小樣')
-    ap.add_argument('--out-root', default=None, help='試切 SVG 輸出資料夾（預設 repo 根目錄）')
+    ap.add_argument('--out-root', default=None, help='試切 SVG 輸出資料夾（預設 03_v2_光耦版）')
     ap.add_argument('--out-dir', default=None, help='預覽圖與 trial_report.md 的資料夾（預設 laser_v2/out）')
     ap.add_argument('--no-png', action='store_true', help='不畫預覽圖')
     a = ap.parse_args(argv)

@@ -3,7 +3,7 @@
 用法
 ----
     from laser_v2 import export
-    res = export.export(sheets, parts, results, out_root)   # out_root 預設 repo 根目錄
+    res = export.export(sheets, parts, results, out_root)   # out_root 預設 v2 資料夾（03_v2_光耦版）
     res['draft_svg'], res['out_dir'], res['qa']             # 草稿路徑、分頁資料夾、qa 結果
     export.render_draft(sheets) -> str                      # 只產生草稿 SVG 字串（qa.check(sheets) 用）
 
@@ -774,10 +774,10 @@ def _measure_section() -> list[str]:
          f'高度：`MODULE[\'back_h\']`（目前 {params.MODULE.get("back_h")}）；**位置不是 params**，量完先回報 | '
          'mm；PCB 用 1 mm 泡棉膠墊高，所以凸出 >1.0 mm 的焊點只能落在 S1-B 讓位孔內（V≤74.7）或 W\'>29，'
          '否則會頂到 S1-B 下料條或 #13R 牆、把 PCB 頂高（光束跟著偏），要改 S1-B 讓位孔／牆槽（mods_s1，改前先問）；'
-         '見 laser_v2/_work/verify-spec-s1/notes.md 觀察 1、verify-assembly/notes.txt | S1-B 讓位孔、S1-F、#37 卡匣窗焊點段 | '
+         '見 laser_v2/驗證筆記/S1規格核對_2026-10-07.md 觀察 1、整機組裝核對_2026-10-07.txt | S1-B 讓位孔、S1-F、#37 卡匣窗焊點段 | '
          'TB-#37、S1-*（TB 全部） |',
          '',
-         '重跑（在 repo 根目錄）：`.venv/Scripts/python.exe -B -m laser_v2.build_v2`（約 95 秒；草稿、分頁 SVG、本報告、'
+         '重跑（先進到 03_v2_光耦版 資料夾）：`../.venv/Scripts/python.exe -B -m laser_v2.build_v2`（約 95 秒；草稿、分頁 SVG、本報告、'
          '試切小樣一起更新；只要草稿加 `--no-trial`）。改完先看「六、各子系統」的警告與「七、跨子系統檢查」，'
          '全部通過再切；先切試切小樣照 trial_report.md 驗收，再切整台。\n']
     L.extend(params_used_section())

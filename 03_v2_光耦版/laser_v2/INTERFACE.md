@@ -1,6 +1,7 @@
 # laser_v2 產生器架構與介面
 
-執行（Windows，在 repo 根目錄）：`.venv/Scripts/python.exe -B -m laser_v2.build_v2`
+執行（Windows，先進到 `03_v2_光耦版` 資料夾；`.venv` 在上一層 repo 根目錄）：`../.venv/Scripts/python.exe -B -m laser_v2.build_v2`
+原始雷切檔在 `../01_原始機構/分幣機雷切原始檔.svg`（catalog.SRC_SVG）。
 → 檢查 params → 讀原始檔 → 三個子系統 → 合併 → 跨子系統檢查 → 排版 → 輸出 → qa → 試切小樣（約 65～95 秒）。
 選項：`--only-original`（只排原始 60 個零件，測排版／輸出）、`--out-root DIR`、`--out-dir DIR`、`--no-png`、`--no-trial`。
 
@@ -280,10 +281,10 @@ run(parts, results, cat=None, out_root=None, out_dir=None, png=True) -> dict
 | `laser_v2/out/sheet_<材質>_<n>.png` | 預覽圖（黑切割、紅雕刻、藍代號） |
 | `laser_v2/out/parts.csv` | 零件清單（UTF-8 含 BOM）：代號、名稱、材質、每套數量、備品、尺寸(mm)、所在板、備品所在板、layer、tags |
 | `laser_v2/out/report.md` | 上雷切機用哪個檔與雷切設定、組裝提醒、張數與利用率、材料與採購（含備品已排進切割檔）、實量後改哪裡與本次 params、各子系統、跨子系統檢查、待決、qa |
-| `分幣機雷切_光耦版_v2_草稿.svg`（repo 根目錄） | 多頁草稿（Inkscape 1.x 多頁），4 個圖層，含隱藏的「註記（不切割）」層；給人看，不要直接上機 |
+| `分幣機雷切_光耦版_v2_草稿.svg`（03_v2_光耦版 資料夾） | 多頁草稿（Inkscape 1.x 多頁），4 個圖層，含隱藏的「註記（不切割）」層；給人看，不要直接上機 |
 | `laser_v2/out/trial_<材質>_<n>.svg` | 試切小樣，**上雷切機用**（同分頁檔規則，不含註記） |
 | `laser_v2/out/trial_<材質>_<n>.png`、`trial_report.md` | 試切小樣預覽與說明（每片要測什麼、過關標準、不過關改哪裡、本次 params） |
-| `分幣機雷切_光耦版_v2_試切小樣.svg`（repo 根目錄） | 試切小樣多頁檔，含隱藏註記層；給人看 |
+| `分幣機雷切_光耦版_v2_試切小樣.svg`（03_v2_光耦版 資料夾） | 試切小樣多頁檔，含隱藏註記層；給人看 |
 
 **重跑時 out/ 裡哪些檔會被動到**：`sheet_<材質>_<n>.svg／.png`、`trial_<材質>_<n>.svg／.png`（材質＝合板／壓克力，
 n 是數字）每次重跑會被覆寫；這次沒有的那幾張會被移除（`export.remove_stale_outputs`：只認這種命名，SVG 還要檔頭有

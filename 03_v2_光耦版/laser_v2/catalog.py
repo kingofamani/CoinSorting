@@ -82,8 +82,8 @@ from shapely.strtree import STRtree
 from svgpathtools import Arc, CubicBezier, Line, QuadraticBezier, parse_path
 from svgpathtools import Path as SvgPath
 
-REPO = FsPath(__file__).resolve().parents[1]
-SRC_SVG = REPO / '分幣機雷切原始檔.svg'
+REPO = FsPath(__file__).resolve().parents[1]   # v2 資料夾（03_v2_光耦版），草稿與試切小樣輸出在這裡
+SRC_SVG = REPO.parent / '01_原始機構' / '分幣機雷切原始檔.svg'   # 2026-10-12 整理資料夾後的位置
 
 CUT = '#000000'
 ENGRAVE = '#ff0000'

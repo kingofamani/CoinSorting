@@ -1,5 +1,5 @@
 __pycache__/
 *.pyc
 .venv/
-laser_v2/_work/
-光耦測試原型/_work/
+# 產生器與驗證的暫存筆記（任何資料夾底下的 _work）
+_work/

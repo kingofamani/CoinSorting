@@ -2,7 +2,7 @@
 
 用法
 ----
-    python -m laser_v2.build_v2                    # 完整流程，輸出到 repo 根目錄與 laser_v2/out/
+    python -m laser_v2.build_v2                    # 完整流程（在 03_v2_光耦版 執行），輸出到 03_v2_光耦版 與 laser_v2/out/
     python -m laser_v2.build_v2 --only-original    # 只排原始 60 個零件（測試排版／輸出用），
                                                    # 預設輸出到 laser_v2/_work/layout_export/only_original/
     選項：--out-root DIR（草稿 SVG 放這裡）、--out-dir DIR（分頁 SVG／PNG／csv／report 放這裡）、--no-png、
@@ -386,7 +386,7 @@ def _pipeline(a, export, layout):
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog='python -m laser_v2.build_v2', description='分幣機 v2 雷切檔產生器')
     ap.add_argument('--only-original', action='store_true', help='只排原始 60 個零件（不跑子系統與 compose）')
-    ap.add_argument('--out-root', default=None, help='草稿 SVG 輸出資料夾（預設 repo 根目錄）')
+    ap.add_argument('--out-root', default=None, help='草稿 SVG 輸出資料夾（預設 03_v2_光耦版）')
     ap.add_argument('--out-dir', default=None, help='分頁 SVG／PNG／csv／report 的資料夾（預設 <out-root>/laser_v2/out）')
     ap.add_argument('--no-png', action='store_true', help='不畫預覽 PNG')
     ap.add_argument('--no-trial', action='store_true', help='不產生試切小樣（laser_v2/trial.py）')

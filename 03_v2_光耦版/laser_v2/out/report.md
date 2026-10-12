@@ -123,9 +123,9 @@
 | TM1637 顯示器 | `TM1637`：pcb_w、pcb_h、pcb_t、hole_d、body_w、body_h、body_H、body_dx、body_dy、back_h、hole_dx、hole_dy、use_screws、hdr_mode、dup_len、dup_gap、wire_bend | mm；**hole_dx／hole_dy 是半距**（孔中心離 PCB 中心）：量到孔距 38×20 要填 19、10；沒有固定孔就 use_screws=False（#24 不切 M2 孔，改熱熔膠）；只改 pcb_w／pcb_h 不改孔距時，ebox 檢查「M2 孔在 TM1637 PCB 上」會不過 | #24 顯示窗與 M2 孔、#26 L 形缺口、#5 前上角 | TA-#24、TA-#26、TA-#5 |
 | ESP32 擴展板＋開發板 | `ESP32_BOARD`：L、W、t、standoff、hole_inset、hole_d、hdr_h、dev_len、dev_w、usb_inset、usb_V_off、btn_dv、dc_V_off | mm；4 個 M3 孔離板邊要相等（hole_inset）；USB／DC 在 +U 端（右牆那側）是寫死的，實品相反要先問 | EB-B 孔、EB-WR 服務窗、盒底 | 電子盒 EB-* |
 | 9V 電池 | `BATTERY_9V`：L、W、T | mm；口袋取 max(實測, 標準 48.5×26.5×17.5)，實品較小不縮 | 電子盒電池帶 | 電子盒 EB-* |
-| S1 模組前臂（靠 #26 那臂）PCB 背面焊腳的**位置**與高度（S1 卡匣用的那個模組；組裝座標 V、W'） | 高度：`MODULE['back_h']`（目前 2.0）；**位置不是 params**，量完先回報 | mm；PCB 用 1 mm 泡棉膠墊高，所以凸出 >1.0 mm 的焊點只能落在 S1-B 讓位孔內（V≤74.7）或 W'>29，否則會頂到 S1-B 下料條或 #13R 牆、把 PCB 頂高（光束跟著偏），要改 S1-B 讓位孔／牆槽（mods_s1，改前先問）；見 laser_v2/_work/verify-spec-s1/notes.md 觀察 1、verify-assembly/notes.txt | S1-B 讓位孔、S1-F、#37 卡匣窗焊點段 | TB-#37、S1-*（TB 全部） |
+| S1 模組前臂（靠 #26 那臂）PCB 背面焊腳的**位置**與高度（S1 卡匣用的那個模組；組裝座標 V、W'） | 高度：`MODULE['back_h']`（目前 2.0）；**位置不是 params**，量完先回報 | mm；PCB 用 1 mm 泡棉膠墊高，所以凸出 >1.0 mm 的焊點只能落在 S1-B 讓位孔內（V≤74.7）或 W'>29，否則會頂到 S1-B 下料條或 #13R 牆、把 PCB 頂高（光束跟著偏），要改 S1-B 讓位孔／牆槽（mods_s1，改前先問）；見 laser_v2/驗證筆記/S1規格核對_2026-10-07.md 觀察 1、整機組裝核對_2026-10-07.txt | S1-B 讓位孔、S1-F、#37 卡匣窗焊點段 | TB-#37、S1-*（TB 全部） |
 
-重跑（在 repo 根目錄）：`.venv/Scripts/python.exe -B -m laser_v2.build_v2`（約 95 秒；草稿、分頁 SVG、本報告、試切小樣一起更新；只要草稿加 `--no-trial`）。改完先看「六、各子系統」的警告與「七、跨子系統檢查」，全部通過再切；先切試切小樣照 trial_report.md 驗收，再切整台。
+重跑（先進到 03_v2_光耦版 資料夾）：`../.venv/Scripts/python.exe -B -m laser_v2.build_v2`（約 95 秒；草稿、分頁 SVG、本報告、試切小樣一起更新；只要草稿加 `--no-trial`）。改完先看「六、各子系統」的警告與「七、跨子系統檢查」，全部通過再切；先切試切小樣照 trial_report.md 驗收，再切整台。
 
 **本次使用的參數（laser_v2/params.py，產生這份檔案時的值）**
 

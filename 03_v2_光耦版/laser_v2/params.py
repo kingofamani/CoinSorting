@@ -1,7 +1,7 @@
 """v2 雷切檔的共用參數。
 
 槽型光耦模組、TM1637、ESP32 擴展板買到實品量完後，只要改這個檔再重跑
-（在 repo 根目錄）.venv/Scripts/python.exe -B -m laser_v2.build_v2，就會重新產生 v2 雷切檔與試切小樣
+（先進到 03_v2_光耦版 資料夾）../.venv/Scripts/python.exe -B -m laser_v2.build_v2，就會重新產生 v2 雷切檔與試切小樣
 （約 95 秒）。量什麼、改哪個鍵、重切哪一塊小樣，見 laser_v2/out/report.md「實量後改哪裡」。
 
 build_v2 一開始會檢查這個檔（必要鍵、要填數字、正值、合理範圍，例如 MODULE 的 slot_w 6～15、
