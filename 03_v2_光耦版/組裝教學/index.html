@@ -1,0 +1,1382 @@
+<title>分幣機 v2 組裝手冊</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* 版面：單欄工坊手冊。左側細軌標步驟序號，圖放在白色圖版裡；講師預組／老師組裝／通電測試三段 */
+:root {
+  --bg: #f4f6f5;
+  --surface: #ffffff;
+  --ink: #1c292b;
+  --muted: #5a6a6c;
+  --line: #d6dedd;
+  --accent: #0f7c8a;
+  --accent-soft: #dcf0f2;
+  --wood: #ecdcc2;
+  --wood-ink: #5f4c2d;
+  --warn: #9a5800;
+  --warn-soft: #fff0d9;
+  --todo: #7b3fa3;
+  --todo-soft: #f3e8fa;
+  --laser: #c0392b;
+  --plate: #ffffff;
+  --font-body: 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111a1b; --surface: #182426; --ink: #e5eded; --muted: #9db0b2; --line: #2b3b3d;
+    --accent: #4cc2ce; --accent-soft: #15353a; --wood: #3b3326; --wood-ink: #ecdcc2;
+    --warn: #f2b45c; --warn-soft: #36280f; --todo: #cfa2ef; --todo-soft: #2c1e37; --laser: #ff7a6b;
+    --plate: #f6f6f4; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111a1b; --surface: #182426; --ink: #e5eded; --muted: #9db0b2; --line: #2b3b3d;
+  --accent: #4cc2ce; --accent-soft: #15353a; --wood: #3b3326; --wood-ink: #ecdcc2;
+  --warn: #f2b45c; --warn-soft: #36280f; --todo: #cfa2ef; --todo-soft: #2c1e37; --laser: #ff7a6b;
+  --plate: #f6f6f4; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.75; }
+.wrap { max-width: 960px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 64px; }
+h1, h2, h3 { line-height: 1.3; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(28px, 5vw, 40px); font-weight: 900; letter-spacing: 0.02em; }
+h2 { font-size: 24px; font-weight: 900; }
+h3 { font-size: 19px; font-weight: 700; }
+p { margin: 0; }
+a { color: var(--accent); }
+code, .code { font-family: var(--font-mono); font-size: 0.92em; overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+[id] { scroll-margin-top: 104px; }
+
+/* 頁首 */
+.masthead { display: grid; gap: 12px; padding-block: 8px 20px; border-bottom: 2px solid var(--ink); }
+.eyebrow { font-size: 13px; letter-spacing: 0.12em; color: var(--muted); font-weight: 700; }
+.lede { color: var(--muted); max-width: 65ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 14px; color: var(--muted); }
+.meta b { color: var(--ink); font-weight: 700; }
+
+/* 目錄與進度 */
+.toc { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg);
+  border-bottom: 1px solid var(--line); padding-block: 10px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.toc a { text-decoration: none; font-weight: 700; font-size: 14px; }
+.progress { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted);
+  font-variant-numeric: tabular-nums; min-width: 0; }
+.bar { width: 120px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .bar > i { transition: none; } }
+
+/* 段落 */
+section.part { padding-block: 36px 8px; display: grid; gap: 20px; }
+.part-head { display: grid; gap: 6px; }
+.part-head p { color: var(--muted); max-width: 65ch; }
+
+/* 步驟卡 */
+.step { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 0 16px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 18px 18px 0; }
+.step-no { text-align: center; font-family: var(--font-mono); font-weight: 600; font-size: 22px; color: var(--accent);
+  border-right: 2px solid var(--accent-soft); padding-top: 2px; }
+.step-body { display: grid; gap: 12px; min-width: 0; }
+.step-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.step-head .time { font-size: 13px; color: var(--muted); }
+.step ol, .step ul { margin: 0; padding-left: 1.4em; display: grid; gap: 4px; }
+.step li::marker { color: var(--accent); font-weight: 700; }
+.step.done { opacity: 0.62; }
+.step.done .step-no { color: var(--muted); }
+
+/* 零件標籤 */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--font-mono); font-size: 13px; font-weight: 600; background: var(--wood); color: var(--wood-ink);
+  border-radius: 6px; padding: 1px 8px; white-space: nowrap; }
+.chip.v2 { background: var(--accent-soft); color: var(--accent); }
+.chip small { font-family: var(--font-body); font-weight: 500; margin-left: 4px; }
+.pc { font-family: var(--font-mono); font-weight: 600; color: var(--wood-ink); background: var(--wood); border-radius: 4px; padding: 0 4px; }
+
+/* 圖版 */
+figure { margin: 0; background: var(--plate); border: 1px solid var(--line); border-radius: 8px; padding: 10px; display: grid; gap: 6px; }
+figure img { display: block; width: 100%; height: auto; border-radius: 4px; }
+figcaption { font-size: 13px; color: #4f5c5e; }
+.figs { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+
+/* 提示框 */
+.note { border-radius: 8px; padding: 10px 14px; font-size: 15px; display: grid; gap: 4px; }
+.note b.tag { font-size: 13px; letter-spacing: 0.06em; }
+.note.warn { background: var(--warn-soft); color: var(--ink); border-left: 4px solid var(--warn); }
+.note.warn b.tag { color: var(--warn); }
+.note.todo { background: var(--todo-soft); color: var(--ink); border-left: 4px solid var(--todo); }
+.note.todo b.tag { color: var(--todo); }
+.note.info { background: var(--accent-soft); color: var(--ink); border-left: 4px solid var(--accent); }
+.note.info b.tag { color: var(--accent); }
+
+/* 完成勾選 */
+.done-row { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
+.done-row input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+/* 表格 */
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 13px; color: var(--muted); font-weight: 700; background: var(--bg); position: sticky; top: 0; }
+td.num { font-variant-numeric: tabular-nums; text-align: right; }
+tr:last-child td { border-bottom: none; }
+
+/* 其他 */
+.star { color: var(--todo); font-weight: 900; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--muted); }
+.sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; border: 1px solid #9c8a6c; background: #e9d9bf; }
+.sw.new { background: #9fd6dc; border-color: #0f7c8a; }
+.sw.laser { background: transparent; border-color: var(--laser); }
+.kit { columns: 2 240px; column-gap: 28px; margin: 0; padding-left: 1.2em; }
+.kit li { break-inside: avoid; }
+.sub { font-weight: 700; }
+.step-body p, .step-body li { max-width: 74ch; }
+.order { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 14px; }
+.order span { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; }
+.order i { color: var(--muted); font-style: normal; }
+.note ul { margin: 0; padding-left: 1.2em; display: grid; gap: 2px; }
+#appendix > h3 { margin-top: 12px; }
+button.reset { font: inherit; font-size: 14px; color: var(--ink); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 8px; padding: 6px 14px; cursor: pointer; }
+button.reset:hover { border-color: var(--accent); }
+
+@media (max-width: 560px) {
+  .step { grid-template-columns: 1fr; padding: 14px; }
+  .step-no { text-align: left; border-right: none; border-bottom: 2px solid var(--accent-soft); padding-bottom: 4px; }
+  .progress { margin-left: 0; }
+}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">智能自動分幣機　v2 光耦版　教師研習</div>
+  <h1>分幣機 v2 組裝手冊</h1>
+  <p class="lede">從雷切下來的零件，組到會自動算錢。分兩段：講師在研習前預組感測器和電子盒；老師在研習當天組機身、裝感測器、掛上電子盒，最後通電測試。</p>
+  <div class="meta">
+    <span><b>零件</b> 80 種（原機 60 件，其中 8 件改成 v2 版；新增 20 種）</span>
+    <span><b>板材</b> 3 mm 合板 3 張＋壓克力 1 張</span>
+    <span><b>連接</b> 機身全部插榫，不用螺絲</span>
+  </div>
+  <div class="note todo">
+    <b class="tag">★ 還沒確認</b>
+    <p>設計檔仍是草稿：光耦模組、TM1637 還沒買到實品量尺寸，程式也還沒在實機跑過。原機沒有組裝說明，順序是照設計檔推出來的。標 <span class="star">★</span> 的地方還要確認，全部列在<a href="#todo">附錄的待確認清單</a>。</p>
+  </div>
+</header>
+
+<nav class="toc" aria-label="目錄">
+  <a href="#start">開始前</a>
+  <a href="#prep">A 講師預組</a>
+  <a href="#build">B 老師組裝</a>
+  <a href="#test">C 通電測試</a>
+  <a href="#swap">D 拆換</a>
+  <a href="#appendix">附錄</a>
+  <span class="progress"><span id="prog-text">0 / 0 步</span><span class="bar"><i id="prog-bar"></i></span></span>
+</nav>
+
+<!-- ===================== 開始前 ===================== -->
+<section class="part" id="start">
+  <div class="part-head">
+    <h2>開始前</h2>
+    <p>先切好零件、認清方向，再把 v2 改過的零件挑出來。</p>
+  </div>
+
+  <article class="step" id="s-1">
+    <div class="step-no">S1</div>
+    <div class="step-body">
+      <div class="step-head"><h3>雷切檔與設定</h3></div>
+      <ul>
+        <li>上機用的檔案在 <code>03_v2_光耦版/laser_v2/out/</code>：<code>sheet_合板_1.svg</code>、<code>sheet_合板_2.svg</code>、<code>sheet_合板_3.svg</code>、<code>sheet_壓克力_1.svg</code>。</li>
+        <li><code>分幣機雷切_光耦版_v2_草稿.svg</code> 有隱藏的註記層，是給人看的，<b>不要直接上機</b>。</li>
+        <li>黑色 0.2 mm 線＝切割；紅色 0.2 mm 線＝雕刻。紅色圖層設「線／向量雕刻」，不要用填色或掃描。</li>
+        <li>圖層清單把<b>紅色排在黑色前面</b>，黑色圖層開「先切內部（inner first）」。不然整張先切穿，小零件來不及雕刻就掉了或移位。雕刻的小字先試切，再調功率。</li>
+        <li>第一次切之前，先切試切小樣 <code>laser_v2/out/trial_合板_1.svg</code>，確認光耦模組、TM1637 裝得進去。</li>
+        <li>#24、#26 開了感測窗，比原機脆。每 10 套多切 2 片 #24、#26 當備片；切好平放，拿的時候不要扳。</li>
+        <li>切割檔裡已經多排的備品：EB-K ×2、S1-P ×1、S1-H ×3、PIN-S50 ×2。原機本來就多給的小零件：U 形卡扣 6 片（用 4）、L 形卡扣 6 片（用 4）、小鍵 4 支（用 2）、圓片 5 片（用 2）<span class="star">★</span>。</li>
+      </ul>
+      <figure>
+        <img src="img/s-v2-sheet.png" alt="四張板的縮圖，v2 改過的 8 件零件塗成青色並標代號：合板 1 有 #24、#37、#21，合板 2 有 #26、#13R，合板 3 有 #7、#6、#5" loading="lazy">
+        <figcaption>v2 改過的 8 件在哪張板上（青色）。壓克力板只有轉盤 #62 和前蓋 #63，沒有改。</figcaption>
+      </figure>
+      <label class="done-row"><input type="checkbox" data-step="s-1"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="s-2">
+    <div class="step-no">S2</div>
+    <div class="step-body">
+      <div class="step-head"><h3>方向和名稱</h3></div>
+      <ul>
+        <li><b>正面</b>：前面板 #24 刻著 Logo 和 1、5、10、50 的那一面。從正面看，轉盤在右邊，顯示器在左上角。</li>
+        <li><b>右端</b>＝轉盤那一端；<b>左端</b>＝顯示器那一端。</li>
+        <li><b>背面</b>：後面板 #37。電子盒掛在背面。</li>
+        <li><b>上游、下游</b>：硬幣從轉盤送上斜槽，往左下滾，依序經過 1 元、5 元、10 元、50 元的開口。靠轉盤的是上游。</li>
+        <li><b>抽屜</b>：從正面看，由左到右是 50、10、5、1 元。</li>
+        <li>機身往後仰 30°，硬幣靠著內牆 #26 滾。</li>
+      </ul>
+      <div class="figs">
+        <figure>
+          <img src="img/photo-front.jpg" alt="原機正面照：左邊是斜槽和四個抽屜，右邊是壓克力轉盤" loading="lazy">
+          <figcaption>原機正面（沒有感測器）。</figcaption>
+        </figure>
+        <figure>
+          <img src="img/photo-back.jpg" alt="原機背面照：後面板 #37 和兩片端板" loading="lazy">
+          <figcaption>原機背面。v2 的電子盒掛在這一面。</figcaption>
+        </figure>
+      </div>
+      <label class="done-row"><input type="checkbox" data-step="s-2"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="s-3">
+    <div class="step-no">S3</div>
+    <div class="step-body">
+      <div class="step-head"><h3>挑出 v2 改過的 8 件</h3></div>
+      <p>這 8 件在原機步驟裡就要用 v2 版。套件裡<b>沒有 #13</b>，只有 #13R。</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>零件</th><th>怎麼認</th><th>改了什麼</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pc">#24</span> 前面板</td><td>左上有顯示器方窗</td><td>S5、S10 感測窗，S50 開底缺口和 2 個插銷方孔，右下排線孔；「5」「1」雕刻和 Logo 搬了位置</td></tr>
+          <tr><td><span class="pc">#26</span> 內牆</td><td>頂邊有 L 形缺口</td><td>感測窗、3 個光孔、#6 新槽、S1 用的 3 個槽、右下排線孔</td></tr>
+          <tr><td><span class="pc">#37</span> 後面板</td><td>有 S1 卡匣窗、4 個掛勾長槽</td><td>卡匣窗、2 個 M3 孔、#13R 後榫的槽、掛勾槽、頂邊 U 形缺口、感測器線孔</td></tr>
+          <tr><td><span class="pc">#13R</span> 右櫃側板</td><td>雕「13R 右」，上半截高出一大塊</td><td>加高成 1 元滑道右牆，多 3 支榫和 S1 卡匣的牆槽</td></tr>
+          <tr><td><span class="pc">#21</span> 左櫃側板</td><td>雕「21 左」</td><td>外形不變，只加雕刻</td></tr>
+          <tr><td><span class="pc">#7</span> 1｜5 間隔條</td><td>雕「S5 v2」</td><td>S5 缺口；中段小榫刪掉</td></tr>
+          <tr><td><span class="pc">#6</span> 5｜10 間隔條</td><td>雕「S10 v2」</td><td>S10 缺口；長榫刪掉，多一支上方小榫</td></tr>
+          <tr><td><span class="pc">#5</span> 10｜50 間隔條</td><td>雕「S50 v2」</td><td>S50 缺口；長榫和上小榫刪掉，只剩 2 支榫</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note info">
+        <b class="tag">少了孔是正常的</b>
+        <p>v2 把用不到的孔拿掉了：#24、#26 沒有 #5、#6 的長榫孔；#26 沒有 #7 的中段小榫孔，也沒有 #5 的上小榫槽；#24 原本 Logo 位置的 9 個菱形孔整組搬家。</p>
+      </div>
+      <figure>
+        <img src="img/s-v2-flat.png" alt="v2 改過的 8 件零件攤平並排，紅線是雕刻" loading="lazy">
+        <figcaption>v2 改過的 8 件（同一比例；紅線是雕刻）。</figcaption>
+      </figure>
+      <label class="done-row"><input type="checkbox" data-step="s-3"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="s-4">
+    <div class="step-no">S4</div>
+    <div class="step-body">
+      <div class="step-head"><h3>工具和材料</h3></div>
+      <p class="sub">講師預組（每套）</p>
+      <ul class="kit">
+        <li>槽型光耦模組（LM393、槽寬 10 mm）×4，另備 1</li>
+        <li>3P 母對母杜邦線 40 cm ×3（S5、S10、S50）、20 cm ×1（S1）</li>
+        <li>TM1637 四位數顯示器 ×1、4P 母對母杜邦線 30 cm ×1</li>
+        <li>M2×8 尼龍螺絲＋螺帽 ×4（顯示器）</li>
+        <li>ESP32 DevKit 38P（WROOM-32）＋38P 擴展板</li>
+        <li>M3×12 尼龍螺絲 ×4、M3 尼龍螺帽 ×12（擴展板）</li>
+        <li>M3 螺帽 ×2（黏在 #37）、M3×10 尼龍螺絲 ×2（給老師鎖卡匣 <span class="star">★</span>）</li>
+        <li>9V 電池＋「電池扣、開關、DC 5.5×2.1 插頭」免焊線組（開關暫定 13.5×9 面板式 <span class="star">★</span>）</li>
+        <li>緞帶 5×80 mm（電池拉環）</li>
+        <li>1.0 mm 雙面泡棉膠約 3 cm²</li>
+        <li>PI 膠帶或電工膠帶（厚度 0.15 mm 以下）</li>
+        <li>白膠、瞬間膠、熱熔膠槍、標籤貼紙、束帶</li>
+        <li>游標卡尺、直角尺、三用電表</li>
+        <li>電腦＋USB 線（Arduino IDE，不用另裝函式庫）</li>
+      </ul>
+      <p class="sub">老師組裝</p>
+      <ul class="kit">
+        <li>講師發的：#24（已裝顯示器、連著電子盒）、3 組感測模組、3 個鎖塊、S1 卡匣、#37（已黏螺帽）、M3×10 尼龍螺絲 ×2</li>
+        <li>原機另購：TT 減速馬達（雙軸 <span class="star">★</span>）、18650 電池與電池盒、馬達開關、導線</li>
+        <li>砂紙或小銼刀（太緊的榫）</li>
+        <li>熱熔膠或背膠線扣（固定排線）<span class="star">★</span></li>
+        <li>罐子或圓筒，直徑約 10 cm（預彎圍邊 #27）</li>
+        <li>毛巾或軟布（#24 正面朝下時墊著）</li>
+      </ul>
+      <label class="done-row"><input type="checkbox" data-step="s-4"> 這一步完成</label>
+    </div>
+  </article>
+</section>
+
+<!-- ===================== A 講師預組 ===================== -->
+<section class="part" id="prep">
+  <div class="part-head">
+    <h2>A　講師預組（研習前）</h2>
+    <p>每套要先做好：3 組感測模組（含線）、3 個鎖塊、S1 卡匣、裝好顯示器的 #24、電子盒（程式已燒好）、黏好螺帽的 #37。時間：感測模組＋鎖塊約 5 分鐘；S1 卡匣約 10 分鐘，白膠乾 20 分鐘；電子盒約 25 分鐘，白膠乾 30 分鐘（10 套約 4.5 小時）。</p>
+  </div>
+
+  <article class="step" id="a-1">
+    <div class="step-no">A1</div>
+    <div class="step-body">
+      <div class="step-head"><h3>模組先量，再切 v2</h3><span class="time">拿到實品的第一件事</span></div>
+      <p>切割檔是照暫定尺寸產生的。光耦模組、TM1637、擴展板買到後，先量再切；量什麼、改哪個鍵，見 <code>laser_v2/out/report.md</code> 第四節。量完改 <code>laser_v2/params.py</code>，重跑產生器。</p>
+      <p class="sub">S5、S10、S50 用的光耦（不合格就換模組）</p>
+      <ul>
+        <li>槽寬至少 7.5 mm（名目 10 mm）。<b>5 mm 槽寬的不能用。</b></li>
+        <li>排針離 PCB 前緣 11.5 mm 以內；排針在 PCB 中段不能用（除非把排針彎 90°）。</li>
+        <li>排針朝下的模組：S5、S10 可以，<b>S50 不行</b>（會擋到抽屜），S50 要用排針朝上的。</li>
+        <li>排針朝自己、兩臂朝上時，PCB 長邊在右邊的三站都能用；長邊在左邊的，S50 要另外量。</li>
+        <li>翼上的零件高 2.3 mm 以下（例如沒有可變電阻）；光耦本體不能有固定耳。</li>
+      </ul>
+      <p class="sub">S1 用的光耦</p>
+      <ul>
+        <li>槽寬至少 8 mm；光耦本體要靠 PCB 長邊，在中間不能用；元件高 3.0 mm 以下。</li>
+        <li>排針在 PCB 短端、光耦對面那端可以用；在長邊、元件面直立的不能用。</li>
+        <li>前臂 PCB 背面焊腳的位置和高度（目前假設 2.0 mm）量完先回報。</li>
+      </ul>
+      <p class="sub">每顆都要做的電性測試</p>
+      <ul>
+        <li>接 3.3 V（擴展板的 V 排針，不要接 5 V）。S5～S50 的模組用最薄的 5 元、S1 的用 1 元慢慢推過槽，燈號要穩定。</li>
+        <li>擋住時輸出是 HIGH 還是 LOW 都可以，程式開機會自己判斷。</li>
+      </ul>
+      <p class="sub">其他要量的</p>
+      <ul>
+        <li>TM1637：PCB 長寬、LED 塊尺寸、固定孔距、排針型式、背面零件最高。孔距填進 params 時填<b>一半</b>（例如孔距 38×20 填 19、10）。沒有固定孔的話設 <code>use_screws=False</code>（#24 不切螺絲孔，改用熱熔膠）。</li>
+        <li>擴展板：外形、4 個固定孔、USB 和 DC 座在哪一端。9V 電池加電池扣總長 61 mm 以下。合板實際厚度。</li>
+      </ul>
+      <label class="done-row"><input type="checkbox" data-step="a-1"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="a-2">
+    <div class="step-no">A2</div>
+    <div class="step-body">
+      <div class="step-head"><h3>感測模組接線、貼標籤</h3><span class="time">S5／S10／S50 各 1 組，另備 1 組</span></div>
+      <ol>
+        <li>3P 杜邦線插在模組排針上，排針根部點熱熔膠。</li>
+        <li>盒端做成 1×3 的杜邦頭，順序 G-V-S（從開發板往外：黑、紅、藍 <span class="star">★</span>）。插反 180° 只會把 G、S 對調，V 還在中間：感測器不動作，但不會燒。</li>
+        <li>兩端都貼標籤：模組端寫站名，盒端寫要插的腳位（見下表）。#24 正面不刻站名，老師靠這個標籤認站。</li>
+        <li>包翼：PCB 翼上的零件面包一層電工膠帶或 PI 膠帶（厚度 0.15 mm 以下），讓落下的硬幣碰到平滑面。<b>不要用 0.5 mm 的 PET 片</b>，會吃掉零件的間隙。</li>
+      </ol>
+      <div class="table-wrap"><table>
+        <thead><tr><th>感測器</th><th>位置</th><th>模組端標籤</th><th>盒端標籤</th><th>線長</th><th>會經過的硬幣</th></tr></thead>
+        <tbody>
+          <tr><td>S1</td><td>1 元滑道內（S1 卡匣）</td><td>S1</td><td>S1→G27</td><td>20 cm</td><td>1 元</td></tr>
+          <tr><td>S5</td><td>1｜5 間隔條</td><td>S5</td><td>S5→G26</td><td>40 cm</td><td>5、10、50 元</td></tr>
+          <tr><td>S10</td><td>5｜10 間隔條</td><td>S10</td><td>S10→G25</td><td>40 cm</td><td>10、50 元</td></tr>
+          <tr><td>S50</td><td>10｜50 間隔條</td><td>S50</td><td>S50→G33</td><td>40 cm（太緊改 50 cm <span class="star">★</span>）</td><td>50 元</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note warn"><b class="tag">注意</b><p>光耦的 VCC 一定接擴展板的 V 排針（3.3 V），不要接 5 V 排針。</p></div>
+      <label class="done-row"><input type="checkbox" data-step="a-2"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="a-3">
+    <div class="step-no">A3</div>
+    <div class="step-body">
+      <div class="step-head"><h3>做 3 個鎖塊（P1＋C1；S50 加 2 支插銷）</h3></div>
+      <div class="chips"><span class="chip v2">C1-S5</span><span class="chip v2">P1-S5</span><span class="chip v2">C1-S10</span><span class="chip v2">P1-S10</span><span class="chip v2">C1-S50</span><span class="chip v2">P1-S50</span><span class="chip v2">PIN-S50 ×2</span></div>
+      <ol>
+        <li>認 C1 的雕刻面：之後<b>貼著 #24 的那一面</b>。上面刻了 P1 的外框和站名；S5、S10 下緣還有一個 ▲；S50 有 2 個插銷方塊。</li>
+        <li>照雕刻外框，用白膠把 P1 黏上。P1 頂面有一段只有 6.5 mm 寬、高出來的「頂住凸塊」，<b>凸塊要在上緣</b>。</li>
+        <li>S5、S10：<b>凸塊要在 C1 下緣 ▲ 那一端</b>（站名刻在另一端）。P1 外框左右對稱，翻面也套得進去；黏反了，凸塊會跑到 PCB 翼和焊點底下。S50 的外框兩邊不一樣長，不會黏反。</li>
+        <li>S50 插銷：2 支 3×3 插銷黏在 C1 雕刻的方塊上。先把插銷插進試切小樣 #24 片段的兩個方孔，再把 C1 壓上去黏，位置最準。</li>
+      </ol>
+      <div class="figs">
+        <figure>
+          <img src="img/a-lock-flat.png" alt="鎖塊零件攤平：C1-S5、P1-S5、C1-S10、P1-S10、C1-S50、P1-S50、插銷，C1 上的紅線是 P1 外框、站名和三角形記號" loading="lazy">
+          <figcaption>C1 上的紅線＝P1 黏貼外框、站名、▲。</figcaption>
+        </figure>
+        <figure>
+          <img src="img/spec-crosstrack-parts.png" alt="設計規格附圖：感測座各零件" loading="lazy">
+          <figcaption>規格附圖（設計審查時畫的；尺寸以 report.md 為準）。</figcaption>
+        </figure>
+      </div>
+      <figure>
+        <img src="img/a-lock-sheet.png" alt="四張板的縮圖，鎖塊零件塗成青色：多數在合板 1，C1-S50 在合板 2" loading="lazy">
+        <figcaption>鎖塊在哪張板：C1-S50 在合板 2，其他在合板 1。</figcaption>
+      </figure>
+      <div class="note todo"><b class="tag">★ 待確認</b><p>白膠要乾多久才能發？規格建議每套多附 1 組 P1＋C1，但目前切割檔沒有排（只有插銷備品）。</p></div>
+      <label class="done-row"><input type="checkbox" data-step="a-3"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="a-4">
+    <div class="step-no">A4</div>
+    <div class="step-body">
+      <div class="step-head"><h3>S1 卡匣</h3><span class="time">約 10 分鐘，白膠乾 20 分鐘</span></div>
+      <div class="chips"><span class="chip v2">S1-B 座塊</span><span class="chip v2">S1-C 座板</span><span class="chip v2">S1-F 背蓋</span><span class="chip v2">S1-P 填塊</span><span class="chip v2">S1-H 導流帽 ×3</span></div>
+      <ol>
+        <li>S1-B 用白膠黏到 S1-C 上：照 S1-C 雕刻面上的紅框貼。兩片的後榫並排，後端切齊。</li>
+        <li>後榫插進 S1-F 的槽：S1-F 刻「S1 ↑」的那面朝外、箭頭朝上。用直角尺確認垂直，再上膠。</li>
+        <li>S1-P 黏在 S1-F 前面，塞進背蓋缺口的內角：左緣對齊元件帶缺口的邊，下緣對齊下方缺口的邊。</li>
+        <li>導流帽：3 片 S1-H 先用白膠疊齊（兩條直角邊對齊），乾了再用<b>瞬間膠</b> <span class="star">★</span> 黏到模組前臂頂面。
+          <ul>
+            <li>4.5 mm 高的直角邊對齊前臂外面（離槽遠的那面），斜坡往槽的方向往下。</li>
+            <li>疊片從臂尖往本體方向排 9 mm。導流帽不可以伸進槽裡。</li>
+            <li>導流帽掉了會卡幣，所以要用瞬間膠。</li>
+          </ul>
+        </li>
+        <li>貼模組：S1-B 滑道側的框上貼 1.0 mm 雙面泡棉膠。模組從背蓋缺口<b>由下往上</b>套進去（後臂和 PCB 尾巴穿過背蓋），PCB 背面壓在泡棉膠上。PCB 上緣對齊 S1-B 上緣、前緣對齊 S1-B 前緣。</li>
+        <li><b>用游標卡尺量：後臂內面到背蓋前面＝2.7±0.2 mm。</b>對了再在 PCB 四角各點一點熱熔膠。</li>
+        <li>插上 20 cm 的 3P 線，接頭點熱熔膠。模組端貼「S1」，盒端做 1×3 G-V-S 並貼「S1→G27」。</li>
+      </ol>
+      <div class="figs">
+        <figure>
+          <img src="img/a-s1-flat.png" alt="S1 卡匣零件攤平：S1-C、S1-B、S1-F、S1-P、S1-H" loading="lazy">
+          <figcaption>S1 卡匣的零件（紅線是雕刻）。</figcaption>
+        </figure>
+        <figure>
+          <img src="img/spec-s1-parts.png" alt="設計規格附圖：S1 卡匣的零件與組合" loading="lazy">
+          <figcaption>規格附圖：卡匣零件與組合方式。</figcaption>
+        </figure>
+      </div>
+      <div class="note warn"><b class="tag">每場研習前</b><p>泡棉膠會慢慢變形、熱熔膠可能脫落。每場研習前都要再量一次 2.7±0.2 mm。建議每 10 套多做 2 個卡匣當備品。</p></div>
+      <label class="done-row"><input type="checkbox" data-step="a-4"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="a-5">
+    <div class="step-no">A5</div>
+    <div class="step-body">
+      <div class="step-head"><h3>#37 預黏 M3 螺帽</h3></div>
+      <p>每片 #37 在內面（朝機身裡面那一面）、卡匣窗旁邊的兩個 Ø3.4 孔上，用熱熔膠黏一顆 M3 螺帽。老師之後從背面鎖卡匣的螺絲。</p>
+      <label class="done-row"><input type="checkbox" data-step="a-5"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="a-6">
+    <div class="step-no">A6</div>
+    <div class="step-body">
+      <div class="step-head"><h3>電子盒盒體（7 片，白膠）</h3><span class="time">白膠乾 30 分鐘</span></div>
+      <div class="chips"><span class="chip v2">EB-E 電池端擋</span><span class="chip v2">EB-F 電池架</span><span class="chip v2">EB-S 電池後擋</span><span class="chip v2">EB-WL 左牆</span><span class="chip v2">EB-B 主板底板</span><span class="chip v2">EB-WR 右牆</span><span class="chip v2">EB-T 頂板</span></div>
+      <p>EB-S、EB-F 兩端都是內嵌的槽，要先組成一個子件，<b>順序不能換</b>。左牆 WL 和右牆 WR 外形幾乎一樣，看雕刻分。</p>
+      <ol>
+        <li>子件：EB-E 平放 → EB-F 的一端榫插進 EB-E 底緣的缺口 → EB-S 的兩支下榫插進 EB-F 的兩個槽，側榫插進 EB-E 的槽。</li>
+        <li>左牆 WL 平放，插上 EB-B 一側的兩支榫。</li>
+        <li>把子件放上去：EB-F 和 EB-E 的下緣坐在 EB-B 的上緣。</li>
+        <li>蓋上右牆 WR：EB-B 另一側的兩支榫、EB-S 的榫同時插進 WR；EB-F 的另一端貼著 WR 內面，用膠黏。</li>
+        <li>從上面把頂板 EB-T 壓下去：兩端的榫進 WL、WR 頂緣的缺口，EB-E 的頂榫進 EB-T 的槽。</li>
+        <li>用直角尺確認 WL、WR 的前緣（有掛勾的那一邊）在同一個平面。</li>
+      </ol>
+      <div class="figs">
+        <figure>
+          <img src="img/a-ebox-flat.png" alt="電子盒零件攤平：EB-E、EB-F、EB-S、EB-T、EB-K、EB-WL、EB-WR、EB-B" loading="lazy">
+          <figcaption>電子盒的零件（EB-K 是老師選用的防拔鍵）。</figcaption>
+        </figure>
+        <figure>
+          <img src="img/spec-ebox-parts.png" alt="設計規格附圖：電子盒各零件" loading="lazy">
+          <figcaption>規格附圖：電子盒零件。</figcaption>
+        </figure>
+      </div>
+      <label class="done-row"><input type="checkbox" data-step="a-6"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="a-7">
+    <div class="step-no">A7</div>
+    <div class="step-body">
+      <div class="step-head"><h3>裝擴展板和 ESP32</h3></div>
+      <ol>
+        <li>ESP32 開發板插在擴展板上。</li>
+        <li>每個固定孔：M3×12 尼龍螺絲從擴展板正面穿入 → 擴展板 → 2 顆 M3 尼龍螺帽（墊高）→ EB-B → EB-B 外側再 1 顆螺帽。共 4 個孔。</li>
+        <li>方向：<b>USB 和 DC 座朝右牆 WR</b>；要用的 GVS 排針（G13、G14、G25、G26、G27、G33）在下緣。</li>
+        <li>擴展板的黃色跳帽設 <b>3.3 V</b>，不可以設 5 V。</li>
+      </ol>
+      <label class="done-row"><input type="checkbox" data-step="a-7"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="a-8">
+    <div class="step-no">A8</div>
+    <div class="step-body">
+      <div class="step-head"><h3>9V 電源</h3></div>
+      <ol>
+        <li>開關卡進頂板 EB-T 的 9×13.5 孔，內側點熱熔膠（開關型式還沒定 <span class="star">★</span>；如果是線上開關盒，EB-T 的孔要改形狀）。</li>
+        <li>電池扣那端越過 EB-E 頂緣，放進電池帶。</li>
+        <li>線組另一端沿電池帶後方的通道，到右牆後緣的線口出盒；DC 插頭從服務窗外面插進 DC 座。</li>
+        <li>電池扣的線在盒內留約 6 cm，電池才能整顆提出來。</li>
+        <li>電池下面墊一條 5×80 mm 緞帶，兩端露出盒頂，當拉環。</li>
+        <li>DC 插頭要「中心＝正極」，先用電表確認。</li>
+      </ol>
+      <label class="done-row"><input type="checkbox" data-step="a-8"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="a-9">
+    <div class="step-no">A9</div>
+    <div class="step-body">
+      <div class="step-head"><h3>TM1637 顯示器裝到 #24，接上電子盒</h3></div>
+      <div class="chips"><span class="chip v2">#24<small>v2</small></span><span class="chip">TM1637</span><span class="chip">4P 線 30 cm</span></div>
+      <ol>
+        <li>4P 排線插上 TM1637 的彎針（由上到下 CLK、DIO、VCC、GND），排針座和杜邦頭的接縫點熱熔膠。</li>
+        <li>#24 正面朝下（墊軟布）。LED 塊從背面塞進左上的方窗，<b>排針朝轉盤那一側</b>。鎖 4 支 M2×8 尼龍螺絲＋螺帽，螺絲頭在正面。沒有固定孔的模組改用熱熔膠（切割前就要設 <code>use_screws=False</code>）。</li>
+        <li>線出杜邦頭後馬上往上折 90°，點一點熱熔膠固定在 #24 背面；再往轉盤方向平貼 #24 背面約 5～10 mm，點第 2 點。<b>這段線要貼在 #24 背面最上緣（離頂邊 14 mm 以內）</b>，裝機時才不會被 #26 夾到。</li>
+        <li>線的另一端插擴展板：<b>CLK→G14 的 S、DIO→G13 的 S、VCC→任一 V、GND→任一 G</b>。盒內從頂邊缺口下來，沿開發板後面往下到 GVS 列，點一點熱熔膠固定在 EB-B 上。</li>
+        <li>用束帶把多的線收在盒內。#24、電子盒和中間的線從此是一組，一起發給老師。</li>
+      </ol>
+      <figure>
+        <img src="img/spec-ebox-front.png" alt="設計規格附圖：從正面看顯示器在 #24 左上角的位置" loading="lazy">
+        <figcaption>規格附圖：顯示器在 #24 左上角。LED 塊會凸出正面約 4 mm。</figcaption>
+      </figure>
+      <div class="note todo"><b class="tag">★ 待確認</b><p>顯示器用 M2 螺絲還是熱熔膠（會影響 #24 切不切螺絲孔）。也還沒決定：要不要改成老師最後才把顯示器線插到盒子上，讓老師組機身時不用拖著電子盒。</p></div>
+      <label class="done-row"><input type="checkbox" data-step="a-9"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="a-10">
+    <div class="step-no">A10</div>
+    <div class="step-body">
+      <div class="step-head"><h3>燒錄程式</h3></div>
+      <ol>
+        <li>Arduino IDE 開 <code>03_v2_光耦版/coin_sorter_opto_esp32/coin_sorter_opto_esp32.ino</code>。資料夾名稱要和 .ino 同名，不要改。不用另裝函式庫。</li>
+        <li>開發板選「ESP32 Dev Module」，連接埠選 CP2102 那個 COM。</li>
+        <li>燒錄前先斷 9V：關掉電源開關，或拔掉 9V 電池 <span class="star">★</span>。</li>
+        <li>出現「Connecting……」時按住板上的 <b>BOOT</b> 鍵，開始寫入後放開；完成後按 <b>RST</b>。（一直要按 BOOT 的話：EN 和 GND 之間接一顆 10 µF 電解電容，長腳接 EN。）</li>
+        <li>放回電池、開電源，顯示「1234」之後變成「0」就對了。</li>
+      </ol>
+      <div class="note warn"><b class="tag">注意</b><p>這支程式還沒在實機上編譯、執行過。第一次編譯如果出錯，把錯誤訊息記下來回報。接線和序列埠指令見同資料夾的 README.md。</p></div>
+      <label class="done-row"><input type="checkbox" data-step="a-10"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="a-11">
+    <div class="step-no">A11</div>
+    <div class="step-body">
+      <div class="step-head"><h3>發給老師的組合（每套）</h3></div>
+      <ul>
+        <li>#24（顯示器已鎖好）＋電子盒（程式已燒好）＋中間的 30 cm 線，一組。</li>
+        <li>3 組 S5／S10／S50 模組（含線、貼好標籤）、3 個鎖塊。每套另備 1 組模組和鎖塊。</li>
+        <li>S1 卡匣 1 個（線已插好、貼好標籤）。</li>
+        <li>#37（內面已黏 2 顆 M3 螺帽）、M3×10 尼龍螺絲 ×2。</li>
+        <li>EB-K 防拔鍵 ×2（選用）。</li>
+        <li>其他 v2 零件（#5、#6、#7、#13R、#21、#26）和原機零件一起發。套件裡沒有 #13。</li>
+      </ul>
+      <p>研習前，講師最好先用一台組好的樣機做一次 <a href="#c-4">C4 序列埠檢查</a>。</p>
+      <label class="done-row"><input type="checkbox" data-step="a-11"> 這一步完成</label>
+    </div>
+  </article>
+</section>
+
+<!-- ===================== B 老師組裝 ===================== -->
+<section class="part" id="build">
+  <div class="part-head">
+    <h2>B　老師組裝（研習當天）</h2>
+    <p>先照原機的順序組機身，遇到 v2 零件就直接換上；轉盤裝好以後，再裝感測器、插線、掛電子盒。機身全部是插榫，不用螺絲。</p>
+  </div>
+  <div class="note info">
+    <b class="tag">為什麼是這個順序</b>
+    <p>內牆 #26 自己沒有榫，是靠別的零件「穿過 #26 再插進 #24」固定的；圍邊 #27 和轉盤軸套也都裝在 #24 上，所以 <b>#24 要最先放</b>。兩片端板一裝上，整台就鎖住，中間的零件再也放不進去，所以端板要等 #37 蓋好才裝。做法是「平放疊裝」：#24 正面朝下平放，零件一層一層由上往下插，最後蓋 #37、裝端板，再把整台立起來。</p>
+  </div>
+  <div class="note todo">
+    <b class="tag">★ 上膠</b>
+    <p>建議機身先不上膠，裝錯才拆得回來。試轉、測試都沒問題後，只在會鬆的地方點白膠：抽屜四角、端板和 #24／#37 的接合處、#26 四角。轉盤組不上膠，要能拆下來保養。</p>
+  </div>
+  <div class="order">
+    <span>B1 分堆</span><i>→</i><span>B2 抽屜</span><i>→</i><span>B3 抽屜櫃</span><i>→</i><span>B4 #24＋#26</span><i>→</i><span>B5 間隔條</span><i>→</i><span>B6 插抽屜櫃</span><i>→</i><span>B7 馬達盒</span><i>→</i><span>B8 馬達電源</span><i>→</i><span>B9 #37</span><i>→</i><span>B10 端板</span><i>→</i><span>B11 腳座</span><i>→</i><span>B12～B14 轉盤</span><i>→</i><span>B15 試轉</span><i>→</i><span>B16～B23 感測器與電子盒</span>
+  </div>
+  <div class="legend"><span><i class="sw"></i>已經裝好的零件</span><span><i class="sw new"></i>這一步要裝的零件</span><span><i class="sw laser"></i>紅線＝雕刻</span></div>
+
+  <article class="step" id="b-1">
+    <div class="step-no">B1</div>
+    <div class="step-body">
+      <div class="step-head"><h3>清點、分堆</h3></div>
+      <ul>
+        <li>抽屜零件依雕刻數字分成 50、10、5、1 四堆，每堆 5 片。</li>
+        <li>撕掉壓克力 #62、#63 的保護膜。</li>
+        <li>小零件分開裝袋並寫名稱（外形很像，容易掉）：U 形腳座卡扣 6 片、L 形抽屜卡扣 6 片、小鍵 4 支、Ø19 圓片 5 片。</li>
+      </ul>
+      <figure>
+        <img src="img/b-small-flat.png" alt="小零件攤平：U 形卡扣 #9 #10 #11 #15 #19 #25、L 形卡扣 #52 到 #57、小鍵 #16 #17 #20 #23、圓形圓片 #14 #58、16 邊形圓片 #18 #59 #22" loading="lazy">
+        <figcaption>U 形腳座卡扣 #9 #10 #11 #15 #19 #25（一端圓頭）、L 形抽屜卡扣 #52～#57、T 形小鍵 #16 #17 #20 #23、圓形圓片 #14 #58（方孔大）、16 邊形圓片 #18 #59 #22（方孔小）。</figcaption>
+      </figure>
+      <label class="done-row"><input type="checkbox" data-step="b-1"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-2">
+    <div class="step-no">B2</div>
+    <div class="step-body">
+      <div class="step-head"><h3>組 4 個抽屜</h3><span class="time">每個 5 片＋1 片 L 形卡扣</span></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>幣值</th><th>底板（前端有雕刻小牌）</th><th>側板 ×2</th><th>前板（頂端半圓指扣）</th><th>後板（上方 6×3 小槽）</th><th>寬</th></tr></thead>
+        <tbody>
+          <tr><td>50 元</td><td>#32</td><td>#39、#41</td><td>#49</td><td>#45</td><td class="num">36.0</td></tr>
+          <tr><td>10 元</td><td>#33</td><td>#38、#42</td><td>#48</td><td>#46</td><td class="num">32.4</td></tr>
+          <tr><td>5 元</td><td>#35</td><td>#43、#47</td><td>#44</td><td>#40</td><td class="num">29.5</td></tr>
+          <tr><td>1 元</td><td>#34</td><td>#50、#51</td><td>#60</td><td>#61</td><td class="num">29.1</td></tr>
+        </tbody>
+      </table></div>
+      <ol>
+        <li>立起一片側板，<b>有兩個小長槽的那一端朝下</b>。</li>
+        <li>前板（半圓指扣朝上）、後板（6×3 小槽在上方）的長邊各 4 支榫，插進側板的 4 個槽。</li>
+        <li>底板雕刻面朝上、<b>有小牌的那一端朝前</b>：兩側的榫插進側板下端的槽；前端的寬榫穿過前板，小牌凸出約 5.5 mm；後端的寬榫插進後板。</li>
+        <li>蓋上另一片側板，對準同樣的槽壓下去。</li>
+        <li>L 形卡扣的開縫舌從外面壓進後板的 6×3 小槽，本體朝後（腳朝上還是朝下 <span class="star">★</span>）。</li>
+      </ol>
+      <figure>
+        <img src="img/b-drawer-flat.png" alt="50 元抽屜的零件攤平：底板 #32、側板 #39 #41、前板 #49、後板 #45、L 形卡扣 #52" loading="lazy">
+        <figcaption>50 元抽屜的零件（其他三個一樣，只有寬度和雕刻數字不同）。</figcaption>
+      </figure>
+      <div class="note warn">
+        <b class="tag">容易出錯</b>
+        <ul>
+          <li>8 片側板外形一樣、前後板也幾乎一樣，<b>先照數字分堆再組</b>。</li>
+          <li>前後板裝反：卡扣跑到前面，抽屜推不到底。</li>
+          <li>底板小牌朝後：小牌頂到抽屜櫃後板，推不進去。</li>
+          <li>5 元和 1 元抽屜只差 0.4 mm，只能看雕刻分。</li>
+        </ul>
+      </div>
+      <p>組好的抽屜先放旁邊，等 <a href="#b-18">B18</a> 再放進去。</p>
+      <label class="done-row"><input type="checkbox" data-step="b-2"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-3">
+    <div class="step-no">B3</div>
+    <div class="step-body">
+      <div class="step-head"><h3>組抽屜櫃（ㄇ形）</h3></div>
+      <div class="chips"><span class="chip">#12 櫃後板</span><span class="chip v2">#13R 右<small>v2</small></span><span class="chip v2">#21 左<small>v2 雕刻</small></span></div>
+      <ol>
+        <li>#12 雕刻面（50　10　5　1）朝前，也就是朝抽屜那一面。6 mm 寬的那支榫在上面。</li>
+        <li>#12 兩側的 3 支榫插進 #13R、#21 的 3 個槽。雕刻面朝自己時，<b>#21 在左、#13R 在右</b>（50 元在左邊）。</li>
+        <li>兩片側板斜邊上的方齒要朝同一個方向（朝前）。</li>
+        <li>組好先放旁邊。<b>一定要先組成ㄇ形</b>：側板插進機身後就撐不開，#12 塞不進去。</li>
+      </ol>
+      <div class="figs">
+        <figure>
+          <img src="img/b-cab-asm.png" alt="抽屜櫃三片在機身裡的位置：正視和側視，#12、#13R、#21 塗成青色" loading="lazy">
+          <figcaption>抽屜櫃裝好後的位置（青色）。</figcaption>
+        </figure>
+        <figure>
+          <img src="img/b-cab-flat.png" alt="抽屜櫃零件攤平：#12、#13R、#21" loading="lazy">
+          <figcaption>#13R 比 #21 高出一大塊，那塊是 1 元滑道的右牆。</figcaption>
+        </figure>
+      </div>
+      <div class="note warn">
+        <b class="tag">容易出錯</b>
+        <ul>
+          <li>#12 翻面也插得進去，但雕刻會跑到背面，從正面看順序也會反。</li>
+          <li>#13R、#21 左右裝反：之後插機身時 #13R 的新榫找不到槽，當場就插不進去。</li>
+        </ul>
+      </div>
+      <label class="done-row"><input type="checkbox" data-step="b-3"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-4">
+    <div class="step-no">B4</div>
+    <div class="step-body">
+      <div class="step-head"><h3>#24 正面朝下平放，疊上 #26</h3></div>
+      <div class="chips"><span class="chip v2">#24 前面板<small>含顯示器</small></span><span class="chip v2">#26 內牆</span></div>
+      <ol>
+        <li>桌上鋪毛巾或軟布。#24 <b>正面朝下</b>平放：顯示器的 LED 和螺絲頭凸出正面約 4 mm，要墊軟的，或讓顯示器那一角伸出桌邊。</li>
+        <li>#24 連著電子盒：把盒子放在 <b>#24 頂邊（長邊、顯示器那一側）外面</b>的桌上，線放鬆，組裝過程不要扯到 <span class="star">★</span>。</li>
+        <li>#26 疊上去。只有一個方向對得上：Ø20 軸孔要同心、四個分幣開口落在斜槽範圍內、頂邊的 L 形缺口對著顯示器的電路板。</li>
+        <li>壓平後檢查共用的小孔都對齊（下緣那一排、斜槽下方那一排）。顯示器的線不可以被 #26 壓到。</li>
+      </ol>
+      <figure>
+        <img src="img/b-front-asm.png" alt="#24 和 #26 疊在一起的正視與側視圖，兩片都塗成青色" loading="lazy">
+        <figcaption>#24（前）和 #26（後）疊在一起。示意圖畫的是立起來的樣子；實際組裝時是正面朝下平放。</figcaption>
+      </figure>
+      <div class="note warn"><b class="tag">容易出錯</b><p>#26 有孔對不上，就是翻面了。#24 開了窗比較脆，不要扳。</p></div>
+      <label class="done-row"><input type="checkbox" data-step="b-4"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-5">
+    <div class="step-no">B5</div>
+    <div class="step-body">
+      <div class="step-head"><h3>插 3 片間隔條（v2 版）</h3></div>
+      <div class="chips"><span class="chip v2">#7 S5 v2</span><span class="chip v2">#6 S10 v2</span><span class="chip v2">#5 S50 v2</span></div>
+      <ol>
+        <li>從轉盤那端數過來：<b>#7（刻「S5 v2」）最靠轉盤</b>，#6（「S10 v2」）在中間，#5（「S50 v2」）最遠。</li>
+        <li>#7：前緣的長榫穿過 #26＋#24，上方的小榫插 #26。</li>
+        <li>#6：上方的小榫插 #26。它沒有長榫。</li>
+        <li>#5：只有一支小榫插 #26。它沒有長榫，蓋 #37 之前容易倒，用手扶著。</li>
+        <li>三片的後榫（16 mm 寬）都朝上，等 #37。</li>
+      </ol>
+      <div class="figs">
+        <figure>
+          <img src="img/b-spacer-asm.png" alt="三片間隔條 #7 #6 #5 插在 #24、#26 上的正視與側視圖" loading="lazy">
+          <figcaption>間隔條就是滑道之間的牆，v2 在上面開了感測器缺口。</figcaption>
+        </figure>
+        <figure>
+          <img src="img/b-spacer-flat.png" alt="間隔條 #7、#6、#5 攤平，紅線是 S5 v2、S10 v2、S50 v2 雕刻" loading="lazy">
+          <figcaption>三片的小榫排法都不一樣，只插得進自己的位置。</figcaption>
+        </figure>
+      </div>
+      <div class="note warn"><b class="tag">容易出錯</b><p>插不進去就是位置放錯了，不要硬塞，會把槽撐壞。#5、#6 沒有長榫，#24、#26 也沒有對應的孔，這是正常的。</p></div>
+      <label class="done-row"><input type="checkbox" data-step="b-5"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-6">
+    <div class="step-no">B6</div>
+    <div class="step-body">
+      <div class="step-head"><h3>插抽屜櫃</h3></div>
+      <div class="chips"><span class="chip">B3 的ㄇ形</span></div>
+      <ol>
+        <li>把 B3 組好的ㄇ形整個由上往下插：#13R 在轉盤那一側，#21 在另一側。</li>
+        <li>兩片側板斜邊的 2 個方齒，穿過 #26＋#24 的方孔。</li>
+        <li>#13R 另外有 2 支前榫，插進 #26 的新槽。</li>
+      </ol>
+      <figure>
+        <img src="img/b-cabin-asm.png" alt="抽屜櫃插進機身的正視與側視圖：#12、#13R、#21 塗成青色，#24、#26、間隔條是木色" loading="lazy">
+        <figcaption>抽屜櫃在機身下方、斜槽出口底下。</figcaption>
+      </figure>
+      <div class="note info"><b class="tag">v2 已修正</b><p>原始檔 #26 右邊第 1 個齒孔偏了 1 mm，v2 已經改好，不用再銼。</p></div>
+      <label class="done-row"><input type="checkbox" data-step="b-6"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-7">
+    <div class="step-no">B7</div>
+    <div class="step-body">
+      <div class="step-head"><h3>馬達盒＋TT 馬達</h3></div>
+      <div class="chips"><span class="chip">#1 底板</span><span class="chip">#2 側壁（有缺口）</span><span class="chip">#3 側壁</span><span class="chip">#4 背板</span><span class="chip">TT 馬達</span></div>
+      <p>馬達盒在轉盤正後方（轉盤那端的空腔裡）。<b>先在桌上把整盒組好，再一起插進機身</b>：側壁插 #26 和插 #1 的方向互相垂直，#1 先插在機身上的話，側壁就裝不進去。</p>
+      <ol>
+        <li>#4 背板平放。#2、#3 側壁一條長邊的 3 支榫插進 #4。有半圓缺口的 #2 放在靠端板那一側，缺口和 #4 的出線缺口同一側 <span class="star">★</span>。</li>
+        <li>放 TT 馬達：後軸套進 #4 的鑰匙孔，定位凸點朝鑰匙孔下方的槽，馬達罐朝 #1 那一邊。馬達線從 #2 的缺口拉出來。</li>
+        <li>#1 底板套上側壁下端的 2 支榫和 #4 下端的 2 支榫。</li>
+        <li>整盒翻過來（側壁另一條長邊的榫朝下），用手托住馬達，往下插：側壁的 3＋3 支榫插進 #26 軸孔兩旁的槽；#1 前端 3 支<b>窄榫</b>穿過 #26＋#24，2 支<b>寬榫</b>只插 #24（那裡沒有 #26）；馬達前軸穿過 Ø20 孔，定位凸點進 #26 孔下方的小缺口。</li>
+        <li>#1 後端的 5 支榫朝上，等 #37。</li>
+        <li>頂板 <span class="star">★</span>：原機照片上馬達盒有一片頂板，但設計檔裡找不到這片。</li>
+      </ol>
+      <div class="figs">
+        <figure>
+          <img src="img/b-motor-flat.png" alt="馬達盒零件攤平：#1、#2、#3、#4" loading="lazy">
+          <figcaption>#4 中間的鑰匙孔給馬達後軸（雙軸 TT 馬達 <span class="star">★</span>）。</figcaption>
+        </figure>
+        <figure>
+          <img src="img/photo-top.jpg" alt="原機俯視照：從上面看得到馬達盒和黃色齒輪箱" loading="lazy">
+          <figcaption>原機俯視：右邊是馬達盒。</figcaption>
+        </figure>
+      </div>
+      <div class="note warn"><b class="tag">容易出錯</b><p>馬達要在 #1 之前放進盒子；整盒插進機身、#37 蓋上後就拿不出來。定位凸點沒對準缺口，盒子會貼不平、軸會歪。</p></div>
+      <label class="done-row"><input type="checkbox" data-step="b-7"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-8">
+    <div class="step-no">B8</div>
+    <div class="step-body">
+      <div class="step-head"><h3>馬達電源 <span class="star">★</span></h3></div>
+      <ul>
+        <li>照原機照片：電池盒（18650）放在 #1 底板上，在端板和馬達盒之間；開關裝在 #37 上。設計檔沒有專用的固定件和開關孔。</li>
+        <li>馬達、電池盒、開關串成一圈，先不要通電。開關如果要裝在 #37 上，蓋 #37 之前先把線接好。</li>
+        <li>v2 的感測器、顯示器用電子盒裡的 9V，和馬達電路分開，<b>兩邊不要接在一起</b>。</li>
+      </ul>
+      <label class="done-row"><input type="checkbox" data-step="b-8"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-9">
+    <div class="step-no">B9</div>
+    <div class="step-body">
+      <div class="step-head"><h3>蓋後面板 #37</h3></div>
+      <div class="chips"><span class="chip v2">#37 後面板<small>已黏螺帽</small></span></div>
+      <ol>
+        <li>#37 外面朝上（黏著 M3 螺帽的內面朝下）。</li>
+        <li>壓下去之前，先讓顯示器線落在 #37 頂邊的 U 形缺口裡，不要被 #37 壓住（線之後從這裡越過機頂到電子盒）。</li>
+        <li>對準所有朝上的榫一起壓下去：3 片間隔條的後榫、#1 的 5 支後榫、#13R 的後榫。</li>
+        <li>#37 下方的開口要套過兩片櫃側板的後上角。#21 那一側的角可能會卡，用砂紙輕輕磨，<b>不要硬壓</b>，#37 會裂。</li>
+        <li>間隔條的後榫比較緊，可以用力壓進去。</li>
+        <li>壓好後摸一下 #5：如果晃超過 0.5 mm，在 #5 和 #37 內面之間點一點白膠 <span class="star">★</span>。</li>
+      </ol>
+      <figure>
+        <img src="img/b-back-asm.png" alt="後面板 #37 蓋上的正視與側視圖：#37 塗成青色，蓋住後面所有零件" loading="lazy">
+        <figcaption>#37 在最後面，一次接住所有零件的後榫。</figcaption>
+      </figure>
+      <label class="done-row"><input type="checkbox" data-step="b-9"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-10">
+    <div class="step-no">B10</div>
+    <div class="step-body">
+      <div class="step-head"><h3>裝兩片端板</h3></div>
+      <div class="chips"><span class="chip">#31 右端</span><span class="chip">#36 左端</span></div>
+      <ol>
+        <li>兩片同形，可以互換。#31 裝轉盤那端，#36 裝另一端。</li>
+        <li>端板上段有兩排各 5 個槽：<b>靠長直邊那一排套 #24 的端榫</b>，另一排套 #37 的端榫。</li>
+        <li><b>長腳朝後</b>（往 #37 那邊伸）。</li>
+        <li>端板的直邊比 #24 正面多凸出約 2 mm，正面朝下平放時會頂到桌面：<b>套端板時，把那一端移出桌邊</b>。</li>
+        <li>兩片都裝好，整台就鎖住了。</li>
+      </ol>
+      <figure>
+        <img src="img/b-ends-asm.png" alt="兩片端板 #31 #36 裝在機身兩端的正視圖，以及從右端看的側視圖：端板下段是往後伸的斜腳" loading="lazy">
+        <figcaption>側視：直邊在前、長腳往後，整台後仰 30°。</figcaption>
+      </figure>
+      <div class="note warn"><b class="tag">容易出錯</b><p>端板前後裝反（長腳朝前）也插得進去，但機身會往前傾，硬幣不會靠著 #26 滾，分幣就失效。</p></div>
+      <label class="done-row"><input type="checkbox" data-step="b-10"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-11">
+    <div class="step-no">B11</div>
+    <div class="step-body">
+      <div class="step-head"><h3>立起來，裝 4 個腳座</h3></div>
+      <div class="chips"><span class="chip">U 形卡扣 ×4</span></div>
+      <ol>
+        <li>把整台立起來，顯示器和電子盒的線不要扯到。</li>
+        <li>U 形卡扣平的那一端放桌上、圓頭朝上。</li>
+        <li>每隻腳底的開口槽往下壓進卡扣中間的槽，十字交叉卡住。兩片端板各 2 隻腳，共 4 個。</li>
+      </ol>
+      <figure>
+        <img src="img/photo-right.jpg" alt="原機右側照：端板的腳底各有一片圓頂的小卡扣立著" loading="lazy">
+        <figcaption>原機側面：每隻腳底都有一片圓頂的 U 形卡扣。</figcaption>
+      </figure>
+      <label class="done-row"><input type="checkbox" data-step="b-11"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-12">
+    <div class="step-no">B12</div>
+    <div class="step-body">
+      <div class="step-head"><h3>裝轉盤 <span class="star">★</span></h3></div>
+      <div class="chips"><span class="chip">#18 16 邊形</span><span class="chip">#62 轉盤</span><span class="chip">#14 圓形</span><span class="chip">小鍵 ×2</span></div>
+      <p>疊法是從零件尺寸推的，還沒有對照實機 <span class="star">★</span>。</p>
+      <ol>
+        <li>16 邊形圓片 #18 套上馬達軸（雙 D 對齊），推進 #24 的 Ø20 孔。</li>
+        <li>轉盤 #62 套上軸，中間的雙 D 孔和兩旁的方孔都要對齊。</li>
+        <li>圓形圓片 #14 蓋在最外面。</li>
+        <li>2 支小鍵從前面插：開縫的柄先進，穿過 #14、#62，卡進 #18；頭留在 #14 的方孔裡。</li>
+        <li>用手轉一圈，#62 不能刮到 #24。</li>
+      </ol>
+      <figure>
+        <img src="img/b-rotor-flat.png" alt="轉盤零件攤平：#18、#62、#14、小鍵 #16 #17" loading="lazy">
+        <figcaption>圓形片方孔大（小鍵的頭卡這裡）、16 邊形片方孔小（小鍵的柄卡這裡）。</figcaption>
+      </figure>
+      <div class="note warn"><b class="tag">容易出錯</b><p>圓形和 16 邊形放反，小鍵會卡不住。#62 的雙 D 孔要對準軸，不要硬轉。</p></div>
+      <label class="done-row"><input type="checkbox" data-step="b-12"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-13">
+    <div class="step-no">B13</div>
+    <div class="step-body">
+      <div class="step-head"><h3>彎曲條圍邊 #27</h3></div>
+      <ol>
+        <li>先預彎：沿著直徑約 10 cm 的罐子，從一端慢慢彎到另一端，不要對折 <span class="star">★</span>。</li>
+        <li>找出<b>兩支榫靠得最近的那一端</b>，放在左下：斜槽入口的下方。</li>
+        <li>從那一端開始，沿著轉盤外圍經過正下方、右邊，把 8 支榫依序壓進 #24 上的 8 個菱形孔，最後一支在右上。</li>
+        <li>圍邊和轉盤之間大約留 1 mm，轉的時候不能刮到。</li>
+      </ol>
+      <div class="figs">
+        <figure>
+          <img src="img/b-ring-flat.png" alt="前蓋 #63 和彎曲條 #27 攤平：#27 是一長條，兩邊各有 8 支小榫" loading="lazy">
+          <figcaption>#27 兩邊各 8 支榫；最後一段的間距比較短，那一端放左下。</figcaption>
+        </figure>
+        <figure>
+          <img src="img/photo-front.jpg" alt="原機正面照：轉盤外圍有一圈彎曲的圍邊，外面蓋著壓克力前蓋" loading="lazy">
+          <figcaption>原機：圍邊繞著轉盤，前面蓋著壓克力 #63。</figcaption>
+        </figure>
+      </div>
+      <div class="note warn"><b class="tag">容易出錯</b><p>彎太急會斷。頭尾放反，最後一支榫會對到斜槽的空缺，插不進去。壓榫時兩排平均出力；榫沒壓到底會刮到轉盤。</p></div>
+      <label class="done-row"><input type="checkbox" data-step="b-13"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-14">
+    <div class="step-no">B14</div>
+    <div class="step-body">
+      <div class="step-head"><h3>前蓋 #63</h3></div>
+      <ol>
+        <li>對準 8 個孔，壓到圍邊外側那一排 8 支榫上。</li>
+        <li>對不上就把 #63 翻面，只有一面對得上。</li>
+        <li>中間的半圓缺口讓出轉盤中心。</li>
+      </ol>
+      <label class="done-row"><input type="checkbox" data-step="b-14"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-15">
+    <div class="step-no">B15</div>
+    <div class="step-body">
+      <div class="step-head"><h3>試轉（先不要放硬幣）</h3></div>
+      <ol>
+        <li>打開馬達開關，轉盤要轉得順，不刮圍邊、不刮 #24。</li>
+        <li>關掉馬達開關。</li>
+      </ol>
+      <div class="note warn"><b class="tag">還不能丟硬幣</b><p>S1 卡匣還沒裝，1 元滑道的牆和 #37 都有開口，硬幣會掉進機身或從背面掉出去。</p></div>
+      <label class="done-row"><input type="checkbox" data-step="b-15"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-16">
+    <div class="step-no">B16</div>
+    <div class="step-body">
+      <div class="step-head"><h3>裝 S5 → S10 → S50 感測器</h3><span class="time">每站約 1 分鐘</span></div>
+      <div class="chips"><span class="chip v2">模組＋線 ×3</span><span class="chip v2">鎖塊 ×3</span></div>
+      <p class="sub">先認站（#24 正面沒有刻站名）</p>
+      <p>沿斜槽從轉盤那端往下數：第 1 個感測窗（旁邊刻「1」）裝 <b>S5</b>；第 2 個裝 <b>S10</b>；最後一個開到 #24 下緣、兩旁各有 1 個方孔的缺口裝 <b>S50</b>。窗旁刻的數字是抽屜的幣值，不是站名。模組和鎖塊都看標籤和雕刻上的站名。</p>
+      <p class="sub">每一站</p>
+      <ol>
+        <li><b>推入</b>：模組兩臂朝上、排針朝自己，對準窗的<b>下半部</b>，水平往機身裡推，後臂先過；推到 PCB 後端碰到間隔條的缺口為止。</li>
+        <li><b>上滑</b>：把模組往上推約 10 mm，推到推不動（光耦的槽底碰到上面的保留條）。</li>
+        <li><b>塞鎖塊</b>：一手頂住模組。另一手拿鎖塊，P1 那面朝機身，先讓 P1 背面貼住 #24 正面（窗的下方），<b>沿 #24 往上推</b>，推到 P1 的凸塊碰到 PCB 下面；S50 同時讓兩支插銷對準 #24 的兩個方孔。再往機身裡推 3 mm，讓 P1 進窗、C1 貼平 #24。</li>
+        <li><b>放手</b>：模組會被重力壓回定位。</li>
+      </ol>
+      <div class="figs">
+        <figure>
+          <img src="img/spec-crosstrack-front.png" alt="設計規格附圖：從正面看三個感測窗和鎖塊的位置" loading="lazy">
+          <figcaption>規格附圖：三站在 #24 正面的位置。</figcaption>
+        </figure>
+        <figure>
+          <img src="img/spec-crosstrack-section.png" alt="設計規格附圖：感測座剖面，模組跨在間隔條上，鎖塊從下面頂住" loading="lazy">
+          <figcaption>規格附圖：剖面。鎖塊從下面頂住模組，不讓它掉回低位。</figcaption>
+        </figure>
+      </div>
+      <div class="note warn">
+        <b class="tag">容易出錯</b>
+        <ul>
+          <li><b>不要把鎖塊從正前方水平塞進去</b>：P1 的凸塊會撞到光耦前臂下面的焊腳。</li>
+          <li>S5、S10 的窗、模組、鎖塊形狀都一樣，裝反要到丟硬幣才看得出來（冒號會亮）。發現時把兩站的模組連同鎖塊對調。</li>
+          <li>鎖塊只靠重力。整台往前倒放時可能滑出來（模組落回低位，不會壞）。要更牢，在 C1 一角和 #24 之間點一點熱熔膠，拆的時候剝掉。</li>
+        </ul>
+      </div>
+      <label class="done-row"><input type="checkbox" data-step="b-16"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-17">
+    <div class="step-no">B17</div>
+    <div class="step-body">
+      <div class="step-head"><h3>整理三條感測器線</h3></div>
+      <ol>
+        <li>三條線沿 #24 正面往下，在各站鎖塊下方往右集中，穿過右下角的排線孔（#24、#26 的 10×4.5 小孔）進到機身裡。</li>
+        <li>再從 #37 的感測器線孔（12×6）拉到背面：從背面看，在轉盤那一側、約在上下的中間 <span class="star">★</span>。</li>
+        <li>用 2～3 點熱熔膠或背膠線扣固定 <span class="star">★</span>。</li>
+      </ol>
+      <div class="note info"><b class="tag">之後拆 S50 時</b><p>排線經過 #24 正面，拆 S50 鎖塊前要先把線撥開。</p></div>
+      <label class="done-row"><input type="checkbox" data-step="b-17"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-18">
+    <div class="step-no">B18</div>
+    <div class="step-body">
+      <div class="step-head"><h3>放抽屜</h3></div>
+      <ol>
+        <li>從正面看，由左到右推進 <b>50、10、5、1</b> 元抽屜，對照 #12 上的雕刻。</li>
+        <li>抽屜後面的 L 形卡扣要進 #12 的槽。卡扣的腳如果朝下，要先把抽屜抬一點再放下去勾住 <span class="star">★</span>。</li>
+      </ol>
+      <div class="note info"><b class="tag">為什麼現在才放</b><p>S50 模組裝的時候會伸到滑道出口下方約 9 mm，抽屜在裡面會擋到。之後拆換 S50 時，也要先抽出 10 元、50 元抽屜 <span class="star">★</span>。</p></div>
+      <label class="done-row"><input type="checkbox" data-step="b-18"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-19">
+    <div class="step-no">B19</div>
+    <div class="step-body">
+      <div class="step-head"><h3>從背面插 S1 卡匣</h3><span class="time">約 1 分鐘</span></div>
+      <div class="chips"><span class="chip v2">S1 卡匣</span><span class="chip">M3×10 尼龍螺絲 ×2</span></div>
+      <ol>
+        <li>卡匣的臂朝前、「S1 ↑」朝外朝上，對準 #37 的卡匣窗，水平往前推。</li>
+        <li>S1-B 會滑進 #13R 的牆槽，S1-C 尖頭的前榫會自己找到 #26 的槽。推到背蓋整面貼住 #37。</li>
+        <li>鎖 2 支 M3×10 尼龍螺絲，用手擰就好 <span class="star">★</span>。</li>
+      </ol>
+      <div class="figs">
+        <figure>
+          <img src="img/spec-s1-section.png" alt="設計規格附圖：S1 卡匣剖面，光耦跨在 1 元滑道上" loading="lazy">
+          <figcaption>規格附圖：卡匣插好後，光耦跨在 1 元滑道上。</figcaption>
+        </figure>
+        <figure>
+          <img src="img/spec-s1-front.png" alt="設計規格附圖：從正面看 S1 的位置" loading="lazy">
+          <figcaption>規格附圖：S1 和 S5～S50 在深度上錯開，互不干涉。</figcaption>
+        </figure>
+      </div>
+      <div class="note warn"><b class="tag">注意</b><p>沒插卡匣時不可以送硬幣。</p></div>
+      <label class="done-row"><input type="checkbox" data-step="b-19"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-20">
+    <div class="step-no">B20</div>
+    <div class="step-body">
+      <div class="step-head"><h3>顯示器線越過機頂</h3></div>
+      <p>確認顯示器的線從 #24 背面上緣越過機頂、落在 #37 頂邊的 U 形缺口裡，沒有被壓到。多的線用束帶收好。</p>
+      <label class="done-row"><input type="checkbox" data-step="b-20"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-21">
+    <div class="step-no">B21</div>
+    <div class="step-body">
+      <div class="step-head"><h3>插四條感測器線</h3><span class="time">盒子還在桌上時插最方便</span></div>
+      <ol>
+        <li>S5、S10、S50 的線從 #37 的感測器線孔出來；S1 的線從卡匣拉過來。</li>
+        <li>四個 1×3 杜邦頭<b>照盒端的標籤</b>插到盒內下緣的 GVS 排針：<b>S1→G27、S5→G26、S10→G25、S50→G33</b>。</li>
+        <li>1×3 頭的 V 在中間。插反 180° 不會燒，但那一路不會動作。</li>
+      </ol>
+      <figure>
+        <img src="img/wiring.png" alt="ESP32 光耦版接線圖：四個光耦模組接 G27、G26、G25、G33，TM1637 接 G14、G13，9V 經開關接 DC 座" loading="lazy">
+        <figcaption>完整接線圖（原檔：<code>03_v2_光耦版/接線圖/</code>）。</figcaption>
+      </figure>
+      <label class="done-row"><input type="checkbox" data-step="b-21"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-22">
+    <div class="step-no">B22</div>
+    <div class="step-body">
+      <div class="step-head"><h3>掛電子盒</h3><span class="time">不用工具</span></div>
+      <ol>
+        <li>雙手拿盒，前緣貼著 #37 背面，<b>比最後的位置高約 6 mm</b>（盒頂比機頂高一點）。</li>
+        <li>盒子兩側的 4 個掛勾對準 #37 上 4 個長槽的上段。</li>
+        <li>往前推，推到盒子的牆碰到 #37。</li>
+        <li>放手，盒子會自己往下滑到底。</li>
+        <li>把感測器線收進左牆前緣的排線口。</li>
+      </ol>
+      <div class="figs">
+        <figure>
+          <img src="img/spec-ebox-back.png" alt="設計規格附圖：從背面看電子盒掛在 #37 上" loading="lazy">
+          <figcaption>規格附圖：從背面看。</figcaption>
+        </figure>
+        <figure>
+          <img src="img/spec-ebox-section.png" alt="設計規格附圖：電子盒剖面，兩層掛勾勾住 #37" loading="lazy">
+          <figcaption>規格附圖：剖面，兩層掛勾勾住 #37。</figcaption>
+        </figure>
+      </div>
+      <label class="done-row"><input type="checkbox" data-step="b-22"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="b-23">
+    <div class="step-no">B23</div>
+    <div class="step-body">
+      <div class="step-head"><h3>（選用）防拔鍵 EB-K</h3></div>
+      <ol>
+        <li>EB-K 是 L 形小片，兩片同形，左右各一。</li>
+        <li><b>頭比舌長出來的那一端朝上</b>，切齊的那一邊朝下（靠在掛勾頂上）。放反會撞到掛勾。</li>
+        <li>手指從機頂的開口伸進去（5 元滑道和 50 元滑道的頂端），從機身裡面把舌頭往後塞進上層掛勾槽的上段。</li>
+        <li>裝好後盒子就抬不起來。要拆盒子時先拔掉。</li>
+      </ol>
+      <label class="done-row"><input type="checkbox" data-step="b-23"> 這一步完成</label>
+    </div>
+  </article>
+</section>
+
+<!-- ===================== C 通電測試 ===================== -->
+<section class="part" id="test">
+  <div class="part-head">
+    <h2>C　通電測試</h2>
+    <p>老師做 C1～C3、C5；C4 要接電腦看序列埠，由講師在樣機上做。</p>
+  </div>
+
+  <article class="step" id="c-1">
+    <div class="step-no">C1</div>
+    <div class="step-body">
+      <div class="step-head"><h3>開機前檢查</h3></div>
+      <ul>
+        <li>擴展板的黃色跳帽在 <b>3.3 V</b>。</li>
+        <li>四條感測器線照兩端標籤插好；顯示器的 4P 線插好。</li>
+        <li><b>4 個感測器的槽裡都是空的</b>：S1 卡匣已插好、軌道上沒有硬幣。</li>
+        <li>馬達開關先關著。</li>
+      </ul>
+      <label class="done-row"><input type="checkbox" data-step="c-1"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="c-2">
+    <div class="step-no">C2</div>
+    <div class="step-body">
+      <div class="step-head"><h3>開機</h3></div>
+      <ol>
+        <li>打開電子盒頂板的電源開關。</li>
+        <li>顯示「<b>1234</b>」約 1.5 秒：這段時間程式在判斷每個感測器「擋住時是 HIGH 還是 LOW」，所以槽裡不能有東西。</li>
+        <li>顯示「<b>0</b>」之後，才開馬達、倒硬幣。</li>
+      </ol>
+      <label class="done-row"><input type="checkbox" data-step="c-2"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="c-3">
+    <div class="step-no">C3</div>
+    <div class="step-body">
+      <div class="step-head"><h3>每種硬幣各丟幾枚</h3></div>
+      <p>每一枚在<b>離開感測器的時候</b>才加上去。每種各丟 5 枚，確認進對抽屜、金額也對。</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>丟入</th><th>會擋到的感測器</th><th>顯示金額</th><th>進哪個抽屜</th></tr></thead>
+        <tbody>
+          <tr><td>1 元</td><td>S1</td><td>＋1</td><td>最右邊</td></tr>
+          <tr><td>5 元</td><td>S5</td><td>＋5</td><td>右邊第 2 個</td></tr>
+          <tr><td>10 元</td><td>S5、S10</td><td>＋10</td><td>左邊第 2 個</td></tr>
+          <tr><td>50 元</td><td>S5、S10、S50</td><td>＋50</td><td>最左邊</td></tr>
+        </tbody>
+      </table></div>
+      <p>大硬幣會先經過小硬幣的感測器，程式用相減算出每種幾枚：1 元＝C1、5 元＝C5−C10、10 元＝C10−C50、50 元＝C50（C＝每個感測器被擋住的次數）。</p>
+      <label class="done-row"><input type="checkbox" data-step="c-3"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="c-4">
+    <div class="step-no">C4</div>
+    <div class="step-body">
+      <div class="step-head"><h3>講師：用序列埠檢查四路</h3></div>
+      <ol>
+        <li>USB 線從機身左端穿過電子盒右牆的服務窗，插上開發板；序列埠設 115200。</li>
+        <li>開機看序列埠：4 個感測器的「擋住＝」應該一樣，沒有「訊號變了 N 次」的警告；顯示器有回應。</li>
+        <li>輸入 <code>v</code>：每 0.2 秒印出 4 個感測器（■＝擋住、·＝亮）。用名片<b>依窗的位置</b>逐一擋：S1 卡匣、第 1 窗（S5）、第 2 窗（S10）、開底缺口（S50）。對應那一欄要從 · 變 ■，其他欄不變。排線插錯、模組裝錯站，在這裡都看得出來。</li>
+        <li>再輸入 <code>v</code> 關掉。</li>
+      </ol>
+      <p>其他指令：<code>r</code> 歸零；<code>a</code> 重新判斷擋住電位（4 個槽先清空）並歸零；<code>?</code> 說明。</p>
+      <label class="done-row"><input type="checkbox" data-step="c-4"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="c-5">
+    <div class="step-no">C5</div>
+    <div class="step-body">
+      <div class="step-head"><h3>倒已知金額比對</h3></div>
+      <ol>
+        <li>開馬達，倒入一把已知總額的硬幣。</li>
+        <li>比對顯示的金額。超過 9999 顯示「----」（序列埠有完整金額）。</li>
+        <li>顯示器的<b>冒號（或第 2 位的小數點）亮起來</b>，表示「C5 ≥ C10 ≥ C50」不成立，有一站漏算或多算，見下一步。</li>
+      </ol>
+      <label class="done-row"><input type="checkbox" data-step="c-5"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="c-6">
+    <div class="step-no">C6</div>
+    <div class="step-body">
+      <div class="step-head"><h3>不對的時候</h3></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>狀況</th><th>原因與處理</th></tr></thead>
+        <tbody>
+          <tr><td>某一路完全不計數</td><td>線沒插好、插錯腳，或 1×3 頭插反 180°。講師用 <code>v</code> 擋槽看那一欄會不會變。</td></tr>
+          <tr><td>沒有硬幣也一直加</td><td>雜訊或接觸不良：重新插好排線；必要時調大程式的 <code>MIN_BLOCK_US</code>。</td></tr>
+          <tr><td>丟一枚卻加兩次</td><td>調大程式的 <code>REARM_US</code>。</td></tr>
+          <tr><td>冒號亮</td><td>常見是排線插錯或模組裝錯站。S5、S10 對調時，把兩站的模組連同鎖塊對調。</td></tr>
+          <tr><td>序列埠提醒「連續擋住超過 3 秒」</td><td>卡幣；或開機時槽裡有東西，判斷反了 → 清空槽後輸入 <code>a</code>，或關電源再開。</td></tr>
+          <tr><td>顯示器不亮</td><td>檢查 CLK→G14、DIO→G13、VCC、GND。</td></tr>
+          <tr><td>硬幣進錯抽屜</td><td>抽屜順序放錯，或端板前後裝反（機身往前傾）。</td></tr>
+        </tbody>
+      </table></div>
+      <label class="done-row"><input type="checkbox" data-step="c-6"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="c-7">
+    <div class="step-no">C7</div>
+    <div class="step-body">
+      <div class="step-head"><h3>歸零、收機 <span class="star">★</span></h3></div>
+      <ul>
+        <li>歸零前，<b>先停馬達、等軌道上沒有硬幣</b>。</li>
+        <li>歸零方式還沒定 <span class="star">★</span>：
+          <ul>
+            <li>按開發板上的 <b>BOOT</b> 鍵：只歸零，不重開機（程式說明的寫法）。</li>
+            <li>按開發板上的 <b>RST（EN）</b>鍵：重開機，會重新顯示 1234、重新判斷，槽要清空。</li>
+            <li>關掉電源開關再打開：效果和按 RST 一樣（電子盒規格建議的寫法，因為從背後單指推按鍵，機身可能往前翻）。</li>
+          </ul>
+        </li>
+        <li>按 BOOT 或 RST 時用「捏」的：拇指按鍵，食指從機頂勾住 #37，不要單指從背後直推。</li>
+        <li>用完：關馬達開關，再關電源開關。</li>
+      </ul>
+      <label class="done-row"><input type="checkbox" data-step="c-7"> 這一步完成</label>
+    </div>
+  </article>
+</section>
+
+<!-- ===================== D 拆換 ===================== -->
+<section class="part" id="swap">
+  <div class="part-head">
+    <h2>D　拆換</h2>
+    <p>感測器、卡匣、電池、電子盒都不用拆機身就能換。換完感測器要重新判斷擋住電位，再照 C3、C4 驗一次。</p>
+  </div>
+
+  <article class="step" id="d-1">
+    <div class="step-no">D1</div>
+    <div class="step-body">
+      <div class="step-head"><h3>換 S5／S10／S50 模組</h3><span class="time">約 1 分鐘</span></div>
+      <ol>
+        <li>換 S50 時：先抽出 10 元、50 元抽屜 <span class="star">★</span>，再把 #24 正面的排線撥開。</li>
+        <li>拔鎖塊：<b>先往前拉 3 mm</b>，讓 P1 離開窗（S50 連兩支插銷一起拉），<b>再往下拿開</b>。</li>
+        <li>模組自己落回低位，水平往前抽出來。</li>
+        <li>換上新模組，照 <a href="#b-16">B16</a> 裝回（推入 → 上滑 → 塞鎖塊 → 放手）。S50 裝好再推回抽屜。</li>
+        <li>槽清空後關電源再開，或序列埠輸入 <code>a</code>，再驗一次。</li>
+      </ol>
+      <div class="note todo"><b class="tag">★ 待確認</b><p>線要留在機上只換模組，還是模組連線一起換（要重新穿排線孔、在盒內換插）？</p></div>
+      <label class="done-row"><input type="checkbox" data-step="d-1"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="d-2">
+    <div class="step-no">D2</div>
+    <div class="step-body">
+      <div class="step-head"><h3>換 S1（整個卡匣換）</h3><span class="time">約 1 分鐘</span></div>
+      <ol>
+        <li>卸下 2 支 M3 螺絲，把卡匣往後拉出來。</li>
+        <li>換上備品卡匣，推回去、鎖螺絲。拔掉盒內 G27 上的舊線，插上新卡匣的 S1 線 <span class="star">★</span>。</li>
+      </ol>
+      <p>卡匣拉出來的時候不可以送硬幣。</p>
+      <label class="done-row"><input type="checkbox" data-step="d-2"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="d-3">
+    <div class="step-no">D3</div>
+    <div class="step-body">
+      <div class="step-head"><h3>換 9V 電池</h3><span class="time">20 秒內</span></div>
+      <ol>
+        <li>關掉頂板的電源開關。</li>
+        <li>捏住凸出盒頂約 4 mm 的電池頂（或拉緞帶），往上提出來。</li>
+        <li>拔掉電池扣，扣上新電池，放回去（電池扣那一端先放）。</li>
+      </ol>
+      <p>不用開蓋、不用工具。動作輕一點，用力往上拉機身會往後翻。</p>
+      <label class="done-row"><input type="checkbox" data-step="d-3"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="d-4">
+    <div class="step-no">D4</div>
+    <div class="step-body">
+      <div class="step-head"><h3>拆電子盒、在機上燒錄</h3></div>
+      <ul>
+        <li>拆盒：拔掉防拔鍵（有裝的話）→ 盒子往上推約 6 mm → 往後拿出來。</li>
+        <li>不拆盒也能燒錄：關電源開關，USB 線從機身左端穿過右牆的服務窗插上開發板；卡在 Connecting 時按 BOOT。</li>
+      </ul>
+      <label class="done-row"><input type="checkbox" data-step="d-4"> 這一步完成</label>
+    </div>
+  </article>
+
+  <article class="step" id="d-5">
+    <div class="step-no">D5</div>
+    <div class="step-body">
+      <div class="step-head"><h3>換顯示器、換馬達 <span class="star">★</span></h3></div>
+      <ul>
+        <li>顯示器鎖在 #24 背面，電路板伸進 #26 的缺口；規格沒有寫怎麼換，看起來要拆機身 <span class="star">★</span>。</li>
+        <li>馬達被 #4、#37 包在裡面：要先拿下電子盒和 S1 卡匣，再拆端板和 #37 才拿得到 <span class="star">★</span>。</li>
+      </ul>
+      <label class="done-row"><input type="checkbox" data-step="d-5"> 這一步完成</label>
+    </div>
+  </article>
+</section>
+
+<!-- ===================== 附錄 ===================== -->
+<section class="part" id="appendix">
+  <div class="part-head">
+    <h2>附錄</h2>
+  </div>
+
+  <h3>零件總表</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>子組件</th><th>零件</th><th>在哪張板</th><th>誰組、哪一步</th></tr></thead>
+    <tbody>
+      <tr><td>抽屜 ×4</td><td>底板 #32～#35；側板 #38 #39 #41 #42 #43 #47 #50 #51；前板 #44 #48 #49 #60；後板 #40 #45 #46 #61</td><td>合板 1～3</td><td>老師 <a href="#b-2">B2</a></td></tr>
+      <tr><td>抽屜卡扣</td><td>L 形 #52～#57（用 4 片）</td><td>合板 1、2</td><td>老師 <a href="#b-2">B2</a></td></tr>
+      <tr><td>抽屜櫃</td><td>#12、<b>#13R</b>、<b>#21</b></td><td>合板 1、2</td><td>老師 <a href="#b-3">B3</a>、<a href="#b-6">B6</a></td></tr>
+      <tr><td>機身</td><td><b>#24</b> 前面板、<b>#26</b> 內牆、<b>#37</b> 後面板、#31 #36 端板</td><td>合板 1、2</td><td>老師 <a href="#b-4">B4</a>、<a href="#b-9">B9</a>、<a href="#b-10">B10</a></td></tr>
+      <tr><td>間隔條</td><td><b>#7</b>、<b>#6</b>、<b>#5</b></td><td>合板 3</td><td>老師 <a href="#b-5">B5</a></td></tr>
+      <tr><td>腳座</td><td>U 形 #9 #10 #11 #15 #19 #25（用 4 片）</td><td>合板 1、2</td><td>老師 <a href="#b-11">B11</a></td></tr>
+      <tr><td>馬達盒</td><td>#1 #2 #3 #4</td><td>合板 2、3</td><td>老師 <a href="#b-7">B7</a></td></tr>
+      <tr><td>轉盤組</td><td>#62 轉盤、#63 前蓋（壓克力）；#27 圍邊；圓片 #14 #18 #22 #58 #59；小鍵 #16 #17 #20 #23</td><td>壓克力 1、合板 1、2</td><td>老師 <a href="#b-12">B12</a>～<a href="#b-14">B14</a></td></tr>
+      <tr><td>用途不明</td><td>#8 <span class="star">★</span></td><td>合板 2</td><td>—</td></tr>
+      <tr><td>感測器鎖塊</td><td>P1-S5 P1-S10 P1-S50、C1-S5 C1-S10 C1-S50、PIN-S50 ×2</td><td>合板 1（C1-S50 在合板 2）</td><td>講師 <a href="#a-3">A3</a></td></tr>
+      <tr><td>S1 卡匣</td><td>S1-B、S1-C、S1-F、S1-P、S1-H ×3</td><td>合板 1～3</td><td>講師 <a href="#a-4">A4</a></td></tr>
+      <tr><td>電子盒</td><td>EB-E EB-F EB-S EB-WL EB-B EB-WR EB-T；EB-K ×2</td><td>合板 1</td><td>講師 <a href="#a-6">A6</a>；EB-K 老師 <a href="#b-23">B23</a></td></tr>
+    </tbody>
+  </table></div>
+  <p class="legend">粗體＝v2 改過的原機零件。</p>
+
+  <h3 id="todo">★ 待確認清單</h3>
+  <div class="note info">
+    <b class="tag">已經照建議寫進步驟（不同意再改）</b>
+    <ul>
+      <li>間隔條在原機流程插間隔條時就用 v2 版（規格寫「機身組好後換」，但那時已經換不了）。</li>
+      <li>丟硬幣測試統一放在掛好電子盒、開電之後（C 段）。</li>
+      <li>S1 卡匣在 S5～S50 之後、插線和掛盒之前裝。</li>
+      <li>抽屜等感測器和排線裝好才放（B18），裝 S50 時就不用再抽出來；試轉時先不放硬幣（B15）。</li>
+      <li>原機步驟採「#24 先平放」的疊裝法；研習草稿（analysis_round1.md）把 #24 放在最後，原機做不到，要改。</li>
+    </ul>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>要確認的事</th><th>步驟</th><th>網頁目前的寫法</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td>歸零：按 BOOT、按 RST，還是關電源再開？</td><td><a href="#c-7">C7</a></td><td>三種都列</td></tr>
+      <tr><td class="num">2</td><td>燒錄時斷 9V：拔電池，還是關開關？</td><td><a href="#a-10">A10</a></td><td>兩種都寫</td></tr>
+      <tr><td class="num">3</td><td>S50 的線 40 cm 還是 50 cm？</td><td><a href="#a-2">A2</a></td><td>40 cm，太緊改 50</td></tr>
+      <tr><td class="num">4</td><td>線色：電子盒規格寫黑紅藍，接線圖的訊號線畫黃色</td><td><a href="#a-2">A2</a></td><td>黑紅藍，並強調看標籤</td></tr>
+      <tr><td class="num">5</td><td>#5 晃動時點白膠，由講師還是老師做？（#5 和 #37 是老師當天才組在一起）</td><td><a href="#b-9">B9</a></td><td>老師現場點</td></tr>
+      <tr><td class="num">6</td><td>換 S50 時抽哪幾格抽屜（10、50 兩格，或只抽 10 元）？</td><td><a href="#b-18">B18</a>、<a href="#d-1">D1</a></td><td>兩格都抽</td></tr>
+      <tr><td class="num">7</td><td>老師現場要不要發熱熔膠或背膠線扣（固定排線）？</td><td><a href="#b-17">B17</a></td><td>列在老師材料</td></tr>
+      <tr><td class="num">8</td><td>換 S5～S50 模組時，線留在機上還是連線一起換？換 S1 卡匣時盒端 G27 怎麼換？</td><td><a href="#d-1">D1</a>、<a href="#d-2">D2</a></td><td>S1 寫成拔舊線插新線；其他沒寫</td></tr>
+      <tr><td class="num">9</td><td>顯示器用 M2 螺絲還是熱熔膠？壞了怎麼換？</td><td><a href="#a-9">A9</a>、<a href="#d-5">D5</a></td><td>M2 螺絲；換法沒寫</td></tr>
+      <tr><td class="num">10</td><td>老師從 B4 起就拖著電子盒組裝，可以嗎？或改成最後才插顯示器線</td><td><a href="#b-4">B4</a></td><td>照規格：拖著組</td></tr>
+      <tr><td class="num">11</td><td>S1 導流帽用瞬間膠（規格有一處寫熱熔膠或瞬間膠）</td><td><a href="#a-4">A4</a></td><td>瞬間膠</td></tr>
+      <tr><td class="num">12</td><td>鎖塊白膠要乾多久？要不要多切 1 組鎖塊備品？</td><td><a href="#a-3">A3</a></td><td>沒寫</td></tr>
+      <tr><td class="num">13</td><td>#37 感測器線孔的位置描述（規格寫「從背面看在左下」，和座標不符）</td><td><a href="#b-17">B17</a></td><td>依座標寫</td></tr>
+      <tr><td class="num">14</td><td>防拔鍵 EB-K 列為正式步驟還是選用？</td><td><a href="#b-23">B23</a></td><td>選用</td></tr>
+      <tr><td class="num">15</td><td>電源開關型式：面板式（卡進 EB-T 的 9×13.5 孔）還是線上開關盒？</td><td><a href="#a-8">A8</a></td><td>面板式</td></tr>
+      <tr><td class="num">16</td><td>S1 卡匣用 M3 尼龍螺絲還是 M2.6 自攻螺絲？#13R 牆頂高度 V30 還是 V38？</td><td><a href="#b-19">B19</a></td><td>M3 尼龍螺絲；V30</td></tr>
+      <tr><td class="num">17</td><td>馬達盒頂板：照片上有，設計檔沒有。原檔漏了，還是另外做的？</td><td><a href="#b-7">B7</a></td><td>提到但沒教</td></tr>
+      <tr><td class="num">18</td><td>#8 的用途；#24 右上 3.5×5.5 小孔、#37 右上 7×26 長孔各裝什麼？</td><td>—</td><td>沒寫</td></tr>
+      <tr><td class="num">19</td><td>馬達電源：電池盒型號、怎麼固定；開關裝在 #37 哪裡（沒有開關孔）？</td><td><a href="#b-8">B8</a></td><td>照照片描述</td></tr>
+      <tr><td class="num">20</td><td>轉盤軸套的疊法；#58、#59、#22 和另 2 支小鍵是不是備品？</td><td><a href="#b-12">B12</a></td><td>#18＋#62＋#14＋2 支小鍵</td></tr>
+      <tr><td class="num">21</td><td>L 形抽屜卡扣的腳朝上還是朝下？</td><td><a href="#b-2">B2</a>、<a href="#b-18">B18</a></td><td>兩種都提</td></tr>
+      <tr><td class="num">22</td><td>多出來的零件（U 形 6 用 4、L 形 6 用 4、小鍵 4 用 2、圓片 5 用 2）是不是備品？</td><td><a href="#s-1">S1</a></td><td>當作備品</td></tr>
+      <tr><td class="num">23</td><td>原機有沒有上膠？研習要不要上膠？</td><td>B 段</td><td>建議先不上膠，試轉沒問題再點</td></tr>
+      <tr><td class="num">24</td><td>TT 馬達是不是雙軸款（#4 的鑰匙孔給後軸）？</td><td><a href="#b-7">B7</a></td><td>雙軸</td></tr>
+      <tr><td class="num">25</td><td>板材是 MDF 還是椴木合板？圍邊 #27 要不要先泡水或加熱？</td><td><a href="#b-13">B13</a></td><td>沿罐子慢慢彎</td></tr>
+      <tr><td class="num">26</td><td>抽屜直接放在桌面上滑（櫃子沒有底板），對嗎？</td><td><a href="#b-18">B18</a></td><td>沒特別寫</td></tr>
+      <tr><td class="num">27</td><td>#26 上有一行鏡像雕刻字，照片看不到，是沒雕還是雕在背面？</td><td>—</td><td>沒寫</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note warn">
+    <b class="tag">其他風險</b>
+    <ul>
+      <li>光耦模組實品還沒量，切割檔是照暫定尺寸做的；左右手性也還沒確認。</li>
+      <li>ESP32 程式還沒在實機編譯、執行過。</li>
+      <li>試切時如果硬幣卡在光耦的 PCB 翼上，S5～S50 可能改成分離式紅外線對射，B16 會整段改。</li>
+      <li>外觀待確認：電池凸出盒頂 4 mm、Logo 和「5」「1」雕刻搬家。</li>
+    </ul>
+  </div>
+
+  <h3>參考檔案（都在 <code>03_v2_光耦版/</code>）</h3>
+  <ul>
+    <li><code>laser_v2/out/report.md</code>：v2 總報告（數字以這份為準）、要量的尺寸、採購表。</li>
+    <li><code>laser_v2/design/crosstrack_final/spec.md</code>、<code>s1wall_final/spec.md</code>、<code>ebox_final/spec.md</code>：三份設計規格（開頭有勘誤）。</li>
+    <li><code>coin_sorter_opto_esp32/</code>：ESP32 程式與 README（接線、燒錄、序列埠指令）。</li>
+    <li><code>接線圖/</code>：接線圖 PNG／SVG。</li>
+    <li><code>組裝教學/</code>：這份網頁；圖由 <code>make_figures.py</code> 依 <code>steps.py</code> 產生。</li>
+  </ul>
+  <p><button type="button" class="reset" id="reset">清除所有勾選</button></p>
+</section>
+
+</div>
+
+<script>
+(function () {
+  var KEY = 'coin-sorter-v2-assembly-done';
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('input[data-step]'));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { saved = {}; }
+  function store() {
+    try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) { /* 無痕視窗等：只是不記住 */ }
+  }
+  function paint() {
+    var n = 0;
+    boxes.forEach(function (b) {
+      var card = document.getElementById(b.getAttribute('data-step'));
+      if (card) card.classList.toggle('done', b.checked);
+      if (b.checked) n++;
+    });
+    document.getElementById('prog-text').textContent = n + ' / ' + boxes.length + ' 步';
+    document.getElementById('prog-bar').style.width = (boxes.length ? 100 * n / boxes.length : 0) + '%';
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.getAttribute('data-step')];
+    b.addEventListener('change', function () {
+      saved[b.getAttribute('data-step')] = b.checked;
+      store();
+      paint();
+    });
+  });
+  var reset = document.getElementById('reset'), armed = null;
+  reset.addEventListener('click', function () {
+    if (!armed) {                       // 按兩次才清除，避免誤按
+      reset.textContent = '再按一次確認清除';
+      armed = setTimeout(function () { armed = null; reset.textContent = '清除所有勾選'; }, 3000);
+      return;
+    }
+    clearTimeout(armed);
+    armed = null;
+    reset.textContent = '清除所有勾選';
+    saved = {};
+    boxes.forEach(function (b) { b.checked = false; });
+    store();
+    paint();
+  });
+  paint();
+})();
+</script>
